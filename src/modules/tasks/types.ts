@@ -40,3 +40,23 @@ export interface Task {
   updatedAt: string
   archived: boolean
 }
+
+export interface TaskFilter {
+  projectId?: string
+  status?: TaskStatus
+  priority?: PriorityLevel
+  tag?: string
+  searchQuery?: string
+  dueDate?: string
+  startDate?: string
+  endDate?: string
+  includeArchived?: boolean
+  smartFilter?: 'all' | 'today' | 'upcoming' | 'overdue' | 'completed' | 'archived'
+}
+
+export interface ProjectWithCount extends Project {
+  taskCount: number
+  completedTaskCount: number
+}
+
+export type TaskViewMode = 'list' | 'calendar' | 'kanban'

@@ -2,6 +2,7 @@ import { moduleRegistry } from '@/core/modules/registry'
 import { HabitsView } from './habits/HabitsView'
 import { HabitDashboardWidget } from './habits/components/HabitDashboardWidget'
 import { TasksView } from './tasks/TasksView'
+import { TaskDashboardWidget } from './tasks/components/TaskDashboardWidget'
 import { NotesView } from './notes/NotesView'
 import { SettingsView } from './settings/SettingsView'
 
@@ -32,6 +33,7 @@ export function initializeModules(): void {
     iconName: 'CheckSquare',
     route: '/tasks',
     navOrder: 2,
+    dashboardWidget: TaskDashboardWidget,
     routes: [
       {
         path: '/tasks',
