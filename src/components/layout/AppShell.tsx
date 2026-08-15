@@ -10,6 +10,7 @@ export interface AppShellProps {
   title: string
   subtitle?: string
   onQuickAction?: () => void
+  onOpenCommandPalette?: () => void
 }
 
 export function AppShell({
@@ -18,7 +19,8 @@ export function AppShell({
   onRouteChange,
   title,
   subtitle,
-  onQuickAction
+  onQuickAction,
+  onOpenCommandPalette
 }: AppShellProps) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-background">
@@ -31,6 +33,7 @@ export function AppShell({
           title={title}
           subtitle={subtitle}
           onQuickAction={onQuickAction}
+          onOpenCommandPalette={onOpenCommandPalette}
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 pb-24 md:pb-6">
           <div className="mx-auto max-w-7xl">

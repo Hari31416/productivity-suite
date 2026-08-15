@@ -1,4 +1,4 @@
-import { Sun, Moon, Laptop, Plus, Menu } from 'lucide-react'
+import { Sun, Moon, Laptop, Plus, Menu, Search } from 'lucide-react'
 import { useTheme } from '@/core/theme/useTheme'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,6 +12,7 @@ export interface HeaderProps {
   title: string
   subtitle?: string
   onQuickAction?: () => void
+  onOpenCommandPalette?: () => void
   onToggleSidebar?: () => void
 }
 
@@ -19,6 +20,7 @@ export function Header({
   title,
   subtitle,
   onQuickAction,
+  onOpenCommandPalette,
   onToggleSidebar
 }: HeaderProps) {
   const { theme, setTheme } = useTheme()
@@ -50,6 +52,26 @@ export function Header({
       </div>
 
       <div className="flex items-center gap-2">
+        {/* Command Palette Trigger */}
+        {onOpenCommandPalette && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onOpenCommandPalette}
+            className="h-8 gap-2 px-2.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:w-48 justify-between"
+            aria-label="Search and command palette"
+          >
+            <div className="flex items-center gap-1.5">
+              <Search className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Search / Commands</span>
+              <span className="sm:hidden">Search</span>
+            </div>
+            <kbd className="pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-0.5 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
+          </Button>
+        )}
+
         {onQuickAction && (
           <Button
             size="sm"

@@ -16,8 +16,11 @@ class ModuleRegistry {
   }
 
   getByRoute(route: string): AppModuleManifest | undefined {
+    const normalizedRoute = !route || route === '' ? '/' : route
     return Array.from(this.modules.values()).find(
-      (manifest) => manifest.route === route || route.startsWith(`${manifest.route}/`)
+      (manifest) =>
+        manifest.route === normalizedRoute ||
+        (manifest.route !== '/' && normalizedRoute.startsWith(`${manifest.route}/`))
     )
   }
 

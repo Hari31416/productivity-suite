@@ -84,6 +84,19 @@ describe('ModuleRegistry', () => {
     expect(moduleRegistry.getByRoute('/notes')).toEqual(manifest)
     expect(moduleRegistry.getByRoute('/notes/detail/123')).toEqual(manifest)
     expect(moduleRegistry.getByRoute('/unknown')).toBeUndefined()
+
+    const dashboardManifest: AppModuleManifest = {
+      id: 'dashboard',
+      title: 'Dashboard',
+      description: 'Home',
+      iconName: 'LayoutGrid',
+      route: '/',
+      navOrder: 0,
+      routes: []
+    }
+    moduleRegistry.register(dashboardManifest)
+    expect(moduleRegistry.getByRoute('/')).toEqual(dashboardManifest)
+    expect(moduleRegistry.getByRoute('')).toEqual(dashboardManifest)
   })
 
   it('unregisters a module correctly', () => {

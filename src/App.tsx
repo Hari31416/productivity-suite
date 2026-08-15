@@ -2,6 +2,10 @@ import { useState, useEffect } from 'react'
 import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
 import { AppShell } from '@/components/layout/AppShell'
+import { CommandPalette } from '@/components/command/CommandPalette'
+import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
+import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
+import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
@@ -9,8 +13,13 @@ export function App() {
       const hashRoute = window.location.hash.replace('#', '')
       if (hashRoute) return hashRoute
     }
-    return '/habits'
+    return '/'
   })
+
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [quickTaskModalOpen, setQuickTaskModalOpen] = useState(false)
+  const [quickHabitModalOpen, setQuickHabitModalOpen] = useState(false)
+  const [quickNoteModalOpen, setQuickNoteModalOpen] = useState(false)
 
   useEffect(() => {
     initializeModules()
@@ -21,6 +30,8 @@ export function App() {
       const hashRoute = window.location.hash.replace('#', '')
       if (hashRoute) {
         setCurrentRoute(hashRoute)
+      } else {
+        setCurrentRoute('/')
       }
     }
 
@@ -34,23 +45,50 @@ export function App() {
   }
 
   const activeModule =
-    moduleRegistry.getByRoute(currentRoute) || moduleRegistry.get('habits')
+    moduleRegistry.getByRoute(currentRoute) ||
+    moduleRegistry.get('dashboard') ||
+    moduleRegistry.get('habits')
 
   const ActiveComponent =
     activeModule?.routes[0]?.component || (() => <div>View not found</div>)
 
   return (
-    <AppShell
-      activeRoute={currentRoute}
-      onRouteChange={handleRouteChange}
-      title={activeModule ? activeModule.title : 'Productivity'}
-      subtitle={activeModule ? activeModule.description : undefined}
-      onQuickAction={() => {
-        // Quick action handler for Phase 1
-      }}
-    >
-      <ActiveComponent />
-    </AppShell>
+    <>
+      <AppShell
+        activeRoute={currentRoute}
+        onRouteChange={handleRouteChange}
+        title={activeModule ? activeModule.title : 'Productivity'}
+        subtitle={activeModule ? activeModule.description : undefined}
+        onQuickAction={() => setCommandPaletteOpen(true)}
+        onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+      >
+        <ActiveComponent />
+      </AppShell>
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onOpenChange={setCommandPaletteOpen}
+        onRouteChange={handleRouteChange}
+        onOpenTaskModal={() => setQuickTaskModalOpen(true)}
+        onOpenHabitModal={() => setQuickHabitModalOpen(true)}
+        onOpenNoteModal={() => setQuickNoteModalOpen(true)}
+      />
+
+      {/* Global Action Modals */}
+      <HabitFormModal
+        open={quickHabitModalOpen}
+        onOpenChange={setQuickHabitModalOpen}
+      />
+      <TaskFormModal
+        open={quickTaskModalOpen}
+        onOpenChange={setQuickTaskModalOpen}
+      />
+      <NoteFormModal
+        open={quickNoteModalOpen}
+        onOpenChange={setQuickNoteModalOpen}
+      />
+    </>
   )
 }
 

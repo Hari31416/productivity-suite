@@ -1,4 +1,5 @@
 import { moduleRegistry } from '@/core/modules/registry'
+import { DashboardView } from './dashboard/DashboardView'
 import { HabitsView } from './habits/HabitsView'
 import { HabitDashboardWidget } from './habits/components/HabitDashboardWidget'
 import { TasksView } from './tasks/TasksView'
@@ -9,6 +10,22 @@ import { SettingsView } from './settings/SettingsView'
 
 export function initializeModules(): void {
   moduleRegistry.clear()
+
+  moduleRegistry.register({
+    id: 'dashboard',
+    title: 'Dashboard',
+    description: 'Unified home overview and daily score',
+    iconName: 'LayoutGrid',
+    route: '/',
+    navOrder: 0,
+    routes: [
+      {
+        path: '/',
+        component: DashboardView,
+        exact: true
+      }
+    ]
+  })
 
   moduleRegistry.register({
     id: 'habits',
