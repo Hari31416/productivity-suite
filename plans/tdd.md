@@ -225,12 +225,13 @@ export class ProductivityDatabase extends Dexie {
 export const db = new ProductivityDatabase()
 ```
 
-### Data Backup and Migration Engine
+### Data Backup and Restore
 
-- Encrypted Compressed Archive:
-  - Serialization: Serializes table datasets into individual JSON files inside a compressed container using `fflate`.
-  - Cryptography: Encrypts the archive using Web Crypto API (`AES-GCM` 256-bit key derived via `PBKDF2` with SHA-256 and a random salt).
-  - Decryption and Verification: Validates password hash on import, decrypts payload, verifies Zod schema structure, and offers atomic restore (clean wipe) or selective merge.
+- Versioned JSON backup (`src/core/backup/backupService.ts`):
+  - Serialization: Dump all Dexie tables plus metadata (`backupFormatVersion`, `exportTimestamp`, `appVersion`, table counts).
+  - Validation: Parse with Zod on import. Reject unknown or incompatible `backupFormatVersion`.
+  - Restore: Offer replace-all (atomic wipe then write) or merge (upsert by id). Never write if validation fails.
+  - Encrypted or password-protected archives are out of scope for now.
 
 ## Modular Feature Registry Architecture
 
@@ -284,6 +285,6 @@ Modules register their routes, dashboard widgets, and database table schemas via
 
 ### Testing Strategy
 
-- Unit Tests: Vitest for state stores, streak calculation utilities, date parsing, and backup validation.
+- Unit Tests: Vitest for state stores, streak calculation utilities, date parsing, and JSON backup validation.
 - Component Tests: React Testing Library for interactive component behavior.
 - Storage Tests: Fake IndexedDB test harness for database operations.

@@ -2,7 +2,7 @@
 
 ## Objectives
 
-Establish the base Single Page Application scaffolding, configure modern UI tooling, create the Dexie.js IndexedDB storage layer with the Modular Feature Registry pattern, set up TanStack Query with Zustand, construct the responsive app shell, and implement Web Crypto AES-GCM encryption and compression utilities.
+Establish the base Single Page Application scaffolding, configure modern UI tooling, create the Dexie.js IndexedDB storage layer with the Modular Feature Registry pattern, set up TanStack Query with Zustand, and construct the responsive app shell.
 
 ## Key Deliverables
 
@@ -12,7 +12,6 @@ Establish the base Single Page Application scaffolding, configure modern UI tool
 - Modular Feature Registry system for dynamic module registration and routing.
 - Responsive layout shell featuring collapsible desktop sidebar and mobile bottom navigation.
 - Global theme manager (light, dark, system) with Tailwind CSS variables.
-- Encryption and compression core utility (AES-GCM 256-bit with PBKDF2 and fflate).
 
 ## Technical Implementation Details
 
@@ -20,8 +19,7 @@ Establish the base Single Page Application scaffolding, configure modern UI tool
 
 Initialize the application with pnpm and install core packages:
 - UI & Icons: `clsx`, `tailwind-merge`, `lucide-react`, `@radix-ui/react-slot`, `@radix-ui/react-dialog`, `@radix-ui/react-dropdown-menu`, `@radix-ui/react-tabs`, `@radix-ui/react-tooltip`.
-- State & Data: `zustand`, `@tanstack/react-query`, `dexie`, `dexie-react-hooks`, `zod`.
-- Cryptography & Compression: `fflate`.
+- State & Data: `zustand`, `@tanstack/react-query`, `dexie`, `zod`.
 - Utilities: `date-fns`.
 
 ### Modular Feature Registry
@@ -86,13 +84,6 @@ export class AppDatabase extends Dexie {
 export const db = new AppDatabase()
 ```
 
-### Encryption and Compression Core
-
-Implement `src/core/crypto/backupCrypto.ts` using browser native Web Crypto API:
-- Key derivation: `crypto.subtle.importKey` with `PBKDF2` (100,000 iterations of SHA-256) and a 16-byte random salt.
-- Encryption: `crypto.subtle.encrypt` with `AES-GCM` (256-bit) and a 12-byte initialization vector (IV).
-- Archive creation: `fflate.zipSync` / `fflate.unzipSync` packaging database JSON files before encryption.
-
 ### Layout Shell and Navigation
 
 - `src/components/layout/AppShell.tsx`: Responsive container handling desktop vs mobile views.
@@ -106,4 +97,3 @@ Implement `src/core/crypto/backupCrypto.ts` using browser native Web Crypto API:
 - Desktop viewport displays sidebar navigation; mobile viewport collapses sidebar and presents bottom navigation.
 - IndexedDB database initializes in browser Application storage.
 - Theme toggle switches between light and dark modes instantly without flash.
-- Encryption and decryption round-trip unit test passes with valid and invalid passwords.

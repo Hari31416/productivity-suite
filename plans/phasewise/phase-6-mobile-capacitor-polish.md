@@ -10,7 +10,7 @@ Optimize the suite for mobile viewports and Capacitor Android deployment, integr
 - Mobile responsive layout tuning (safe area insets, 44px touch targets, mobile gesture support).
 - Local notification service abstraction (Web Notification API with Capacitor plugin readiness).
 - Zero-external-dependency asset bundling (all fonts, SVGs, and scripts local).
-- Automated test suite covering crypto routines, streak calculations, interval engines, and Dexie repositories using Vitest.
+- Automated test suite covering streak calculations, interval engines, JSON backup validation, and Dexie repositories using Vitest.
 
 ## Technical Implementation Details
 
@@ -58,10 +58,10 @@ export default config
 
 ### Automated Testing Suite with Vitest
 
-1. **Crypto & Compression Tests** (`src/core/crypto/__tests__/backupCrypto.test.ts`):
-   - Validates AES-GCM 256-bit encryption and decryption round-trip.
-   - Tests authentication failure and data rejection on incorrect password.
-   - Tests zip compression and decompression round-trip using `fflate`.
+1. **Backup Tests** (`src/core/backup/__tests__/backupService.test.ts`):
+   - Validates JSON export shape and Zod rejection of invalid payloads.
+   - Confirms failed import does not write to IndexedDB.
+   - Tests replace-all vs merge restore behavior.
 
 2. **Habit Engine Tests** (`src/modules/habits/utils/__tests__/streakCalculator.test.ts`):
    - Current streak and longest streak calculations across dates and frequency types.

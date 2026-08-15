@@ -11,7 +11,7 @@ This roadmap defines the sequential, modular implementation plan for the Local P
   - Dexie.js IndexedDB schema and repository abstraction.
   - Modular Feature Registry architecture.
   - Responsive shell navigation (Desktop sidebar and Mobile bottom navigation).
-  - Theme provider and Web Crypto AES-GCM plus fflate compression foundation.
+  - Theme provider (light, dark, system).
 - Phase 2: [phase-2-habit-tracker.md](phase-2-habit-tracker.md)
   - Habit tracking domain models and schema.
   - Daily check-ins and sub-day interval tracking (e.g., every 3 hours, multi-time daily logging).
@@ -29,8 +29,7 @@ This roadmap defines the sequential, modular implementation plan for the Local P
   - Single note and bulk Markdown export.
 - Phase 5: [phase-5-dashboard-and-security.md](phase-5-dashboard-and-security.md)
   - Unified Dashboard home view aggregating daily habits, urgent tasks, and recent notes.
-  - Master-password-protected AES-GCM encrypted and compressed JSON backup engine.
-  - Import, decrypt, and conflict-resolution restore workflow.
+  - Versioned JSON export/import with overwrite or merge restore.
   - Storage diagnostics and settings management.
 - Phase 6: [phase-6-mobile-capacitor-polish.md](phase-6-mobile-capacitor-polish.md)
   - Capacitor Android configuration and mobile web optimizations.
@@ -41,7 +40,7 @@ This roadmap defines the sequential, modular implementation plan for the Local P
 ## Dependency and Execution Order
 
 ```text
-Phase 1 (Foundation, DB, Module Registry, Responsive Shell, Crypto)
+Phase 1 (Foundation, DB, Module Registry, Responsive Shell)
    |
    +---> Phase 2 (Habit Tracker Module)
    |
@@ -49,7 +48,7 @@ Phase 1 (Foundation, DB, Module Registry, Responsive Shell, Crypto)
    |
    +---> Phase 4 (Notepad Module)
    |
-   +---> Phase 5 (Unified Dashboard, Password Backup/Restore Engine)
+   +---> Phase 5 (Unified Dashboard, JSON Backup/Restore)
    |
    +---> Phase 6 (Mobile & Capacitor Polish, Testing & Verification)
 ```
