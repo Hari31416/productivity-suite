@@ -69,7 +69,12 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const [projectId, setProjectId] = useState<string | undefined>(initialNote?.projectId)
   const [pinned, setPinned] = useState(initialNote?.pinned || false)
   const [color, setColor] = useState(initialNote?.color || '')
-  const [viewMode, setViewMode] = useState<ViewMode>('split')
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return 'edit'
+    }
+    return 'split'
+  })
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
   const [isZenMode, setIsZenMode] = useState(false)
 
@@ -278,17 +283,18 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             <button
               type="button"
               onClick={() => setViewMode('edit')}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`rounded px-2.5 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
                 viewMode === 'edit' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
               }`}
               title="Edit Only"
             >
-              <Edit3 className="h-3.5 w-3.5" />
+              <span className="sm:hidden text-xs">Edit</span>
+              <Edit3 className="hidden sm:inline h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setViewMode('split')}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`hidden md:inline-flex rounded px-2.5 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
                 viewMode === 'split' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
               }`}
               title="Split View"
@@ -298,12 +304,13 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             <button
               type="button"
               onClick={() => setViewMode('preview')}
-              className={`rounded px-2.5 py-1 text-xs font-medium transition-colors ${
+              className={`rounded px-2.5 py-1.5 text-xs font-medium transition-colors min-h-[32px] ${
                 viewMode === 'preview' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
               }`}
               title="Preview Only"
             >
-              <Eye className="h-3.5 w-3.5" />
+              <span className="sm:hidden text-xs">Preview</span>
+              <Eye className="hidden sm:inline h-3.5 w-3.5" />
             </button>
           </div>
 
@@ -464,31 +471,31 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('# ', '', 'Heading 1')}
             title="Heading 1"
           >
-            <Heading1 className="h-3.5 w-3.5" />
+            <Heading1 className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('## ', '', 'Heading 2')}
             title="Heading 2"
           >
-            <Heading2 className="h-3.5 w-3.5" />
+            <Heading2 className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('### ', '', 'Heading 3')}
             title="Heading 3"
           >
-            <Heading3 className="h-3.5 w-3.5" />
+            <Heading3 className="h-4 w-4" />
           </Button>
 
           <div className="mx-1 h-4 w-px bg-border shrink-0" />
@@ -497,31 +504,31 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('**', '**', 'bold text')}
             title="Bold"
           >
-            <Bold className="h-3.5 w-3.5" />
+            <Bold className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('*', '*', 'italic text')}
             title="Italic"
           >
-            <Italic className="h-3.5 w-3.5" />
+            <Italic className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('`', '`', 'code')}
             title="Inline Code"
           >
-            <Code className="h-3.5 w-3.5" />
+            <Code className="h-4 w-4" />
           </Button>
 
           <div className="mx-1 h-4 w-px bg-border shrink-0" />
@@ -530,37 +537,37 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('- ', '', 'List item')}
             title="Bullet List"
           >
-            <List className="h-3.5 w-3.5" />
+            <List className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('- [ ] ', '', 'Task item')}
             title="Task List"
           >
-            <CheckSquare className="h-3.5 w-3.5" />
+            <CheckSquare className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() => insertFormatting('> ', '', 'Quote text')}
             title="Blockquote"
           >
-            <Quote className="h-3.5 w-3.5" />
+            <Quote className="h-4 w-4" />
           </Button>
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() =>
               insertFormatting(
                 '| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |\n'
@@ -568,7 +575,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             }
             title="Insert Table"
           >
-            <TableIcon className="h-3.5 w-3.5" />
+            <TableIcon className="h-4 w-4" />
           </Button>
         </div>
       )}

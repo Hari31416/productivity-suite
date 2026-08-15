@@ -39,6 +39,46 @@ export function App() {
     return () => window.removeEventListener('hashchange', handleHashChange)
   }, [])
 
+  // Android / Capacitor Back Button & Escape dismissal for modals
+  useEffect(() => {
+    const handleBack = (e: Event) => {
+      if (commandPaletteOpen) {
+        e.preventDefault()
+        setCommandPaletteOpen(false)
+        return
+      }
+      if (quickTaskModalOpen) {
+        e.preventDefault()
+        setQuickTaskModalOpen(false)
+        return
+      }
+      if (quickHabitModalOpen) {
+        e.preventDefault()
+        setQuickHabitModalOpen(false)
+        return
+      }
+      if (quickNoteModalOpen) {
+        e.preventDefault()
+        setQuickNoteModalOpen(false)
+        return
+      }
+    }
+
+    // Android webview / Capacitor backbutton event
+    document.addEventListener('backbutton', handleBack)
+    window.addEventListener('ionBackButton', handleBack)
+
+    return () => {
+      document.removeEventListener('backbutton', handleBack)
+      window.removeEventListener('ionBackButton', handleBack)
+    }
+  }, [
+    commandPaletteOpen,
+    quickTaskModalOpen,
+    quickHabitModalOpen,
+    quickNoteModalOpen
+  ])
+
   const handleRouteChange = (route: string) => {
     setCurrentRoute(route)
     window.location.hash = route

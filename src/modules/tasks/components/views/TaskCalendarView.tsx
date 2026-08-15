@@ -199,7 +199,7 @@ export function TaskCalendarView({
           <div
             className={cn(
               'grid grid-cols-7 divide-x divide-y border-b text-xs',
-              calendarMode === 'month' ? 'auto-rows-[90px] sm:auto-rows-[105px]' : 'auto-rows-[180px]'
+              calendarMode === 'month' ? 'auto-rows-[64px] sm:auto-rows-[105px]' : 'auto-rows-[120px] sm:auto-rows-[180px]'
             )}
           >
             {calendarDays.map((day) => {
@@ -214,7 +214,7 @@ export function TaskCalendarView({
                   key={dayStr}
                   onClick={() => setSelectedDate(day)}
                   className={cn(
-                    'p-1.5 flex flex-col justify-between transition-colors cursor-pointer hover:bg-muted/30 relative',
+                    'p-1 sm:p-1.5 flex flex-col justify-between transition-colors cursor-pointer hover:bg-muted/30 relative select-none',
                     !isCurrentMonth && calendarMode === 'month' && 'bg-muted/15 text-muted-foreground/60',
                     isSelected && 'bg-primary/5 ring-2 ring-primary/60 ring-inset z-10'
                   )}
@@ -222,8 +222,8 @@ export function TaskCalendarView({
                   <div className="flex items-center justify-between">
                     <span
                       className={cn(
-                        'h-6 w-6 rounded-full flex items-center justify-center font-medium text-xs',
-                        dayIsToday && 'bg-primary text-primary-foreground font-bold shadow-sm',
+                        'h-5 w-5 sm:h-6 sm:w-6 rounded-full flex items-center justify-center font-medium text-[11px] sm:text-xs',
+                        dayIsToday && 'bg-primary text-primary-foreground font-bold shadow-xs',
                         !dayIsToday && isSelected && 'font-bold text-foreground',
                         !dayIsToday && !isSelected && 'text-muted-foreground'
                       )}
@@ -231,14 +231,33 @@ export function TaskCalendarView({
                       {format(day, 'd')}
                     </span>
                     {dayTasks.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground font-medium px-1">
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium px-0.5 sm:px-1">
                         {dayTasks.length}
                       </span>
                     )}
                   </div>
 
-                  {/* Task list pills */}
-                  <div className="space-y-1 overflow-hidden my-auto max-h-[56px] sm:max-h-[68px]">
+                  {/* Mobile Compact Dots (shown on <sm) */}
+                  <div className="flex sm:hidden items-center justify-center gap-1 my-auto flex-wrap max-h-[24px] overflow-hidden">
+                    {dayTasks.slice(0, 4).map((task) => {
+                      const priority = PRIORITY_CONFIG[task.priority]
+                      return (
+                        <span
+                          key={task.id}
+                          className={cn(
+                            'h-1.5 w-1.5 rounded-full shrink-0',
+                            task.status === 'done' ? 'bg-muted-foreground/40' : priority?.dotClass || 'bg-primary'
+                          )}
+                        />
+                      )
+                    })}
+                    {dayTasks.length > 4 && (
+                      <span className="text-[8px] text-muted-foreground font-semibold">+</span>
+                    )}
+                  </div>
+
+                  {/* Desktop Task list pills (hidden on mobile, shown on sm+) */}
+                  <div className="hidden sm:block space-y-1 overflow-hidden my-auto max-h-[56px] sm:max-h-[68px]">
                     {dayTasks.slice(0, 3).map((task) => {
                       const priority = PRIORITY_CONFIG[task.priority]
                       return (

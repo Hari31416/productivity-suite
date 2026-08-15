@@ -36,7 +36,27 @@ export function buildNoteMarkdownContent(note: Note): string {
   return lines.join('\n')
 }
 
-export function triggerBrowserDownload(blob: Blob, filename: string): void {
+export async function triggerBrowserDownload(blob: Blob, filename: string): Promise<void> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') {
+    return
+  }
+
+  // Support Web Share API on mobile devices and Capacitor WebViews
+  if (typeof navigator !== 'undefined' && navigator.canShare && typeof File !== 'undefined') {
+    try {
+      const file = new File([blob], filename, { type: blob.type })
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: filename
+        })
+        return
+      }
+    } catch {
+      // Fallback to standard link download if share was cancelled or unavailable
+    }
+  }
+
   const url = URL.createObjectURL(blob)
   const anchor = document.createElement('a')
   anchor.href = url
@@ -47,11 +67,11 @@ export function triggerBrowserDownload(blob: Blob, filename: string): void {
   URL.revokeObjectURL(url)
 }
 
-export function exportNoteAsMarkdown(note: Note): void {
+export async function exportNoteAsMarkdown(note: Note): Promise<void> {
   const markdown = buildNoteMarkdownContent(note)
   const filename = `${sanitizeFilename(note.title)}.md`
   const blob = new Blob([markdown], { type: 'text/markdown;charset=utf-8' })
-  triggerBrowserDownload(blob, filename)
+  await triggerBrowserDownload(blob, filename)
 }
 
 export function generateZipArchive(notes: Note[]): Promise<Uint8Array> {
@@ -89,5 +109,5 @@ export async function exportAllNotesAsZip(
 ): Promise<void> {
   const zipData = await generateZipArchive(notes)
   const blob = new Blob([zipData.buffer as ArrayBuffer], { type: 'application/zip' })
-  triggerBrowserDownload(blob, archiveName)
+  await triggerBrowserDownload(blob, archiveName)
 }

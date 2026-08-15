@@ -66,6 +66,7 @@ export function TaskKanbanView({
 }: TaskKanbanViewProps) {
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
+  const [mobileSelectedColumn, setMobileSelectedColumn] = useState<TaskStatus>('todo')
 
   const updateStatusMutation = useUpdateTaskStatus()
 
@@ -128,77 +129,116 @@ export function TaskKanbanView({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
-      {COLUMNS.map((column) => {
-        const columnTasks = tasksByColumn[column.id] || []
-        const Icon = column.icon
-        const isDragTarget = dragOverColumn === column.id
+    <div className="space-y-4">
+      {/* Mobile Column Tab Switcher */}
+      <div className="md:hidden flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+        {COLUMNS.map((col) => {
+          const count = (tasksByColumn[col.id] || []).length
+          const Icon = col.icon
+          const isSelected = mobileSelectedColumn === col.id
+          return (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => setMobileSelectedColumn(col.id)}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all border shrink-0 min-h-[40px]',
+                isSelected
+                  ? 'bg-primary text-primary-foreground border-primary shadow-xs'
+                  : 'bg-card text-muted-foreground border-border hover:text-foreground'
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              <span>{col.title}</span>
+              <span
+                className={cn(
+                  'ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] font-semibold',
+                  isSelected ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
 
-        return (
-          <div
-            key={column.id}
-            onDragOver={(e) => handleDragOver(e, column.id)}
-            onDragLeave={(e) => handleDragLeave(e, column.id)}
-            onDrop={(e) => handleDrop(e, column.id)}
-            className={cn(
-              'flex flex-col rounded-xl border bg-muted/20 p-3 min-h-[480px] transition-all',
-              column.borderColor,
-              isDragTarget && 'ring-2 ring-primary/80 bg-primary/5'
-            )}
-          >
-            {/* Column Header */}
-            <div className="flex items-center justify-between pb-3 mb-2 border-b">
-              <div className="flex items-center gap-2">
-                <Icon className={cn('h-4 w-4', column.color)} />
-                <span className="font-semibold text-sm text-foreground">
-                  {column.title}
-                </span>
-                <Badge variant="secondary" className="text-[11px] h-5 px-1.5 font-normal">
-                  {columnTasks.length}
-                </Badge>
+      {/* Columns: Tabbed view on mobile, Grid on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 items-start">
+        {COLUMNS.map((column) => {
+          const columnTasks = tasksByColumn[column.id] || []
+          const Icon = column.icon
+          const isDragTarget = dragOverColumn === column.id
+          const isHiddenOnMobile = mobileSelectedColumn !== column.id
+
+          return (
+            <div
+              key={column.id}
+              onDragOver={(e) => handleDragOver(e, column.id)}
+              onDragLeave={(e) => handleDragLeave(e, column.id)}
+              onDrop={(e) => handleDrop(e, column.id)}
+              className={cn(
+                'flex flex-col rounded-xl border bg-muted/20 p-3 min-h-[400px] md:min-h-[480px] transition-all',
+                column.borderColor,
+                isDragTarget && 'ring-2 ring-primary/80 bg-primary/5',
+                isHiddenOnMobile && 'hidden md:flex'
+              )}
+            >
+              {/* Column Header */}
+              <div className="flex items-center justify-between pb-3 mb-2 border-b">
+                <div className="flex items-center gap-2">
+                  <Icon className={cn('h-4 w-4', column.color)} />
+                  <span className="font-semibold text-sm text-foreground">
+                    {column.title}
+                  </span>
+                  <Badge variant="secondary" className="text-[11px] h-5 px-1.5 font-normal">
+                    {columnTasks.length}
+                  </Badge>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onAddTask?.(column.id)}
+                  className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 hover:bg-background/80"
+                  aria-label={`Add task to ${column.title}`}
+                >
+                  <Plus className="h-4 w-4" />
+                </Button>
               </div>
 
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onAddTask?.(column.id)}
-                className="h-7 w-7 p-0 hover:bg-background/80"
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
+              {/* Task list */}
+              <div className="space-y-2.5 flex-1">
+                {columnTasks.length === 0 ? (
+                  <div className="h-28 flex flex-col items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                    <span>No tasks</span>
+                    <Button
+                      variant="link"
+                      size="sm"
+                      onClick={() => onAddTask?.(column.id)}
+                      className="text-xs h-auto p-0 mt-1 min-h-[36px]"
+                    >
+                      + Add task
+                    </Button>
+                  </div>
+                ) : (
+                  columnTasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      project={task.projectId ? projectMap.get(task.projectId) : undefined}
+                      onEdit={onEditTask}
+                      draggable
+                      onDragStart={handleDragStart}
+                      compact
+                    />
+                  ))
+                )}
+              </div>
             </div>
-
-            {/* Task list */}
-            <div className="space-y-2.5 flex-1">
-              {columnTasks.length === 0 ? (
-                <div className="h-28 flex flex-col items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
-                  <span>No tasks</span>
-                  <Button
-                    variant="link"
-                    size="sm"
-                    onClick={() => onAddTask?.(column.id)}
-                    className="text-xs h-auto p-0 mt-1"
-                  >
-                    + Add task
-                  </Button>
-                </div>
-              ) : (
-                columnTasks.map((task) => (
-                  <TaskCard
-                    key={task.id}
-                    task={task}
-                    project={task.projectId ? projectMap.get(task.projectId) : undefined}
-                    onEdit={onEditTask}
-                    draggable
-                    onDragStart={handleDragStart}
-                    compact
-                  />
-                ))
-              )}
-            </div>
-          </div>
-        )
-      })}
+          )
+        })}
+      </div>
     </div>
   )
 }
