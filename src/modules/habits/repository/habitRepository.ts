@@ -1,5 +1,5 @@
 import { db } from '@/core/db'
-import type { Habit, HabitLog } from '../types'
+import type { Habit, HabitLog, CreateHabitInput, UpdateHabitInput } from '../types'
 
 export const habitRepository = {
   async getAllHabits(includeArchived: boolean = false): Promise<Habit[]> {
@@ -14,12 +14,13 @@ export const habitRepository = {
   },
 
   async createHabit(
-    habitData: Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>
+    habitData: CreateHabitInput
   ): Promise<Habit> {
     const now = new Date().toISOString()
     const habit: Habit = {
       ...habitData,
       id: crypto.randomUUID(),
+      archived: habitData.archived ?? false,
       createdAt: now,
       updatedAt: now
     }
@@ -27,7 +28,7 @@ export const habitRepository = {
     return habit
   },
 
-  async updateHabit(id: string, updates: Partial<Habit>): Promise<Habit> {
+  async updateHabit(id: string, updates: UpdateHabitInput): Promise<Habit> {
     const existing = await db.habits.get(id)
     if (!existing) {
       throw new Error(`Habit with ID ${id} not found`)

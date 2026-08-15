@@ -1,6 +1,6 @@
 import { db } from '@/core/db'
 import { format } from 'date-fns'
-import type { Task, Subtask, TaskFilter, TaskStatus } from '../types'
+import type { Task, Subtask, TaskFilter, TaskStatus, CreateTaskInput, UpdateTaskInput } from '../types'
 
 export const taskRepository = {
   async getAllTasks(filter?: TaskFilter): Promise<Task[]> {
@@ -112,7 +112,7 @@ export const taskRepository = {
   },
 
   async createTask(
-    taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'subtaskIds'>,
+    taskData: CreateTaskInput,
     initialSubtasks?: Array<{ title: string; completed?: boolean }>
   ): Promise<Task> {
     const taskId = crypto.randomUUID()
@@ -141,6 +141,10 @@ export const taskRepository = {
       const task: Task = {
         ...taskData,
         id: taskId,
+        status: taskData.status || 'todo',
+        priority: taskData.priority || 'medium',
+        archived: taskData.archived ?? false,
+        tags: taskData.tags || [],
         subtaskIds,
         completedAt: taskData.status === 'done' ? now : undefined,
         createdAt: now,
@@ -157,7 +161,7 @@ export const taskRepository = {
     return created
   },
 
-  async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
+  async updateTask(id: string, updates: UpdateTaskInput): Promise<Task> {
     const existing = await db.tasks.get(id)
     if (!existing) {
       throw new Error(`Task with ID ${id} not found`)

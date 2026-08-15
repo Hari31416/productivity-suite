@@ -135,9 +135,22 @@ export function calculateStreak(
   let runningStreak = 0
 
   const habitCreatedDate = habit.createdAt ? parseISO(habit.createdAt) : subDays(targetDateObj, 90)
-  const startDate = isBefore(habitCreatedDate, subDays(targetDateObj, 365))
+  
+  let earliestLogDate = habitCreatedDate
+  for (const dateKey of logsByDate.keys()) {
+    try {
+      const logD = parseISO(dateKey)
+      if (isBefore(logD, earliestLogDate)) {
+        earliestLogDate = logD
+      }
+    } catch {
+      // Ignore parse error
+    }
+  }
+
+  const startDate = isBefore(earliestLogDate, subDays(targetDateObj, 365))
     ? subDays(targetDateObj, 365)
-    : habitCreatedDate
+    : earliestLogDate
 
   const normalizedStartDate = isAfter(startDate, targetDateObj)
     ? targetDateObj

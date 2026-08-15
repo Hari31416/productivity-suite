@@ -60,3 +60,19 @@ export interface ProjectWithCount extends Project {
 }
 
 export type TaskViewMode = 'list' | 'calendar' | 'kanban'
+
+export type CreateProjectInput = Omit<Project, 'id' | 'createdAt' | 'updatedAt' | 'archived'> & {
+  archived?: boolean
+}
+
+export type UpdateProjectInput = Partial<Omit<Project, 'id' | 'createdAt' | 'updatedAt'>>
+
+export type CreateTaskInput = Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'subtaskIds' | 'status' | 'priority' | 'archived' | 'tags'> & {
+  status?: TaskStatus
+  priority?: PriorityLevel
+  archived?: boolean
+  tags?: string[]
+}
+
+export type UpdateTaskInput = Partial<Omit<Task, 'id' | 'createdAt' | 'updatedAt'>>
+

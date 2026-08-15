@@ -53,3 +53,10 @@ export interface HabitCategory {
   color: string
   icon?: string
 }
+
+export type CreateHabitInput = Omit<Habit, 'id' | 'createdAt' | 'updatedAt' | 'archived'> & {
+  archived?: boolean
+}
+
+export type UpdateHabitInput = Partial<Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>>
+

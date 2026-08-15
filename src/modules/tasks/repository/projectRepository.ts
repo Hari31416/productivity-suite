@@ -1,5 +1,5 @@
 import { db } from '@/core/db'
-import type { Project, ProjectWithCount } from '../types'
+import type { Project, ProjectWithCount, CreateProjectInput, UpdateProjectInput } from '../types'
 
 export const projectRepository = {
   async getAllProjects(includeArchived: boolean = false): Promise<Project[]> {
@@ -29,12 +29,13 @@ export const projectRepository = {
   },
 
   async createProject(
-    projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
+    projectData: CreateProjectInput
   ): Promise<Project> {
     const now = new Date().toISOString()
     const project: Project = {
       ...projectData,
       id: crypto.randomUUID(),
+      archived: projectData.archived ?? false,
       createdAt: now,
       updatedAt: now
     }
@@ -42,7 +43,7 @@ export const projectRepository = {
     return project
   },
 
-  async updateProject(id: string, updates: Partial<Project>): Promise<Project> {
+  async updateProject(id: string, updates: UpdateProjectInput): Promise<Project> {
     const existing = await db.projects.get(id)
     if (!existing) {
       throw new Error(`Project with ID ${id} not found`)
