@@ -75,6 +75,15 @@ describe('MarkdownRenderer component', () => {
     expect(html).toContain('const greeting = &quot;hello&quot;')
   })
 
+  it('handles partial headers and standalone special characters without crashing or looping', () => {
+    const markdown = '#\n##\n### \n[\n*\n_\n~\n|\n>\n`\n# Partial Header\n[incomplete link\n**unclosed bold'
+    const html = renderToStaticMarkup(<MarkdownRenderer content={markdown} />)
+
+    expect(html).toContain('<h1')
+    expect(html).toContain('Partial Header')
+    expect(html).toContain('[incomplete link')
+  })
+
   it('extracts table of contents headings and slugifies ids', async () => {
     const { extractHeadings, slugify } = await import('../markdownParser')
     expect(slugify('Hello World! (123)')).toBe('hello-world-123')

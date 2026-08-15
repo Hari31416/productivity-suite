@@ -29,8 +29,8 @@ export function extractHeadings(content: string): MarkdownHeading[] {
   const headings: MarkdownHeading[] = []
 
   for (const line of lines) {
-    const match = line.match(/^(#{1,6})\s+(.+)$/)
-    if (match) {
+    const match = line.match(/^(#{1,6})(?:\s+(.+))?$/)
+    if (match && match[2] && match[2].trim()) {
       const text = match[2].trim()
       headings.push({
         level: match[1].length,
@@ -44,11 +44,14 @@ export function extractHeadings(content: string): MarkdownHeading[] {
 }
 
 function parseInline(text: string): React.ReactNode[] {
+  if (!text) return []
   const elements: React.ReactNode[] = []
   let remaining = text
   let keyIndex = 0
 
   while (remaining.length > 0) {
+    const prevLength = remaining.length
+
     // Check for inline code: `code`
     const codeMatch = remaining.match(/^`([^`]+)`/)
     if (codeMatch) {
@@ -130,6 +133,12 @@ function parseInline(text: string): React.ReactNode[] {
     } else {
       elements.push(remaining.slice(0, nextSpecialIndex))
       remaining = remaining.slice(nextSpecialIndex)
+    }
+
+    // Failsafe: guarantee progress
+    if (remaining.length >= prevLength) {
+      elements.push(remaining[0])
+      remaining = remaining.slice(1)
     }
   }
 
@@ -216,12 +225,12 @@ export function MarkdownRenderer({
     }
 
     // 3. Headings (# to ######)
-    const headingMatch = line.match(/^(#{1,6})\s+(.+)$/)
+    const headingMatch = line.match(/^(#{1,6})(?:\s+(.*))?$/)
     if (headingMatch) {
       const level = headingMatch[1].length
-      const headingText = headingMatch[2]
-      const headingId = `heading-${slugify(headingText)}`
-      const parsedHeading = parseInline(headingText)
+      const headingText = (headingMatch[2] || '').trim()
+      const headingId = headingText ? `heading-${slugify(headingText)}` : `heading-${elementKey}`
+      const parsedHeading = headingText ? parseInline(headingText) : <span>&nbsp;</span>
 
       switch (level) {
         case 1:
@@ -359,10 +368,10 @@ export function MarkdownRenderer({
     }
 
     // 6. Checkbox lists: - [ ] or - [x]
-    if (/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/.test(line)) {
+    if (/^\s*[-*]\s+\[([ xX])\]\s*(.*)$/.test(line)) {
       const checkItems: { lineIndex: number; checked: boolean; text: string }[] = []
       while (i < lines.length) {
-        const checkMatch = lines[i].match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/)
+        const checkMatch = lines[i].match(/^\s*[-*]\s+\[([ xX])\]\s*(.*)$/)
         if (!checkMatch) break
         checkItems.push({
           lineIndex: i,
@@ -399,10 +408,10 @@ export function MarkdownRenderer({
     }
 
     // 7. Unordered lists: - item or * item
-    if (/^\s*[-*+]\s+(.*)$/.test(line)) {
+    if (/^\s*[-*+]\s*(.*)$/.test(line)) {
       const listItems: string[] = []
       while (i < lines.length) {
-        const itemMatch = lines[i].match(/^\s*[-*+]\s+(.*)$/)
+        const itemMatch = lines[i].match(/^\s*[-*+]\s*(.*)$/)
         // make sure it is not a checkbox item or horizontal divider
         if (!itemMatch || /^\s*[-*]\s+\[([ xX])\]/.test(lines[i])) break
         listItems.push(itemMatch[1])
@@ -448,7 +457,7 @@ export function MarkdownRenderer({
     while (
       i < lines.length &&
       lines[i].trim() &&
-      !lines[i].trim().startsWith('#') &&
+      !lines[i].match(/^(#{1,6})(?:\s+.*)?$/) &&
       !lines[i].trim().startsWith('```') &&
       !lines[i].trim().startsWith('>') &&
       !/^(---|___|\*\*\*)$/.test(lines[i].trim()) &&
@@ -456,6 +465,11 @@ export function MarkdownRenderer({
       !/^\s*\d+\.\s+/.test(lines[i]) &&
       !lines[i].trim().startsWith('|')
     ) {
+      paragraphLines.push(lines[i])
+      i++
+    }
+
+    if (paragraphLines.length === 0) {
       paragraphLines.push(lines[i])
       i++
     }
