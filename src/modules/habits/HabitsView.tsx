@@ -44,12 +44,13 @@ import { isHabitScheduledOnDate, calculateStreak } from './utils/streakCalculato
 import { HabitCard } from './components/HabitCard'
 import { HabitFormModal } from './components/HabitFormModal'
 import { HabitAnalytics } from './components/HabitAnalytics'
+import { HabitWeekOverview } from './components/HabitWeekOverview'
 
 export function HabitsView() {
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), 'yyyy-MM-dd')
   )
-  const [viewMode, setViewMode] = useState<'tracker' | 'analytics'>('tracker')
+  const [viewMode, setViewMode] = useState<'tracker' | 'week' | 'analytics'>('tracker')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showArchived, setShowArchived] = useState<boolean>(false)
@@ -216,6 +217,15 @@ export function HabitsView() {
             >
               <Activity className="h-3.5 w-3.5" />
               <span>Daily Tracker</span>
+            </Button>
+            <Button
+              variant={viewMode === 'week' ? 'default' : 'ghost'}
+              size="sm"
+              className="h-8 text-xs gap-1.5"
+              onClick={() => setViewMode('week')}
+            >
+              <CalendarIcon className="h-3.5 w-3.5" />
+              <span>Week Overview</span>
             </Button>
             <Button
               variant={viewMode === 'analytics' ? 'default' : 'ghost'}
@@ -480,6 +490,68 @@ export function HabitsView() {
               })}
             </div>
           )}
+        </div>
+      ) : viewMode === 'week' ? (
+        <div className="space-y-4">
+          {/* Category & Search filter for Week Overview */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <Button
+                variant={selectedCategory === 'all' ? 'default' : 'outline'}
+                size="sm"
+                className="h-8 text-xs shrink-0"
+                onClick={() => setSelectedCategory('all')}
+              >
+                All Categories
+              </Button>
+              {DEFAULT_HABIT_CATEGORIES.map((cat) => (
+                <Button
+                  key={cat.id}
+                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs shrink-0 gap-1.5"
+                  onClick={() => setSelectedCategory(cat.id)}
+                >
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: cat.color }}
+                  />
+                  <span>{cat.name}</span>
+                </Button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-48">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Filter habits..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="h-8 pl-8 text-xs"
+                />
+              </div>
+
+              <Button
+                variant={showArchived ? 'secondary' : 'outline'}
+                size="sm"
+                className="h-8 text-xs shrink-0 gap-1"
+                onClick={() => setShowArchived(!showArchived)}
+                title="Toggle archived habits"
+              >
+                <Archive className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Archived</span>
+              </Button>
+            </div>
+          </div>
+
+          <HabitWeekOverview
+            habits={filteredHabits}
+            logs={allRangeLogs}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            onEditHabit={handleEditHabit}
+          />
         </div>
       ) : (
         <HabitAnalytics habits={habits} logs={allRangeLogs} />
