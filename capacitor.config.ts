@@ -1,0 +1,37 @@
+export interface CapacitorConfig {
+  appId: string
+  appName: string
+  webDir: string
+  server?: {
+    androidScheme?: string
+    [key: string]: unknown
+  }
+  plugins?: {
+    LocalNotifications?: {
+      smallIcon?: string
+      iconColor?: string
+      sound?: string
+      [key: string]: unknown
+    }
+    [key: string]: unknown
+  }
+  [key: string]: unknown
+}
+
+const config: CapacitorConfig = {
+  appId: 'com.localproductivity.suite',
+  appName: 'Productivity Suite',
+  webDir: 'dist',
+  server: {
+    androidScheme: 'https'
+  },
+  plugins: {
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#488AFF',
+      sound: 'beep.wav'
+    }
+  }
+}
+
+export default config

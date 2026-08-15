@@ -188,7 +188,8 @@ export function TaskCard({
           <button
             type="button"
             onClick={handleToggleCompletion}
-            className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+            className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
+            aria-label={isDone ? 'Mark task incomplete' : 'Mark task complete'}
           >
             {isDone ? (
               <CheckSquare className="h-4 w-4 text-primary" />
@@ -301,7 +302,8 @@ export function TaskCard({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 opacity-80 hover:opacity-100 group-hover:opacity-100 shrink-0"
+              className="h-10 w-10 sm:h-7 sm:w-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-0 opacity-80 hover:opacity-100 group-hover:opacity-100 shrink-0"
+              aria-label="Task options"
             >
               <MoreVertical className="h-4 w-4" />
             </Button>

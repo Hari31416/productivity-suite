@@ -119,7 +119,7 @@ export function SubtaskList({
                 type="button"
                 disabled={readOnly}
                 onClick={() => handleToggle(index, subtask)}
-                className="flex items-center gap-2.5 flex-1 min-w-0 text-left cursor-pointer disabled:cursor-default"
+                className="flex items-center gap-2.5 flex-1 min-w-0 min-h-[40px] sm:min-h-[32px] text-left cursor-pointer disabled:cursor-default"
               >
                 {subtask.completed ? (
                   <CheckSquare className="h-4 w-4 text-primary shrink-0" />
@@ -142,7 +142,8 @@ export function SubtaskList({
                   variant="ghost"
                   size="sm"
                   onClick={() => handleDelete(index, subtask)}
-                  className="h-6 w-6 p-0 opacity-70 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  className="h-10 w-10 sm:h-6 sm:w-6 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-0 opacity-70 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  aria-label="Delete subtask"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>

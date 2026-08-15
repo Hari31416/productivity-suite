@@ -48,8 +48,17 @@ import {
   Trash2,
   RefreshCw,
   Lock,
-  Globe
+  Globe,
+  Bell,
+  BellRing,
+  BellOff
 } from 'lucide-react'
+import {
+  getNotificationPermission,
+  requestNotificationPermission,
+  sendLocalNotification,
+  type NotificationPermissionStatus
+} from '@/core/notifications/notificationService'
 
 const COMMON_TIMEZONES = [
   'UTC',
@@ -91,6 +100,12 @@ export function SettingsView() {
       'UTC'
     )
   })
+
+  // Notification states
+  const [notificationPermission, setNotificationPermission] =
+    useState<NotificationPermissionStatus>(() => getNotificationPermission())
+  const [notificationFeedback, setNotificationFeedback] = useState<string | null>(null)
+  const [isTestingNotification, setIsTestingNotification] = useState(false)
 
   // Backup & Restore states
   const [isExporting, setIsExporting] = useState(false)
@@ -178,6 +193,40 @@ export function SettingsView() {
   const handleTimezoneChange = (val: string) => {
     setTimezone(val)
     localStorage.setItem('productivity_timezone', val)
+  }
+
+  // Notification handlers
+  const handleRequestNotificationPermission = async () => {
+    const status = await requestNotificationPermission()
+    setNotificationPermission(status)
+    if (status === 'granted') {
+      setNotificationFeedback('Notification permissions granted successfully.')
+    } else if (status === 'denied') {
+      setNotificationFeedback('Notification permissions were blocked by your browser.')
+    } else if (status === 'unsupported') {
+      setNotificationFeedback('Notifications are not supported in this environment.')
+    }
+  }
+
+  const handleTestNotification = async () => {
+    setIsTestingNotification(true)
+    setNotificationFeedback(null)
+    try {
+      const sent = await sendLocalNotification({
+        title: 'Productivity Suite',
+        body: 'Local notification test successful. Habit & interval reminders are operational.'
+      })
+      if (sent) {
+        setNotificationFeedback('Test notification sent successfully.')
+      } else {
+        setNotificationFeedback(
+          'Failed to trigger notification. Please check browser permission settings.'
+        )
+      }
+      setNotificationPermission(getNotificationPermission())
+    } finally {
+      setIsTestingNotification(false)
+    }
   }
 
   // Backup Export
@@ -361,6 +410,91 @@ export function SettingsView() {
               ))}
             </SelectContent>
           </Select>
+        </CardContent>
+      </Card>
+
+      {/* Notifications & Reminders */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Bell className="h-5 w-5 text-primary" />
+            <CardTitle className="text-base font-semibold">Notifications & Reminders</CardTitle>
+          </div>
+          <CardDescription>
+            Configure local reminders for habit intervals, sub-day check-ins, and scheduled tasks.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-xl border bg-muted/10">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold">Permission Status</span>
+                {notificationPermission === 'granted' && (
+                  <Badge variant="secondary" className="gap-1 text-emerald-600 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Granted
+                  </Badge>
+                )}
+                {notificationPermission === 'denied' && (
+                  <Badge variant="destructive" className="gap-1">
+                    <BellOff className="h-3.5 w-3.5" />
+                    Denied
+                  </Badge>
+                )}
+                {notificationPermission === 'default' && (
+                  <Badge variant="outline" className="gap-1 text-amber-600 dark:text-amber-400">
+                    <AlertTriangle className="h-3.5 w-3.5" />
+                    Prompt Required
+                  </Badge>
+                )}
+                {notificationPermission === 'unsupported' && (
+                  <Badge variant="outline" className="gap-1 text-muted-foreground">
+                    <BellOff className="h-3.5 w-3.5" />
+                    Unsupported
+                  </Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {notificationPermission === 'granted'
+                  ? 'Local notifications and habit alarms are enabled.'
+                  : notificationPermission === 'denied'
+                    ? 'Notifications are blocked in your browser settings. Unblock to receive reminders.'
+                    : notificationPermission === 'default'
+                      ? 'Click Request Permission below to allow habit alerts and time-slot alarms.'
+                      : 'The current environment does not support HTML5 or native local notifications.'}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
+                <Button
+                  size="sm"
+                  onClick={handleRequestNotificationPermission}
+                  className="text-xs gap-1.5 min-h-[44px]"
+                >
+                  <BellRing className="h-4 w-4" />
+                  <span>Request Permission</span>
+                </Button>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTestNotification}
+                disabled={isTestingNotification}
+                className="text-xs gap-1.5 min-h-[44px]"
+              >
+                <Bell className="h-4 w-4" />
+                <span>{isTestingNotification ? 'Sending...' : 'Send Test Notification'}</span>
+              </Button>
+            </div>
+          </div>
+
+          {notificationFeedback && (
+            <div className="p-3 rounded-lg bg-muted/40 border text-xs text-foreground flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
+              <span>{notificationFeedback}</span>
+            </div>
+          )}
         </CardContent>
       </Card>
 

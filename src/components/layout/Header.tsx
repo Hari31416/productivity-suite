@@ -26,14 +26,14 @@ export function Header({
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
+    <header className="sticky top-0 z-40 flex min-h-[3.75rem] w-full items-center justify-between border-b bg-background/95 px-4 pt-[env(safe-area-inset-top,0px)] pb-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
       <div className="flex items-center gap-3">
         {onToggleSidebar && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="md:hidden"
+            className="md:hidden h-10 w-10 min-h-[44px] min-w-[44px]"
             aria-label="Toggle navigation menu"
           >
             <Menu className="h-5 w-5" />
@@ -58,7 +58,7 @@ export function Header({
             variant="outline"
             size="sm"
             onClick={onOpenCommandPalette}
-            className="h-8 gap-2 px-2.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:w-48 justify-between"
+            className="h-9 min-h-[36px] sm:h-8 gap-2 px-2.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:w-48 justify-between"
             aria-label="Search and command palette"
           >
             <div className="flex items-center gap-1.5">
@@ -76,7 +76,7 @@ export function Header({
           <Button
             size="sm"
             onClick={onQuickAction}
-            className="h-8 gap-1.5 px-3 text-xs font-medium"
+            className="h-9 min-h-[36px] sm:h-8 gap-1.5 px-3 text-xs font-medium"
           >
             <Plus className="h-3.5 w-3.5" />
             <span className="hidden xs:inline">Quick Add</span>
@@ -88,7 +88,7 @@ export function Header({
             <Button
               variant="outline"
               size="icon"
-              className="h-8 w-8"
+              className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-8 sm:w-8"
               aria-label="Select theme"
             >
               <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
