@@ -16,13 +16,24 @@ import {
   Calendar,
   AlertCircle,
   Clock,
-  Inbox
+  Inbox,
+  CheckSquare,
+  Trash2,
+  Folder,
+  X
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { Task, Project } from '../../types'
 import { TaskCard } from '../TaskCard'
+import { useUpdateTaskStatus, useDeleteTask, useUpdateTask } from '../../hooks/useTasks'
 
 interface TaskListViewProps {
   tasks: Task[]
@@ -50,6 +61,12 @@ export function TaskListView({
   isLoading
 }: TaskListViewProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({})
+  const [isSelectMode, setIsSelectMode] = useState(false)
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([])
+
+  const updateStatusMutation = useUpdateTaskStatus()
+  const deleteTaskMutation = useDeleteTask()
+  const updateTaskMutation = useUpdateTask()
 
   const projectMap = useMemo(() => {
     const map = new Map<string, Project>()
@@ -165,6 +182,52 @@ export function TaskListView({
     }))
   }
 
+  const handleToggleSelect = (taskId: string) => {
+    setSelectedTaskIds((prev) =>
+      prev.includes(taskId) ? prev.filter((id) => id !== taskId) : [...prev, taskId]
+    )
+  }
+
+  const handleSelectAll = () => {
+    setSelectedTaskIds(tasks.map((t) => t.id))
+  }
+
+  const handleDeselectAll = () => {
+    setSelectedTaskIds([])
+  }
+
+  const handleBatchMarkDone = () => {
+    for (const taskId of selectedTaskIds) {
+      updateStatusMutation.mutate({ id: taskId, status: 'done' })
+    }
+    setSelectedTaskIds([])
+    setIsSelectMode(false)
+  }
+
+  const handleBatchDelete = () => {
+    for (const taskId of selectedTaskIds) {
+      deleteTaskMutation.mutate(taskId)
+    }
+    setSelectedTaskIds([])
+    setIsSelectMode(false)
+  }
+
+  const handleBatchMoveProject = (projectId: string | undefined) => {
+    for (const taskId of selectedTaskIds) {
+      const task = tasks.find((t) => t.id === taskId)
+      if (task) {
+        updateTaskMutation.mutate({
+          id: taskId,
+          updates: {
+            projectId: projectId || undefined
+          }
+        })
+      }
+    }
+    setSelectedTaskIds([])
+    setIsSelectMode(false)
+  }
+
   if (isLoading) {
     return (
       <div className="py-16 text-center text-sm text-muted-foreground">
@@ -190,7 +253,59 @@ export function TaskListView({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-16">
+      {/* Top list mode controls */}
+      <div className="flex items-center justify-between gap-2 border-b pb-3">
+        <div className="text-xs text-muted-foreground">
+          {isSelectMode ? (
+            <span>
+              <strong>{selectedTaskIds.length}</strong> of {tasks.length} selected
+            </span>
+          ) : (
+            <span>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} total</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {isSelectMode ? (
+            <>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 text-xs px-2.5"
+                onClick={selectedTaskIds.length === tasks.length ? handleDeselectAll : handleSelectAll}
+              >
+                {selectedTaskIds.length === tasks.length ? 'Deselect All' : 'Select All'}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 text-xs px-2.5"
+                onClick={() => {
+                  setIsSelectMode(false)
+                  setSelectedTaskIds([])
+                }}
+              >
+                Done
+              </Button>
+            </>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs px-2.5 gap-1.5"
+              onClick={() => setIsSelectMode(true)}
+            >
+              <CheckSquare className="h-3.5 w-3.5" />
+              <span>Select</span>
+            </Button>
+          )}
+        </div>
+      </div>
+
       {groups.map((group) => {
         if (group.tasks.length === 0 && group.id !== 'today') {
           return null
@@ -222,7 +337,7 @@ export function TaskListView({
                 </Badge>
               </button>
 
-              {onAddTask && (
+              {onAddTask && !isSelectMode && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -249,6 +364,9 @@ export function TaskListView({
                       task={task}
                       project={task.projectId ? projectMap.get(task.projectId) : undefined}
                       onEdit={onEditTask}
+                      selectable={isSelectMode}
+                      isSelected={selectedTaskIds.includes(task.id)}
+                      onToggleSelect={handleToggleSelect}
                     />
                   ))
                 )}
@@ -257,6 +375,75 @@ export function TaskListView({
           </div>
         )
       })}
+
+      {/* Floating Batch Actions Bar */}
+      {isSelectMode && selectedTaskIds.length > 0 && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 p-2 px-4 rounded-xl border bg-background/95 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-4 duration-200 max-w-[95vw] flex-wrap justify-center">
+          <span className="text-xs font-semibold px-1 text-foreground shrink-0">
+            {selectedTaskIds.length} selected
+          </span>
+
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleBatchMarkDone}
+            className="h-9 sm:h-8 px-3 text-xs gap-1.5 font-medium bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            <span>Mark Done</span>
+          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 sm:h-8 px-3 text-xs gap-1.5 font-medium shrink-0"
+              >
+                <Folder className="h-3.5 w-3.5" />
+                <span>Move Project</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center" className="w-48">
+              <DropdownMenuItem onClick={() => handleBatchMoveProject(undefined)}>
+                <span>No Project</span>
+              </DropdownMenuItem>
+              {projects.map((p) => (
+                <DropdownMenuItem key={p.id} onClick={() => handleBatchMoveProject(p.id)}>
+                  <span
+                    className="h-2 w-2 rounded-full mr-2"
+                    style={{ backgroundColor: p.color || '#3b82f6' }}
+                  />
+                  <span className="truncate">{p.name}</span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <Button
+            type="button"
+            variant="destructive"
+            size="sm"
+            onClick={handleBatchDelete}
+            className="h-9 sm:h-8 px-3 text-xs gap-1.5 font-medium shrink-0"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            <span>Delete</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleDeselectAll}
+            className="h-9 sm:h-8 w-8 p-0 text-muted-foreground hover:text-foreground shrink-0"
+            title="Deselect all"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

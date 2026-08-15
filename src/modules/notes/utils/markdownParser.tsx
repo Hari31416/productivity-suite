@@ -1,9 +1,46 @@
 import React, { useState } from 'react'
 import { Check, Copy } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-interface MarkdownRendererProps {
+export interface MarkdownRendererProps {
   content: string
   className?: string
+  onToggleCheckbox?: (lineIndex: number) => void
+}
+
+export interface MarkdownHeading {
+  level: number
+  text: string
+  id: string
+}
+
+export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+}
+
+export function extractHeadings(content: string): MarkdownHeading[] {
+  if (!content) return []
+  const lines = content.split(/\r?\n/)
+  const headings: MarkdownHeading[] = []
+
+  for (const line of lines) {
+    const match = line.match(/^(#{1,6})\s+(.+)$/)
+    if (match) {
+      const text = match[2].trim()
+      headings.push({
+        level: match[1].length,
+        text,
+        id: `heading-${slugify(text)}`
+      })
+    }
+  }
+
+  return headings
 }
 
 function parseInline(text: string): React.ReactNode[] {
@@ -134,7 +171,11 @@ function CodeBlock({ language, code }: CodeBlockProps) {
   )
 }
 
-export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+export function MarkdownRenderer({
+  content,
+  className = '',
+  onToggleCheckbox
+}: MarkdownRendererProps) {
   if (!content || !content.trim()) {
     return <p className="text-sm italic text-muted-foreground">Nothing to preview</p>
   }
@@ -179,14 +220,16 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     if (headingMatch) {
       const level = headingMatch[1].length
       const headingText = headingMatch[2]
+      const headingId = `heading-${slugify(headingText)}`
       const parsedHeading = parseInline(headingText)
 
       switch (level) {
         case 1:
           renderedElements.push(
             <h1
+              id={headingId}
               key={`h1-${elementKey++}`}
-              className="mt-6 mb-3 text-2xl font-bold tracking-tight text-foreground first:mt-0"
+              className="mt-6 mb-3 text-2xl font-bold tracking-tight text-foreground first:mt-0 scroll-mt-6"
             >
               {parsedHeading}
             </h1>
@@ -195,8 +238,9 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         case 2:
           renderedElements.push(
             <h2
+              id={headingId}
               key={`h2-${elementKey++}`}
-              className="mt-5 mb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0"
+              className="mt-5 mb-2 text-xl font-semibold tracking-tight text-foreground first:mt-0 scroll-mt-6"
             >
               {parsedHeading}
             </h2>
@@ -205,8 +249,9 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         case 3:
           renderedElements.push(
             <h3
+              id={headingId}
               key={`h3-${elementKey++}`}
-              className="mt-4 mb-2 text-lg font-semibold text-foreground first:mt-0"
+              className="mt-4 mb-2 text-lg font-semibold text-foreground first:mt-0 scroll-mt-6"
             >
               {parsedHeading}
             </h3>
@@ -215,8 +260,9 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         case 4:
           renderedElements.push(
             <h4
+              id={headingId}
               key={`h4-${elementKey++}`}
-              className="mt-3 mb-1 text-base font-semibold text-foreground first:mt-0"
+              className="mt-3 mb-1 text-base font-semibold text-foreground first:mt-0 scroll-mt-6"
             >
               {parsedHeading}
             </h4>
@@ -225,8 +271,9 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         default:
           renderedElements.push(
             <h5
+              id={headingId}
               key={`h5-${elementKey++}`}
-              className="mt-2 mb-1 text-sm font-semibold text-foreground first:mt-0"
+              className="mt-2 mb-1 text-sm font-semibold text-foreground first:mt-0 scroll-mt-6"
             >
               {parsedHeading}
             </h5>
@@ -313,11 +360,12 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
 
     // 6. Checkbox lists: - [ ] or - [x]
     if (/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/.test(line)) {
-      const checkItems: { checked: boolean; text: string }[] = []
+      const checkItems: { lineIndex: number; checked: boolean; text: string }[] = []
       while (i < lines.length) {
         const checkMatch = lines[i].match(/^\s*[-*]\s+\[([ xX])\]\s+(.*)$/)
         if (!checkMatch) break
         checkItems.push({
+          lineIndex: i,
           checked: checkMatch[1].toLowerCase() === 'x',
           text: checkMatch[2]
         })
@@ -325,15 +373,22 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
       }
       renderedElements.push(
         <ul key={`checklist-${elementKey++}`} className="my-2 space-y-1 text-sm">
-          {checkItems.map((item, idx) => (
-            <li key={`checkitem-${idx}`} className="flex items-center gap-2">
+          {checkItems.map((item) => (
+            <li key={`checkitem-${item.lineIndex}`} className="flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={item.checked}
-                disabled
-                className="h-4 w-4 rounded border-border text-primary accent-primary"
+                disabled={!onToggleCheckbox}
+                onChange={() => onToggleCheckbox?.(item.lineIndex)}
+                className="h-4 w-4 rounded border-border text-primary accent-primary cursor-pointer disabled:cursor-default"
               />
-              <span className={item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}>
+              <span
+                onClick={onToggleCheckbox ? () => onToggleCheckbox(item.lineIndex) : undefined}
+                className={cn(
+                  onToggleCheckbox && 'cursor-pointer select-text',
+                  item.checked ? 'line-through text-muted-foreground' : 'text-foreground'
+                )}
+              >
                 {parseInline(item.text)}
               </span>
             </li>

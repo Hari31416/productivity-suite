@@ -54,6 +54,9 @@ interface TaskCardProps {
   draggable?: boolean
   onDragStart?: (e: React.DragEvent, task: Task) => void
   className?: string
+  selectable?: boolean
+  isSelected?: boolean
+  onToggleSelect?: (taskId: string) => void
 }
 
 export function formatDueDate(dueDateStr?: string): {
@@ -101,7 +104,7 @@ export function formatEstimatedMinutes(minutes?: number): string {
   if (hours > 0) {
     return `${hours}h`
   }
-  return `${minutes}m`
+  return `${remainingMinutes}m`
 }
 
 export const PRIORITY_CONFIG: Record<
@@ -130,10 +133,7 @@ export const PRIORITY_CONFIG: Record<
   }
 }
 
-export const STATUS_CONFIG: Record<
-  TaskStatus,
-  { label: string; color: string }
-> = {
+export const STATUS_CONFIG: Record<TaskStatus, { label: string; color: string }> = {
   todo: { label: 'To Do', color: '#64748b' },
   in_progress: { label: 'In Progress', color: '#3b82f6' },
   blocked: { label: 'Blocked', color: '#ef4444' },
@@ -147,7 +147,10 @@ export function TaskCard({
   compact = false,
   draggable = false,
   onDragStart,
-  className
+  className,
+  selectable = false,
+  isSelected = false,
+  onToggleSelect
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false)
   const isDone = task.status === 'done'
@@ -179,24 +182,40 @@ export function TaskCard({
       className={cn(
         'group relative rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md hover:border-foreground/20',
         isDone && 'bg-muted/30 opacity-75',
+        isSelected && 'border-primary ring-2 ring-primary/20 bg-primary/5',
         draggable && 'cursor-grab active:cursor-grabbing',
         className
       )}
     >
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex items-start gap-2.5 flex-1 min-w-0">
-          <button
-            type="button"
-            onClick={handleToggleCompletion}
-            className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
-            aria-label={isDone ? 'Mark task incomplete' : 'Mark task complete'}
-          >
-            {isDone ? (
-              <CheckSquare className="h-4 w-4 text-primary" />
-            ) : (
-              <Square className="h-4 w-4" />
-            )}
-          </button>
+          {selectable ? (
+            <button
+              type="button"
+              onClick={() => onToggleSelect?.(task.id)}
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
+              aria-label={isSelected ? 'Deselect task' : 'Select task'}
+            >
+              {isSelected ? (
+                <CheckSquare className="h-5 w-5 text-primary" />
+              ) : (
+                <Square className="h-5 w-5 text-muted-foreground/60" />
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleToggleCompletion}
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
+              aria-label={isDone ? 'Mark task incomplete' : 'Mark task complete'}
+            >
+              {isDone ? (
+                <CheckSquare className="h-4 w-4 text-primary" />
+              ) : (
+                <Square className="h-4 w-4" />
+              )}
+            </button>
+          )}
 
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
@@ -265,12 +284,17 @@ export function TaskCard({
               <button
                 type="button"
                 onClick={() => setExpanded(!expanded)}
-                className="flex items-center gap-1 hover:text-foreground transition-colors"
+                className={cn(
+                  'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors',
+                  expanded
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                )}
                 title={expanded ? 'Collapse subtasks' : 'View / Add subtasks'}
               >
-                <ListChecks className="h-3 w-3" />
+                <ListChecks className="h-3.5 w-3.5" />
                 <span>
-                  {totalSubtasks > 0 ? `${completedSubtasks}/${totalSubtasks}` : 'Subtasks'}
+                  {totalSubtasks > 0 ? `${completedSubtasks}/${totalSubtasks} subtasks` : 'Add subtasks'}
                 </span>
                 {expanded ? (
                   <ChevronDown className="h-3 w-3 ml-0.5" />

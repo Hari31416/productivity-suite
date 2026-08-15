@@ -40,7 +40,7 @@ import {
   useDeleteHabit,
   useCreateHabit
 } from './hooks/useHabits'
-import { isHabitScheduledOnDate } from './utils/streakCalculator'
+import { isHabitScheduledOnDate, calculateStreak } from './utils/streakCalculator'
 import { HabitCard } from './components/HabitCard'
 import { HabitFormModal } from './components/HabitFormModal'
 import { HabitAnalytics } from './components/HabitAnalytics'
@@ -58,6 +58,7 @@ export function HabitsView() {
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
   const [quickTitle, setQuickTitle] = useState('')
   const [quickCategory, setQuickCategory] = useState(DEFAULT_HABIT_CATEGORIES[0].id)
+  const [sortBy, setSortBy] = useState<'default' | 'streak' | 'name' | 'category'>('default')
 
   const { data: habits = [], isLoading: habitsLoading } = useHabits(showArchived)
   const { data: currentLogs = [] } = useHabitLogs(selectedDate)
@@ -176,10 +177,25 @@ export function HabitsView() {
   }, [habits, selectedCategory, searchQuery])
 
   const scheduledHabits = useMemo(() => {
-    return filteredHabits.filter((h) =>
+    const list = filteredHabits.filter((h) =>
       showArchived ? true : isHabitScheduledOnDate(h, selectedDate)
     )
-  }, [filteredHabits, selectedDate, showArchived])
+
+    if (sortBy === 'name') {
+      return [...list].sort((a, b) => a.title.localeCompare(b.title))
+    }
+    if (sortBy === 'streak') {
+      return [...list].sort((a, b) => {
+        const streakA = calculateStreak(a, allRangeLogs, selectedDate).currentStreak
+        const streakB = calculateStreak(b, allRangeLogs, selectedDate).currentStreak
+        return streakB - streakA
+      })
+    }
+    if (sortBy === 'category') {
+      return [...list].sort((a, b) => (a.categoryId || '').localeCompare(b.categoryId || ''))
+    }
+    return list
+  }, [filteredHabits, selectedDate, showArchived, sortBy, allRangeLogs])
 
   return (
     <div className="space-y-6">
@@ -220,6 +236,26 @@ export function HabitsView() {
 
       {viewMode === 'tracker' ? (
         <div className="space-y-5">
+          {/* Historical Date Indicator Banner */}
+          {!isCurrentDateToday && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 shadow-xs">
+              <div className="flex items-center gap-2.5 text-xs sm:text-sm">
+                <CalendarIcon className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                <span>
+                  Viewing historical log for <strong>{format(selectedDateObj, 'EEEE, MMMM d, yyyy')}</strong>
+                </span>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleToday}
+                className="h-8 text-xs bg-background hover:bg-background/90 border-amber-500/40 text-foreground shrink-0 self-start sm:self-auto font-medium"
+              >
+                Return to Today
+              </Button>
+            </div>
+          )}
+
           {/* Quick-Add Bar */}
           <form onSubmit={handleQuickAdd} className="flex gap-2 items-center">
             <div className="relative flex-1">
@@ -345,8 +381,8 @@ export function HabitsView() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2">
-              <div className="relative w-full sm:w-56">
+            <div className="flex items-center gap-2 flex-wrap">
+              <div className="relative flex-1 sm:w-48">
                 <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   placeholder="Search habits..."
@@ -355,6 +391,20 @@ export function HabitsView() {
                   className="h-8 pl-8 text-xs"
                 />
               </div>
+
+              {/* Sort selector */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="h-8 rounded-md border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Sort habits"
+              >
+                <option value="default">Default Order</option>
+                <option value="streak">Highest Streak</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="category">Category</option>
+              </select>
+
               <Button
                 variant={showArchived ? 'secondary' : 'outline'}
                 size="sm"

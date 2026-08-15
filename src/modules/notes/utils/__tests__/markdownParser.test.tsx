@@ -74,4 +74,16 @@ describe('MarkdownRenderer component', () => {
     expect(html).toContain('typescript')
     expect(html).toContain('const greeting = &quot;hello&quot;')
   })
+
+  it('extracts table of contents headings and slugifies ids', async () => {
+    const { extractHeadings, slugify } = await import('../markdownParser')
+    expect(slugify('Hello World! (123)')).toBe('hello-world-123')
+
+    const markdown = '# Introduction\n## Getting Started\n### Installation'
+    const headings = extractHeadings(markdown)
+    expect(headings).toHaveLength(3)
+    expect(headings[0]).toEqual({ level: 1, text: 'Introduction', id: 'heading-introduction' })
+    expect(headings[1]).toEqual({ level: 2, text: 'Getting Started', id: 'heading-getting-started' })
+    expect(headings[2]).toEqual({ level: 3, text: 'Installation', id: 'heading-installation' })
+  })
 })

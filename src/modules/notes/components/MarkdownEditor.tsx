@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import {
   Heading1,
   Heading2,
@@ -17,12 +17,19 @@ import {
   Columns,
   Eye,
   Edit3,
-  Folder
+  Folder,
+  ListTree
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { MarkdownRenderer } from '../utils/markdownParser'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import { MarkdownRenderer, extractHeadings, type MarkdownHeading } from '../utils/markdownParser'
 import { getNoteStats } from '../utils/noteStats'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useTags, useFindOrCreateTag } from '../hooks/useTags'
@@ -69,6 +76,28 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const findOrCreateTagMutation = useFindOrCreateTag()
 
   const stats = getNoteStats(content)
+  const headings = useMemo(() => extractHeadings(content), [content])
+
+  const handleToggleCheckbox = useCallback((lineIndex: number) => {
+    const lines = content.split(/\r?\n/)
+    if (lineIndex < 0 || lineIndex >= lines.length) return
+    const targetLine = lines[lineIndex]
+    const checkMatch = targetLine.match(/^(\s*[-*]\s+\[)([ xX])(\]\s+.*)$/)
+    if (checkMatch) {
+      const isChecked = checkMatch[2].toLowerCase() === 'x'
+      const newChar = isChecked ? ' ' : 'x'
+      lines[lineIndex] = `${checkMatch[1]}${newChar}${checkMatch[3]}`
+      const newContent = lines.join('\n')
+      setContent(newContent)
+    }
+  }, [content])
+
+  const handleJumpToHeading = (headingId: string) => {
+    const el = document.getElementById(headingId)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+  }
 
   const handleSave = useCallback(async () => {
     setSaveStatus('saving')
@@ -261,6 +290,40 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
               <Eye className="h-3.5 w-3.5" />
             </button>
           </div>
+
+          {/* Table of Contents / Outline */}
+          {headings.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 text-xs gap-1"
+                  title="Table of Contents"
+                >
+                  <ListTree className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Outline</span>
+                  <span className="text-[10px] text-muted-foreground">({headings.length})</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 max-h-72 overflow-y-auto">
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
+                  Table of Contents
+                </div>
+                {headings.map((h: MarkdownHeading, idx: number) => (
+                  <DropdownMenuItem
+                    key={`${h.id}-${idx}`}
+                    onClick={() => handleJumpToHeading(h.id)}
+                    className="text-xs py-1.5 cursor-pointer"
+                    style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
+                  >
+                    <span className="truncate">{h.text}</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
 
           {/* Save Status / Button */}
           <Button
@@ -492,7 +555,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
         {/* Preview Pane */}
         {(viewMode === 'preview' || viewMode === 'split') && (
           <div className="flex-1 overflow-auto bg-muted/10 p-4">
-            <MarkdownRenderer content={content} />
+            <MarkdownRenderer content={content} onToggleCheckbox={handleToggleCheckbox} />
           </div>
         )}
       </div>

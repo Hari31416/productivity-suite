@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
+import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,10 +18,10 @@ import {
   Edit2,
   Archive,
   Trash2,
-  Plus,
   Minus,
   Clock,
-  RotateCcw
+  RotateCcw,
+  Pencil
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
 import { DEFAULT_HABIT_CATEGORIES } from '../constants'
@@ -53,6 +54,9 @@ export function HabitCard({
   onArchive,
   onDelete
 }: HabitCardProps) {
+  const [isEditingDirect, setIsEditingDirect] = useState(false)
+  const [directValueInput, setDirectValueInput] = useState('')
+
   const toggleMutation = useToggleHabitLog()
   const setValueMutation = useSetHabitLogValue()
 
@@ -119,6 +123,29 @@ export function HabitCard({
       completed: nextVal >= target
     })
   }
+
+  const handleDirectSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    const parsed = parseFloat(directValueInput)
+    if (!isNaN(parsed) && parsed >= 0) {
+      const target = habit.targetValue || 1
+      setValueMutation.mutate({
+        habitId: habit.id,
+        date: selectedDate,
+        value: parsed,
+        completed: parsed >= target
+      })
+    }
+    setIsEditingDirect(false)
+  }
+
+  const numericPresets = useMemo(() => {
+    const target = habit.targetValue || 1
+    if (target >= 1000) return [250, 500, 1000]
+    if (target >= 100) return [10, 50, 100]
+    if (target >= 20) return [1, 5, 10]
+    return [1, 2, 5]
+  }, [habit.targetValue])
 
   const handleTimerAdd = (minutes: number) => {
     const targetMinutes = habit.targetValue || 30
@@ -333,52 +360,89 @@ export function HabitCard({
         )}
 
         {habit.targetType === 'numeric' && (
-          <div className="space-y-2 pt-1 border-t">
+          <div className="space-y-2.5 pt-2 border-t">
             <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">{targetDisplay}</span>
-              <span className="font-medium text-foreground">{numericPercent}%</span>
+              {isEditingDirect ? (
+                <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5 flex-1 max-w-xs">
+                  <Input
+                    type="number"
+                    min="0"
+                    step="any"
+                    value={directValueInput}
+                    onChange={(e) => setDirectValueInput(e.target.value)}
+                    placeholder={`${currentNumericValue}`}
+                    autoFocus
+                    className="h-8 text-xs w-24 px-2"
+                  />
+                  <span className="text-muted-foreground">{habit.unit || 'units'}</span>
+                  <Button type="submit" size="sm" className="h-8 px-2 text-xs">
+                    Set
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    onClick={() => setIsEditingDirect(false)}
+                  >
+                    Cancel
+                  </Button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDirectValueInput(`${currentNumericValue}`)
+                    setIsEditingDirect(true)
+                  }}
+                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors group cursor-pointer"
+                  title="Click to enter number directly"
+                >
+                  <span>{targetDisplay}</span>
+                  <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </button>
+              )}
+              <span className="font-semibold text-foreground">{numericPercent}%</span>
             </div>
+
             <Progress value={numericPercent} className="h-2" />
+
             <div className="flex items-center justify-end gap-1.5 pt-1 flex-wrap">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 aria-label="Decrease value"
-                className="h-8 px-2 text-xs"
-                onClick={() => handleNumericChange((habit.targetValue || 1) >= 100 ? -250 : -1)}
+                className="h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-2.5 text-xs"
+                onClick={() => handleNumericChange(-numericPresets[0])}
                 disabled={currentNumericValue <= 0}
               >
                 <Minus className="h-3.5 w-3.5 mr-0.5" />
-                <span>{(habit.targetValue || 1) >= 100 ? '250' : '1'}</span>
+                <span>{numericPresets[0]}</span>
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-label="Increase value"
-                className="h-8 px-2 text-xs"
-                onClick={() => handleNumericChange((habit.targetValue || 1) >= 100 ? 250 : 1)}
-              >
-                <Plus className="h-3.5 w-3.5 mr-0.5" />
-                <span>{(habit.targetValue || 1) >= 100 ? '250' : '1'}</span>
-              </Button>
-              {(habit.targetValue || 1) >= 500 && (
+
+              {numericPresets.map((preset, idx) => (
                 <Button
+                  key={preset}
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-8 px-2 text-xs"
-                  onClick={() => handleNumericChange(500)}
+                  aria-label={idx === 0 ? 'Increase value' : `Add ${preset}`}
+                  className="h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-2.5 text-xs font-medium"
+                  onClick={() => handleNumericChange(preset)}
                 >
-                  +500
+                  +{preset}
                 </Button>
-              )}
+              ))}
+
               <Button
                 type="button"
                 variant={isCompleted ? 'default' : 'outline'}
                 size="sm"
-                className={cn('h-8 px-2.5 text-xs font-medium', isCompleted && 'bg-primary text-primary-foreground')}
+                className={cn(
+                  'h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-3 text-xs font-medium',
+                  isCompleted && 'bg-primary text-primary-foreground'
+                )}
                 onClick={() => {
                   if (isCompleted) {
                     setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: 0 })

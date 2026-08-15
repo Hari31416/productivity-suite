@@ -29,6 +29,7 @@ interface NoteCardProps {
   note: Note
   layout?: 'grid' | 'list'
   projectName?: string
+  searchQuery?: string
   onEdit: (note: Note) => void
   onTogglePin: (id: string) => void
   onToggleArchive: (id: string) => void
@@ -37,7 +38,7 @@ interface NoteCardProps {
   onTagClick?: (tag: string) => void
 }
 
-function getSnippet(content: string, maxLength = 160): string {
+function getSnippet(content: string, searchQuery?: string, maxLength = 160): React.ReactNode {
   // Strip common markdown characters for snippet
   const cleaned = content
     .replace(/^#+\s+/gm, '')
@@ -53,6 +54,38 @@ function getSnippet(content: string, maxLength = 160): string {
     .replace(/\s+/g, ' ')
     .trim()
 
+  if (!cleaned) return ''
+
+  if (searchQuery && searchQuery.trim()) {
+    const q = searchQuery.trim().toLowerCase()
+    const index = cleaned.toLowerCase().indexOf(q)
+    if (index !== -1) {
+      const start = Math.max(0, index - 40)
+      const end = Math.min(cleaned.length, index + q.length + 80)
+      const prefix = start > 0 ? '...' : ''
+      const suffix = end < cleaned.length ? '...' : ''
+      const segment = cleaned.substring(start, end)
+
+      const regex = new RegExp(`(${searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+      const parts = segment.split(regex)
+      return (
+        <span>
+          {prefix}
+          {parts.map((part, i) =>
+            part.toLowerCase() === q ? (
+              <mark key={i} className="bg-amber-300/50 dark:bg-amber-500/40 text-foreground px-0.5 rounded font-medium">
+                {part}
+              </mark>
+            ) : (
+              part
+            )
+          )}
+          {suffix}
+        </span>
+      )
+    }
+  }
+
   if (cleaned.length <= maxLength) return cleaned
   return cleaned.substring(0, maxLength).trim() + '...'
 }
@@ -61,6 +94,7 @@ export function NoteCard({
   note,
   layout = 'grid',
   projectName,
+  searchQuery,
   onEdit,
   onTogglePin,
   onToggleArchive,
@@ -73,7 +107,7 @@ export function NoteCard({
     : 'Unknown'
 
   const readingTime = calculateReadingTime(note.wordCount)
-  const snippet = getSnippet(note.content)
+  const snippet = getSnippet(note.content, searchQuery)
 
   const handleExport = (e: React.MouseEvent) => {
     e.stopPropagation()

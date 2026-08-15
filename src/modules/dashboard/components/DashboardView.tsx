@@ -9,12 +9,22 @@ import {
   Zap,
   TrendingUp,
   Flame,
-  Calendar
+  Calendar,
+  Sparkles,
+  Info,
+  Check
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from '@/components/ui/dialog'
 import { moduleRegistry } from '@/core/modules/registry'
 import { useHabits, useHabitLogs } from '@/modules/habits/hooks/useHabits'
 import { useTasks } from '@/modules/tasks/hooks/useTasks'
@@ -40,6 +50,7 @@ export function DashboardView() {
   const [habitModalOpen, setHabitModalOpen] = useState(false)
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [noteModalOpen, setNoteModalOpen] = useState(false)
+  const [scoreModalOpen, setScoreModalOpen] = useState(false)
 
   // Data queries
   const { data: habits = [] } = useHabits(false)
@@ -49,15 +60,15 @@ export function DashboardView() {
   const { data: notes = [] } = useNotes({ archived: false })
 
   // Habit metrics
-  const { todayHabits, completedHabitsCount, maxStreak } = useMemo(() => {
+  const { todayHabits, completedHabitsCount, maxStreak, completedHabitsList } = useMemo(() => {
     const scheduled = habits.filter((h) => isHabitScheduledOnDate(h, todayStr))
-    let completed = 0
+    const completedList: typeof habits = []
     let bestStreak = 0
 
     for (const habit of scheduled) {
       const logs = todayLogs.filter((l) => l.habitId === habit.id)
       if (logs.some((l) => l.completed)) {
-        completed += 1
+        completedList.push(habit)
       }
     }
 
@@ -69,20 +80,22 @@ export function DashboardView() {
 
     return {
       todayHabits: scheduled,
-      completedHabitsCount: completed,
+      completedHabitsCount: completedList.length,
+      completedHabitsList: completedList,
       maxStreak: bestStreak
     }
   }, [habits, todayLogs, todayStr])
 
   // Task metrics
-  const { todayTasks, completedTasksCount, urgentTasksCount } = useMemo(() => {
+  const { todayTasks, completedTasksCount, urgentTasksCount, completedTasksList } = useMemo(() => {
     const dueToday = tasks.filter((t) => t.dueDate === todayStr)
-    const completedToday = dueToday.filter((t) => t.status === 'done').length
+    const completedList = tasks.filter((t) => t.status === 'done' && (t.dueDate === todayStr || t.updatedAt?.startsWith(todayStr)))
     const urgent = tasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length
 
     return {
       todayTasks: dueToday,
-      completedTasksCount: completedToday,
+      completedTasksCount: dueToday.filter((t) => t.status === 'done').length,
+      completedTasksList: completedList,
       urgentTasksCount: urgent
     }
   }, [tasks, todayStr])
@@ -98,6 +111,14 @@ export function DashboardView() {
   }, [completedHabitsCount, todayHabits.length, completedTasksCount, todayTasks.length])
 
   const productivityStatus = getProductivityStatus(score)
+
+  const habitsPercentage = todayHabits.length > 0
+    ? Math.round((completedHabitsCount / todayHabits.length) * 100)
+    : 100
+
+  const tasksPercentage = todayTasks.length > 0
+    ? Math.round((completedTasksCount / todayTasks.length) * 100)
+    : 100
 
   // Registered widgets from modules
   const registeredWidgets = useMemo(() => {
@@ -153,11 +174,15 @@ export function DashboardView() {
             </div>
           </div>
 
-          {/* Daily Productivity Score Card */}
-          <div className="flex w-full flex-col gap-3 rounded-xl border bg-background/80 p-4 backdrop-blur sm:w-80 shrink-0">
+          {/* Daily Productivity Score Card (Clickable for breakdown) */}
+          <div
+            onClick={() => setScoreModalOpen(true)}
+            className="flex w-full flex-col gap-3 rounded-xl border bg-background/80 p-4 backdrop-blur sm:w-80 shrink-0 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group"
+            title="Click to view full score breakdown"
+          >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-500" />
+                <Zap className="h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Daily Score
                 </span>
@@ -191,6 +216,10 @@ export function DashboardView() {
                   {completedTasksCount}/{todayTasks.length}
                 </span>
               </div>
+            </div>
+
+            <div className="text-[10px] text-center text-primary font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+              Tap for detailed score breakdown &rarr;
             </div>
           </div>
         </div>
@@ -261,6 +290,74 @@ export function DashboardView() {
         </Card>
       </div>
 
+      {/* Completed Today Daily Wins Feed */}
+      {(completedHabitsList.length > 0 || completedTasksList.length > 0) && (
+        <div className="rounded-xl border bg-card/60 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-amber-500" />
+              <h2 className="text-sm font-semibold tracking-tight text-foreground">
+                Completed Today ({completedHabitsList.length + completedTasksList.length})
+              </h2>
+            </div>
+            <span className="text-xs text-muted-foreground font-medium">Daily Wins</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+            {completedHabitsList.map((habit) => (
+              <div
+                key={`completed-habit-${habit.id}`}
+                className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-background text-xs shadow-2xs"
+              >
+                <div
+                  className="h-3 w-3 rounded-full shrink-0"
+                  style={{ backgroundColor: habit.color || '#3b82f6' }}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="font-medium text-foreground truncate">{habit.title}</span>
+                    <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 text-emerald-600 border-emerald-500/30 shrink-0">
+                      Habit
+                    </Badge>
+                  </div>
+                </div>
+                <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+              </div>
+            ))}
+
+            {completedTasksList.map((task) => {
+              const project = task.projectId ? projects.find((p) => p.id === task.projectId) : undefined
+              return (
+                <div
+                  key={`completed-task-${task.id}`}
+                  className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-background text-xs shadow-2xs"
+                >
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-1">
+                      <span className="font-medium text-foreground truncate line-through text-muted-foreground">
+                        {task.title}
+                      </span>
+                      {project && (
+                        <span
+                          className="text-[10px] px-1 py-0 rounded font-normal shrink-0"
+                          style={{
+                            backgroundColor: `${project.color}20`,
+                            color: project.color
+                          }}
+                        >
+                          {project.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Dynamic Module Widgets Grid */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -287,6 +384,65 @@ export function DashboardView() {
           })}
         </div>
       </div>
+
+      {/* Score Breakdown Dialog */}
+      <Dialog open={scoreModalOpen} onOpenChange={setScoreModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-500" />
+              <DialogTitle>Daily Productivity Score Breakdown</DialogTitle>
+            </div>
+            <DialogDescription>
+              How your daily score of {score}% is calculated for {formattedDate}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* Habits component */}
+            <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <Activity className="h-4 w-4 text-blue-500" />
+                  <span>Scheduled Habits</span>
+                </div>
+                <span className="text-foreground">{habitsPercentage}% ({completedHabitsCount}/{todayHabits.length})</span>
+              </div>
+              <Progress value={habitsPercentage} className="h-2" />
+              <p className="text-[11px] text-muted-foreground">
+                {todayHabits.length === 0
+                  ? 'No habits scheduled for today.'
+                  : `${completedHabitsCount} of ${todayHabits.length} daily habits logged.`}
+              </p>
+            </div>
+
+            {/* Tasks component */}
+            <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
+              <div className="flex items-center justify-between text-xs font-semibold">
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <span>Due Tasks</span>
+                </div>
+                <span className="text-foreground">{tasksPercentage}% ({completedTasksCount}/{todayTasks.length})</span>
+              </div>
+              <Progress value={tasksPercentage} className="h-2" />
+              <p className="text-[11px] text-muted-foreground">
+                {todayTasks.length === 0
+                  ? 'No tasks due today.'
+                  : `${completedTasksCount} of ${todayTasks.length} tasks scheduled for today completed.`}
+              </p>
+            </div>
+
+            {/* Formula explanation */}
+            <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
+              <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+              <p className="text-[11px] leading-relaxed">
+                The Daily Productivity Score blends your habit completion rate (50%) and your due task completion rate (50%). Checking in habits and clearing due tasks directly elevates your score!
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Modals for Quick Creation */}
       <HabitFormModal

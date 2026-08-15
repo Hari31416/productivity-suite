@@ -359,6 +359,7 @@ export function NotesView() {
                     note={note}
                     layout={layout}
                     projectName={note.projectId ? projectMap.get(note.projectId) : undefined}
+                    searchQuery={searchQuery}
                     onEdit={(n) => setEditingNote(n)}
                     onTogglePin={(id) => togglePinMutation.mutate(id)}
                     onToggleArchive={(id) => toggleArchiveMutation.mutate(id)}
@@ -393,6 +394,7 @@ export function NotesView() {
                     note={note}
                     layout={layout}
                     projectName={note.projectId ? projectMap.get(note.projectId) : undefined}
+                    searchQuery={searchQuery}
                     onEdit={(n) => setEditingNote(n)}
                     onTogglePin={(id) => togglePinMutation.mutate(id)}
                     onToggleArchive={(id) => toggleArchiveMutation.mutate(id)}
