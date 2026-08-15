@@ -4,6 +4,7 @@ import { HabitDashboardWidget } from './habits/components/HabitDashboardWidget'
 import { TasksView } from './tasks/TasksView'
 import { TaskDashboardWidget } from './tasks/components/TaskDashboardWidget'
 import { NotesView } from './notes/NotesView'
+import { NotesDashboardWidget } from './notes/components/NotesDashboardWidget'
 import { SettingsView } from './settings/SettingsView'
 
 export function initializeModules(): void {
@@ -50,6 +51,7 @@ export function initializeModules(): void {
     iconName: 'FileText',
     route: '/notes',
     navOrder: 3,
+    dashboardWidget: NotesDashboardWidget,
     routes: [
       {
         path: '/notes',
