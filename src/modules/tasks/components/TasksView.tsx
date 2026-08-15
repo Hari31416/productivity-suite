@@ -196,12 +196,12 @@ export function TasksView() {
 
         <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs">
+          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs w-full sm:w-auto justify-between sm:justify-start">
             <button
               type="button"
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
                 viewMode === 'list'
                   ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
@@ -215,7 +215,7 @@ export function TasksView() {
               type="button"
               onClick={() => setViewMode('calendar')}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
                 viewMode === 'calendar'
                   ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
@@ -229,7 +229,7 @@ export function TasksView() {
               type="button"
               onClick={() => setViewMode('kanban')}
               className={cn(
-                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
                 viewMode === 'kanban'
                   ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
@@ -243,7 +243,7 @@ export function TasksView() {
           <Button
             size="sm"
             onClick={() => handleOpenNewTask()}
-            className="h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
+            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>New Task</span>
@@ -266,27 +266,32 @@ export function TasksView() {
         {/* Right Main Content Area */}
         <div className="md:col-span-3 lg:col-span-4 space-y-4">
           {/* Filter Toolbar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-xl border bg-card/60 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 p-2.5 sm:p-3 rounded-xl border bg-card/60 shadow-sm">
             <div className="flex items-center gap-2 flex-1 min-w-0">
-              {/* Mobile Sidebar Trigger */}
+              {/* Mobile Sidebar & Filters Trigger */}
               <Button
-                variant="outline"
+                variant={showMobileSidebar || (priorityFilter !== 'all' || statusFilter !== 'all' || tagFilter !== 'all') ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setShowMobileSidebar(!showMobileSidebar)}
-                className="md:hidden h-9 px-2.5 shrink-0"
+                className="md:hidden h-8 sm:h-9 px-2.5 shrink-0 text-xs gap-1.5"
               >
-                <SlidersHorizontal className="h-4 w-4 mr-1.5" />
+                <SlidersHorizontal className="h-3.5 w-3.5" />
                 <span>Filters</span>
+                {(priorityFilter !== 'all' || statusFilter !== 'all' || tagFilter !== 'all' || selectedProjectId || selectedSmartFilter !== 'all') && (
+                  <span className="ml-0.5 rounded-full bg-primary-foreground text-primary text-[10px] w-4 h-4 inline-flex items-center justify-center font-bold">
+                    {[priorityFilter !== 'all', statusFilter !== 'all', tagFilter !== 'all', !!selectedProjectId, selectedSmartFilter !== 'all'].filter(Boolean).length}
+                  </span>
+                )}
               </Button>
 
               {/* Search input */}
-              <div className="relative flex-1 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="relative flex-1">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search tasks, descriptions, tags..."
-                  className="h-9 pl-8.5 pr-8 text-xs sm:text-sm bg-background"
+                  placeholder="Search tasks, tags..."
+                  className="h-8 sm:h-9 pl-8 pr-8 text-xs sm:text-sm bg-background"
                 />
                 {searchQuery && (
                   <button
@@ -294,14 +299,14 @@ export function TasksView() {
                     onClick={() => setSearchQuery('')}
                     className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Filter Dropdowns */}
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            {/* Filter Dropdowns (Desktop always, mobile when toggled) */}
+            <div className="hidden md:flex items-center gap-2 flex-wrap sm:flex-nowrap">
               <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                 <SelectTrigger className="h-9 text-xs w-[125px]">
                   <SelectValue placeholder="Priority" />
@@ -457,13 +462,85 @@ export function TasksView() {
 
           {/* Mobile Sidebar Collapsible */}
           {showMobileSidebar && (
-            <div className="md:hidden border rounded-xl p-3 bg-card shadow-sm">
-              <ProjectSidebar
-                selectedSmartFilter={selectedSmartFilter}
-                selectedProjectId={selectedProjectId}
-                onSelectFilter={handleSelectSmartFilter}
-                onSelectProject={handleSelectProject}
-              />
+            <div className="md:hidden border rounded-xl p-3 bg-card shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b pb-2">
+                <span className="text-xs font-semibold text-foreground">Filter Properties</span>
+                {hasActiveFilters && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResetFilters}
+                    className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                  >
+                    Reset all
+                  </Button>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-[11px] text-muted-foreground block mb-1">Priority</label>
+                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger className="h-8 text-xs w-full">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priorities</SelectItem>
+                      <SelectItem value="urgent">Urgent</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {viewMode !== 'kanban' && (
+                  <div>
+                    <label className="text-[11px] text-muted-foreground block mb-1">Status</label>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="h-8 text-xs w-full">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="blocked">Blocked</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {tags.length > 0 && (
+                  <div className="col-span-2">
+                    <label className="text-[11px] text-muted-foreground block mb-1">Tag</label>
+                    <Select value={tagFilter} onValueChange={setTagFilter}>
+                      <SelectTrigger className="h-8 text-xs w-full">
+                        <SelectValue placeholder="Tag" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Tags</SelectItem>
+                        {tags.map((t) => (
+                          <SelectItem key={t} value={t}>
+                            #{t}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t pt-2">
+                <span className="text-xs font-semibold text-foreground block mb-2">Projects & Lists</span>
+                <ProjectSidebar
+                  selectedSmartFilter={selectedSmartFilter}
+                  selectedProjectId={selectedProjectId}
+                  onSelectFilter={handleSelectSmartFilter}
+                  onSelectProject={handleSelectProject}
+                />
+              </div>
             </div>
           )}
 

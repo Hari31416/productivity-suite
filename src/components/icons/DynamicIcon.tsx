@@ -5,12 +5,16 @@ import {
   FileText,
   Settings,
   LayoutDashboard,
+  LayoutGrid,
   Calendar,
   Layers,
   Folder,
   Tag,
   Clock,
   Circle,
+  Home,
+  Gauge,
+  Sparkles,
   HelpCircle,
   type LucideProps
 } from 'lucide-react'
@@ -21,12 +25,16 @@ const iconMap: Record<string, React.ComponentType<LucideProps>> = {
   FileText,
   Settings,
   LayoutDashboard,
+  LayoutGrid,
   Calendar,
   Layers,
   Folder,
   Tag,
   Clock,
-  Circle
+  Circle,
+  Home,
+  Gauge,
+  Sparkles
 }
 
 export interface DynamicIconProps extends LucideProps {

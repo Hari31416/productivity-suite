@@ -15,7 +15,7 @@ export function initializeModules(): void {
     id: 'dashboard',
     title: 'Dashboard',
     description: 'Unified home overview and daily score',
-    iconName: 'LayoutGrid',
+    iconName: 'LayoutDashboard',
     route: '/',
     navOrder: 0,
     routes: [

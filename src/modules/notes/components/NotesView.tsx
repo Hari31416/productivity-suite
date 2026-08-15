@@ -105,7 +105,7 @@ export function NotesView() {
 
   const handleSaveNote = async (
     noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }
-  ) => {
+  ): Promise<Note | void> => {
     if ('id' in noteData) {
       await updateNoteMutation.mutateAsync(noteData)
       // Update local state if editing
@@ -116,6 +116,7 @@ export function NotesView() {
       const created = await createNoteMutation.mutateAsync(noteData)
       setEditingNote(created)
       setIsCreatingNew(false)
+      return created
     }
   }
 
@@ -165,20 +166,24 @@ export function NotesView() {
           </p>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
+        <div className="flex items-center justify-end w-auto gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportAll}
             disabled={notes.length === 0 || isExporting}
-            className="h-8 gap-1.5 text-xs px-2.5"
+            className="h-8 gap-1.5 text-xs px-2 sm:px-2.5"
             title="Export all notes to a zip archive"
           >
             <Download className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export (.zip)'}</span>
           </Button>
 
-          <Button size="sm" onClick={handleStartCreate} className="h-8 gap-1.5 shadow-xs text-xs px-3">
+          <Button
+            size="sm"
+            onClick={handleStartCreate}
+            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs text-xs px-3"
+          >
             <Plus className="h-3.5 w-3.5" />
             <span>New Note</span>
           </Button>

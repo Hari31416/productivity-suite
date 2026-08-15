@@ -13,7 +13,6 @@ import {
   Pin,
   X,
   Plus,
-  Save,
   Columns,
   Eye,
   Edit3,
@@ -43,7 +42,7 @@ import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
 interface MarkdownEditorProps {
   initialNote?: Note | null
-  onSave: (noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }) => Promise<void>
+  onSave: (noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }) => Promise<Note | void>
   onClose: () => void
 }
 
@@ -63,6 +62,7 @@ const COLOR_OPTIONS = [
 ]
 
 export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorProps) {
+  const [noteId, setNoteId] = useState<string | undefined>(initialNote?.id)
   const [title, setTitle] = useState(initialNote?.title || '')
   const [content, setContent] = useState(initialNote?.content || '')
   const [tags, setTags] = useState<string[]>(initialNote?.tags || [])
@@ -82,6 +82,12 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
   const isFirstRender = useRef(true)
+  const latestValuesRef = useRef({ noteId, title, content, tags, projectId, pinned, color })
+
+  // Keep latest values in ref for flushing on close/unmount
+  useEffect(() => {
+    latestValuesRef.current = { noteId, title, content, tags, projectId, pinned, color }
+  }, [noteId, title, content, tags, projectId, pinned, color])
 
   const { data: projects = [] } = useProjects()
   const { data: existingTags = [] } = useTags()
@@ -112,38 +118,46 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   }
 
   const handleSave = useCallback(async () => {
+    const current = latestValuesRef.current
+    if (!current.title.trim() && !current.content.trim() && !current.noteId) {
+      return
+    }
+
     setSaveStatus('saving')
     try {
-      if (initialNote?.id) {
+      if (current.noteId) {
         await onSave({
-          id: initialNote.id,
+          id: current.noteId,
           input: {
-            title: title.trim() || 'Untitled Note',
-            content,
-            tags,
-            projectId: projectId || undefined,
-            pinned,
-            color: color || undefined,
+            title: current.title.trim() || 'Untitled Note',
+            content: current.content,
+            tags: current.tags,
+            projectId: current.projectId || undefined,
+            pinned: current.pinned,
+            color: current.color || undefined,
             wordCount: stats.wordCount
           }
         })
       } else {
-        await onSave({
-          title: title.trim() || 'Untitled Note',
-          content,
-          tags,
-          projectId: projectId || undefined,
-          pinned,
-          color: color || undefined,
+        const created = await onSave({
+          title: current.title.trim() || 'Untitled Note',
+          content: current.content,
+          tags: current.tags,
+          projectId: current.projectId || undefined,
+          pinned: current.pinned,
+          color: current.color || undefined,
           wordCount: stats.wordCount,
           archived: false
         })
+        if (created && created.id) {
+          setNoteId(created.id)
+        }
       }
       setSaveStatus('saved')
     } catch {
       setSaveStatus('unsaved')
     }
-  }, [initialNote, title, content, tags, projectId, pinned, color, stats.wordCount, onSave])
+  }, [stats.wordCount, onSave])
 
   // Keyboard shortcut listener for Cmd+S / Ctrl+S and Esc for Zen mode
   useEffect(() => {
@@ -175,7 +189,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
 
     autoSaveTimerRef.current = setTimeout(() => {
       handleSave()
-    }, 1000)
+    }, 600)
 
     return () => {
       if (autoSaveTimerRef.current) {
@@ -183,6 +197,15 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
       }
     }
   }, [title, content, tags, projectId, pinned, color, handleSave])
+
+  // Flush save on close
+  const handleClose = async () => {
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current)
+    }
+    await handleSave()
+    onClose()
+  }
 
   const insertFormatting = (prefix: string, suffix: string = '', defaultPlaceholder: string = '') => {
     const textarea = textareaRef.current
@@ -410,35 +433,35 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             <span className="hidden md:inline">{isZenMode ? 'Exit Zen' : 'Zen'}</span>
           </Button>
 
-          {/* Save Status / Button */}
-          <Button
-            type="button"
-            variant={saveStatus === 'saved' ? 'outline' : 'default'}
-            size="sm"
-            onClick={handleSave}
-            disabled={saveStatus === 'saving'}
-            className="h-8 gap-1 px-2.5 min-w-[64px]"
-          >
+          {/* Auto-Save Status Indicator */}
+          <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground select-none" title={`Status: ${saveStatus}`}>
             {saveStatus === 'saving' ? (
               <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                <span className="text-xs">Saving...</span>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span className="hidden sm:inline text-xs">Saving...</span>
               </>
             ) : saveStatus === 'saved' ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-xs text-emerald-600 dark:text-emerald-400">Saved</span>
+                <span className="hidden sm:inline text-xs text-emerald-600 dark:text-emerald-400">Saved</span>
               </>
             ) : (
               <>
-                <Save className="h-3.5 w-3.5" />
-                <span className="text-xs">Save</span>
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="hidden sm:inline text-xs text-muted-foreground">Unsaved</span>
               </>
             )}
-          </Button>
+          </div>
 
           {/* Close Editor */}
-          <Button type="button" variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0" title="Close Editor">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleClose}
+            className="h-8 w-8 p-0"
+            title="Close Editor"
+          >
             <X className="h-4 w-4" />
           </Button>
         </div>

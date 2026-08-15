@@ -30,6 +30,7 @@ import {
   RotateCcw,
   Trash2
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import type { Habit } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
 import {
@@ -60,6 +61,8 @@ export function HabitsView() {
   const [quickTitle, setQuickTitle] = useState('')
   const [quickCategory, setQuickCategory] = useState(DEFAULT_HABIT_CATEGORIES[0].id)
   const [sortBy, setSortBy] = useState<'default' | 'streak' | 'name' | 'category'>('default')
+
+  const [showQuickAdd, setShowQuickAdd] = useState(false)
 
   const { data: habits = [], isLoading: habitsLoading } = useHabits(showArchived)
   const { data: currentLogs = [] } = useHabitLogs(selectedDate)
@@ -122,13 +125,6 @@ export function HabitsView() {
     setIsFormOpen(true)
   }
 
-  const handleArchiveHabit = (habit: Habit) => {
-    archiveMutation.mutate({
-      id: habit.id,
-      archived: !habit.archived
-    })
-  }
-
   const handleDeleteHabit = (habit: Habit) => {
     setHabitToDelete(habit)
   }
@@ -140,14 +136,19 @@ export function HabitsView() {
     }
   }
 
+  const handleArchiveHabit = (habit: Habit) => {
+    archiveMutation.mutate({
+      id: habit.id,
+      archived: !habit.archived
+    })
+  }
+
   const handleQuickAdd = async (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmed = quickTitle.trim()
-    if (!trimmed) return
+    if (!quickTitle.trim()) return
 
     await createMutation.mutateAsync({
-      title: trimmed,
-      description: '',
+      title: quickTitle.trim(),
       categoryId: quickCategory,
       frequencyType: 'daily',
       targetDaysOfWeek: [0, 1, 2, 3, 4, 5, 6],
@@ -159,6 +160,7 @@ export function HabitsView() {
     })
 
     setQuickTitle('')
+    setShowQuickAdd(false)
   }
 
   const filteredHabits = useMemo(() => {
@@ -208,11 +210,11 @@ export function HabitsView() {
           </p>
         </div>
         <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
-          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs">
+          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs w-full sm:w-auto justify-between sm:justify-start">
             <Button
               variant={viewMode === 'tracker' ? 'default' : 'ghost'}
               size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1"
+              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
               onClick={() => setViewMode('tracker')}
             >
               <Activity className="h-3.5 w-3.5" />
@@ -221,7 +223,7 @@ export function HabitsView() {
             <Button
               variant={viewMode === 'week' ? 'default' : 'ghost'}
               size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1"
+              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
               onClick={() => setViewMode('week')}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
@@ -230,14 +232,18 @@ export function HabitsView() {
             <Button
               variant={viewMode === 'analytics' ? 'default' : 'ghost'}
               size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1"
+              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
               onClick={() => setViewMode('analytics')}
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>Analytics</span>
             </Button>
           </div>
-          <Button size="sm" onClick={handleCreateNew} className="h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3">
+          <Button
+            size="sm"
+            onClick={handleCreateNew}
+            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
+          >
             <Plus className="h-3.5 w-3.5" />
             <span>New Habit</span>
           </Button>
@@ -266,31 +272,65 @@ export function HabitsView() {
             </div>
           )}
 
-          {/* Quick-Add Bar */}
-          <form onSubmit={handleQuickAdd} className="flex gap-1.5 sm:gap-2 items-center">
-            <div className="relative flex-1 min-w-0">
-              <Input
-                placeholder="Quick add daily habit..."
-                value={quickTitle}
-                onChange={(e) => setQuickTitle(e.target.value)}
-                className="h-9 text-xs sm:text-sm"
-              />
-            </div>
-            <select
-              value={quickCategory}
-              onChange={(e) => setQuickCategory(e.target.value)}
-              className="h-9 rounded-md border bg-background px-2 sm:px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0 max-w-[130px]"
+          {/* Quick-Add Bar (Collapsible on mobile) */}
+          <div className="space-y-1.5">
+            {!showQuickAdd && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowQuickAdd(true)}
+                className="sm:hidden w-full h-8 text-xs text-muted-foreground hover:text-foreground border-dashed gap-1.5"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Quick Add Habit</span>
+              </Button>
+            )}
+
+            <form
+              onSubmit={handleQuickAdd}
+              className={cn('flex gap-1.5 sm:gap-2 items-center', !showQuickAdd && 'hidden sm:flex')}
             >
-              {DEFAULT_HABIT_CATEGORIES.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-            <Button type="submit" size="sm" className="h-9 px-3 sm:px-4 text-xs font-medium shrink-0" disabled={!quickTitle.trim()}>
-              Add
-            </Button>
-          </form>
+              <div className="relative flex-1 min-w-0">
+                <Input
+                  placeholder="Quick add daily habit..."
+                  value={quickTitle}
+                  onChange={(e) => setQuickTitle(e.target.value)}
+                  className="h-8 sm:h-9 text-xs sm:text-sm"
+                  autoFocus={showQuickAdd}
+                />
+              </div>
+              <select
+                value={quickCategory}
+                onChange={(e) => setQuickCategory(e.target.value)}
+                className="h-8 sm:h-9 rounded-md border bg-background px-2 sm:px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0 max-w-[120px] sm:max-w-[130px]"
+              >
+                {DEFAULT_HABIT_CATEGORIES.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="submit"
+                size="sm"
+                className="h-8 sm:h-9 px-3 sm:px-4 text-xs font-medium shrink-0"
+                disabled={!quickTitle.trim()}
+              >
+                Add
+              </Button>
+              {showQuickAdd && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowQuickAdd(false)}
+                  className="sm:hidden h-8 px-2 text-xs text-muted-foreground"
+                >
+                  Cancel
+                </Button>
+              )}
+            </form>
+          </div>
 
           {/* Date Navigation & Rolling Week Strip */}
           <div className="flex flex-col gap-2 rounded-xl border bg-card p-2.5 sm:p-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">

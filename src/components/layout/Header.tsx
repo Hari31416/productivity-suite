@@ -58,7 +58,7 @@ export function Header({
             variant="outline"
             size="sm"
             onClick={onOpenCommandPalette}
-            className="h-9 min-h-[36px] sm:h-8 gap-2 px-2.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:w-48 justify-between"
+            className="h-9 min-h-[36px] sm:h-8 gap-1.5 px-2.5 sm:px-3 text-xs text-muted-foreground hover:text-foreground font-normal sm:w-48 justify-between"
             aria-label="Search and command palette"
           >
             <div className="flex items-center gap-1.5">
@@ -76,10 +76,11 @@ export function Header({
           <Button
             size="sm"
             onClick={onQuickAction}
-            className="h-9 min-h-[36px] sm:h-8 gap-1.5 px-3 text-xs font-medium"
+            className="h-9 w-9 min-h-[36px] min-w-[36px] p-0 sm:w-auto sm:px-3 sm:h-8 gap-1.5 text-xs font-medium"
+            aria-label="Quick add item"
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span className="hidden xs:inline">Quick Add</span>
+            <Plus className="h-4 w-4 sm:h-3.5 sm:w-3.5" />
+            <span className="hidden sm:inline">Quick Add</span>
           </Button>
         )}
 
