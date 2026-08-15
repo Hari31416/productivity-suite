@@ -298,12 +298,20 @@ export function CommandPalette({
       )
     }
 
-    return allCommands.filter((cmd) => {
-      const matchTitle = cmd.title.toLowerCase().includes(q)
-      const matchSubtitle = cmd.subtitle?.toLowerCase().includes(q)
-      const matchKeywords = cmd.keywords?.some((k) => k.toLowerCase().includes(q))
-      return matchTitle || matchSubtitle || matchKeywords
-    })
+    return allCommands
+      .filter((cmd) => {
+        const matchTitle = cmd.title.toLowerCase().includes(q)
+        const matchSubtitle = cmd.subtitle?.toLowerCase().includes(q)
+        const matchKeywords = cmd.keywords?.some((k) => k.toLowerCase().includes(q))
+        return matchTitle || matchSubtitle || matchKeywords
+      })
+      .sort((a, b) => {
+        const aTitleMatch = a.title.toLowerCase().startsWith(q)
+        const bTitleMatch = b.title.toLowerCase().startsWith(q)
+        if (aTitleMatch && !bTitleMatch) return -1
+        if (!aTitleMatch && bTitleMatch) return 1
+        return 0
+      })
   }, [allCommands, query])
 
   // Reset selected index when filtered list changes
@@ -326,9 +334,7 @@ export function CommandPalette({
       if (filteredCommands[selectedIndex]) {
         filteredCommands[selectedIndex].onSelect()
       }
-    }
-   Stephen:
-    if (e.key === 'Escape') {
+    } else if (e.key === 'Escape') {
       onOpenChange(false)
     }
   }

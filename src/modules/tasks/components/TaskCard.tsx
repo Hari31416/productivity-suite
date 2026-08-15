@@ -262,23 +262,22 @@ export function TaskCard({
                 </div>
               )}
 
-              {totalSubtasks > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setExpanded(!expanded)}
-                  className="flex items-center gap-1 hover:text-foreground font-medium transition-colors"
-                >
-                  <ListChecks className="h-3 w-3" />
-                  <span>
-                    {completedSubtasks}/{totalSubtasks}
-                  </span>
-                  {expanded ? (
-                    <ChevronDown className="h-3 w-3 ml-0.5" />
-                  ) : (
-                    <ChevronRight className="h-3 w-3 ml-0.5" />
-                  )}
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setExpanded(!expanded)}
+                className="flex items-center gap-1 hover:text-foreground transition-colors"
+                title={expanded ? 'Collapse subtasks' : 'View / Add subtasks'}
+              >
+                <ListChecks className="h-3 w-3" />
+                <span>
+                  {totalSubtasks > 0 ? `${completedSubtasks}/${totalSubtasks}` : 'Subtasks'}
+                </span>
+                {expanded ? (
+                  <ChevronDown className="h-3 w-3 ml-0.5" />
+                ) : (
+                  <ChevronRight className="h-3 w-3 ml-0.5" />
+                )}
+              </button>
 
               {task.tags && task.tags.length > 0 && (
                 <div className="flex items-center gap-1 flex-wrap">
@@ -312,6 +311,11 @@ export function TaskCard({
             <DropdownMenuItem onClick={() => onEdit?.(task)}>
               <Edit2 className="h-3.5 w-3.5 mr-2" />
               <span>Edit Task</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => setExpanded(true)}>
+              <ListChecks className="h-3.5 w-3.5 mr-2" />
+              <span>Manage Subtasks</span>
             </DropdownMenuItem>
 
             <DropdownMenuSub>
@@ -374,9 +378,9 @@ export function TaskCard({
         </DropdownMenu>
       </div>
 
-      {expanded && totalSubtasks > 0 && (
+      {expanded && (
         <div className="mt-3 pt-3 border-t pl-6">
-          <SubtaskList taskId={task.id} showProgress={false} />
+          <SubtaskList taskId={task.id} showProgress={totalSubtasks > 0} />
         </div>
       )}
     </div>

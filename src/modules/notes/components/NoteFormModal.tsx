@@ -18,6 +18,7 @@ import {
 import { useCreateNote } from '../hooks/useNotes'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useTags } from '../hooks/useTags'
+import { MarkdownRenderer } from '../utils/markdownParser'
 import { Tag as TagIcon, X } from 'lucide-react'
 
 interface NoteFormModalProps {
@@ -38,6 +39,7 @@ const PRESET_NOTE_COLORS = [
 export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [preview, setPreview] = useState(false)
   const [projectId, setProjectId] = useState<string | undefined>(undefined)
   const [color, setColor] = useState('')
   const [tagInput, setTagInput] = useState('')
@@ -103,16 +105,49 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">
-                Content (Markdown supported)
-              </label>
-              <textarea
-                className="w-full min-h-[140px] p-3 rounded-md border bg-background text-sm resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                placeholder="Write your note here..."
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
-              />
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Content (Markdown supported)
+                </label>
+                <div className="flex rounded border bg-muted p-0.5 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setPreview(false)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                      !preview ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
+                    }`}
+                  >
+                    Write
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreview(true)}
+                    className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                      preview ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
+                    }`}
+                  >
+                    Preview
+                  </button>
+                </div>
+              </div>
+
+              {preview ? (
+                <div className="w-full min-h-[140px] max-h-[260px] overflow-y-auto p-3 rounded-md border bg-muted/20 text-sm">
+                  {content.trim() ? (
+                    <MarkdownRenderer content={content} />
+                  ) : (
+                    <span className="text-xs text-muted-foreground italic">Nothing to preview</span>
+                  )}
+                </div>
+              ) : (
+                <textarea
+                  className="w-full min-h-[140px] p-3 rounded-md border bg-background text-sm resize-y focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Write your note here..."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  required
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">

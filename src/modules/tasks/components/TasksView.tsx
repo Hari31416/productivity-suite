@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { format } from 'date-fns'
 import {
   List,
   Calendar as CalendarIcon,
@@ -26,7 +27,7 @@ import type {
   TaskStatus,
   TaskFilter
 } from '../types'
-import { useTasks, useTaskTags } from '../hooks/useTasks'
+import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { ProjectSidebar } from './ProjectSidebar'
 import { TaskListView } from './views/TaskListView'
@@ -43,6 +44,8 @@ export function TasksView() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [tagFilter, setTagFilter] = useState<string>('all')
   const [showMobileSidebar, setShowMobileSidebar] = useState(false)
+  const [quickTitle, setQuickTitle] = useState('')
+  const [quickPriority, setQuickPriority] = useState<PriorityLevel>('medium')
 
   // Modals state
   const [taskModalOpen, setTaskModalOpen] = useState(false)
@@ -53,9 +56,9 @@ export function TasksView() {
   const activeFilter: TaskFilter = useMemo(() => {
     return {
       projectId: selectedProjectId,
-      smartFilter: selectedProjectId
-        ? undefined
-        : (selectedSmartFilter as TaskFilter['smartFilter']),
+      smartFilter: selectedSmartFilter !== 'all'
+        ? (selectedSmartFilter as TaskFilter['smartFilter'])
+        : undefined,
       priority: priorityFilter !== 'all' ? (priorityFilter as PriorityLevel) : undefined,
       status: statusFilter !== 'all' ? (statusFilter as TaskStatus) : undefined,
       tag: tagFilter !== 'all' ? tagFilter : undefined,
@@ -74,17 +77,39 @@ export function TasksView() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(activeFilter)
   const { data: projects = [] } = useProjects(false)
   const { data: tags = [] } = useTaskTags()
+  const createTaskMutation = useCreateTask()
 
   const handleSelectSmartFilter = (filterType: string) => {
     setSelectedSmartFilter(filterType)
-    setSelectedProjectId(undefined)
     setShowMobileSidebar(false)
   }
 
-  const handleSelectProject = (projectId: string) => {
+  const handleSelectProject = (projectId: string | undefined) => {
     setSelectedProjectId(projectId)
-    setSelectedSmartFilter('all')
     setShowMobileSidebar(false)
+  }
+
+  const handleQuickAddTask = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = quickTitle.trim()
+    if (!trimmed) return
+
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const dueDate = selectedSmartFilter === 'today' ? todayStr : undefined
+
+    await createTaskMutation.mutateAsync({
+      taskData: {
+        title: trimmed,
+        projectId: selectedProjectId,
+        priority: quickPriority,
+        status: 'todo',
+        dueDate,
+        tags: [],
+        archived: false
+      }
+    })
+
+    setQuickTitle('')
   }
 
   const handleOpenNewTask = (date?: string, status?: TaskStatus) => {
@@ -106,35 +131,47 @@ export function TasksView() {
   }, [projects, selectedProjectId])
 
   const activeFilterTitle = useMemo(() => {
-    if (activeProject) return activeProject.name
+    const parts: string[] = []
+    if (activeProject) parts.push(activeProject.name)
     switch (selectedSmartFilter) {
       case 'today':
-        return "Today's Tasks"
+        parts.push("Today's Tasks")
+        break
       case 'upcoming':
-        return 'Upcoming Tasks'
+        parts.push('Upcoming Tasks')
+        break
       case 'overdue':
-        return 'Overdue Tasks'
+        parts.push('Overdue Tasks')
+        break
       case 'completed':
-        return 'Completed Tasks'
+        parts.push('Completed Tasks')
+        break
       case 'archived':
-        return 'Archived Tasks'
+        parts.push('Archived Tasks')
+        break
       case 'all':
       default:
-        return 'All Tasks'
+        if (!activeProject) parts.push('All Tasks')
+        break
     }
+    return parts.join(' • ')
   }, [activeProject, selectedSmartFilter])
 
   const hasActiveFilters =
     searchQuery !== '' ||
     priorityFilter !== 'all' ||
     statusFilter !== 'all' ||
-    tagFilter !== 'all'
+    tagFilter !== 'all' ||
+    selectedProjectId !== undefined ||
+    selectedSmartFilter !== 'all'
 
   const handleResetFilters = () => {
     setSearchQuery('')
     setPriorityFilter('all')
     setStatusFilter('all')
     setTagFilter('all')
+    setSelectedProjectId(undefined)
+    setSelectedSmartFilter('all')
   }
 
   return (
@@ -341,6 +378,29 @@ export function TasksView() {
               </Badge>
             </div>
           </div>
+
+          {/* Quick Add Task Input */}
+          <form onSubmit={handleQuickAddTask} className="flex gap-2 items-center">
+            <Input
+              placeholder="Add a task and press Enter..."
+              value={quickTitle}
+              onChange={(e) => setQuickTitle(e.target.value)}
+              className="h-10 text-sm"
+            />
+            <select
+              value={quickPriority}
+              onChange={(e) => setQuickPriority(e.target.value as PriorityLevel)}
+              className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="urgent">Urgent</option>
+            </select>
+            <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
+              Add
+            </Button>
+          </form>
 
           {/* Views Area */}
           {viewMode === 'list' && (

@@ -104,6 +104,19 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     }
   }, [initialNote, title, content, tags, projectId, pinned, color, stats.wordCount, onSave])
 
+  // Keyboard shortcut listener for Cmd+S / Ctrl+S
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
+        e.preventDefault()
+        handleSave()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleSave])
+
   // Debounced auto-save effect
   useEffect(() => {
     if (isFirstRender.current) {

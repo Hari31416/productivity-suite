@@ -4,11 +4,20 @@ import {
   addDays,
   subDays,
   parseISO,
-  isToday as checkIsToday
+  isToday as checkIsToday,
+  isSameDay
 } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog'
 import {
   ChevronLeft,
   ChevronRight,
@@ -18,7 +27,8 @@ import {
   BarChart3,
   Calendar as CalendarIcon,
   Archive,
-  RotateCcw
+  RotateCcw,
+  Trash2
 } from 'lucide-react'
 import type { Habit } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
@@ -27,7 +37,8 @@ import {
   useHabitLogs,
   useHabitRangeLogs,
   useArchiveHabit,
-  useDeleteHabit
+  useDeleteHabit,
+  useCreateHabit
 } from './hooks/useHabits'
 import { isHabitScheduledOnDate } from './utils/streakCalculator'
 import { HabitCard } from './components/HabitCard'
@@ -44,6 +55,9 @@ export function HabitsView() {
   const [showArchived, setShowArchived] = useState<boolean>(false)
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false)
   const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null)
+  const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
+  const [quickTitle, setQuickTitle] = useState('')
+  const [quickCategory, setQuickCategory] = useState(DEFAULT_HABIT_CATEGORIES[0].id)
 
   const { data: habits = [], isLoading: habitsLoading } = useHabits(showArchived)
   const { data: currentLogs = [] } = useHabitLogs(selectedDate)
@@ -57,6 +71,7 @@ export function HabitsView() {
 
   const { data: allRangeLogs = [] } = useHabitRangeLogs(rangeStart, rangeEnd)
 
+  const createMutation = useCreateHabit()
   const archiveMutation = useArchiveHabit()
   const deleteMutation = useDeleteHabit()
 
@@ -66,6 +81,21 @@ export function HabitsView() {
 
   const isCurrentDateToday = useMemo(() => {
     return checkIsToday(selectedDateObj)
+  }, [selectedDateObj])
+
+  // Rolling 7-day strip centered on selected date
+  const weekDays = useMemo(() => {
+    return [-3, -2, -1, 0, 1, 2, 3].map((offset) => {
+      const d = addDays(selectedDateObj, offset)
+      return {
+        dateStr: format(d, 'yyyy-MM-dd'),
+        dateObj: d,
+        dayName: format(d, 'EEE'),
+        dayNum: format(d, 'd'),
+        isToday: checkIsToday(d),
+        isSelected: isSameDay(d, selectedDateObj)
+      }
+    })
   }, [selectedDateObj])
 
   const handlePrevDay = () => {
@@ -98,9 +128,35 @@ export function HabitsView() {
   }
 
   const handleDeleteHabit = (habit: Habit) => {
-    if (window.confirm(`Are you sure you want to delete "${habit.title}"?`)) {
-      deleteMutation.mutate(habit.id)
+    setHabitToDelete(habit)
+  }
+
+  const confirmDelete = () => {
+    if (habitToDelete) {
+      deleteMutation.mutate(habitToDelete.id)
+      setHabitToDelete(null)
     }
+  }
+
+  const handleQuickAdd = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = quickTitle.trim()
+    if (!trimmed) return
+
+    await createMutation.mutateAsync({
+      title: trimmed,
+      description: '',
+      categoryId: quickCategory,
+      frequencyType: 'daily',
+      targetDaysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+      targetType: 'boolean',
+      targetValue: 1,
+      color: DEFAULT_HABIT_CATEGORIES.find((c) => c.id === quickCategory)?.color || '#3b82f6',
+      icon: 'Activity',
+      archived: false
+    })
+
+    setQuickTitle('')
   }
 
   const filteredHabits = useMemo(() => {
@@ -164,6 +220,33 @@ export function HabitsView() {
 
       {viewMode === 'tracker' ? (
         <div className="space-y-5">
+          {/* Quick-Add Bar */}
+          <form onSubmit={handleQuickAdd} className="flex gap-2 items-center">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Quick add a daily habit (press Enter)..."
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                className="h-10 text-sm"
+              />
+            </div>
+            <select
+              value={quickCategory}
+              onChange={(e) => setQuickCategory(e.target.value)}
+              className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {DEFAULT_HABIT_CATEGORIES.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+            <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
+              Add Habit
+            </Button>
+          </form>
+
+          {/* Date Navigation & Rolling Week Strip */}
           <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-1.5">
               <Button
@@ -198,6 +281,27 @@ export function HabitsView() {
                   {format(selectedDateObj, 'EEEE, MMMM d, yyyy')}
                 </span>
               </div>
+            </div>
+
+            {/* Rolling 7-day clickable buttons */}
+            <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+              {weekDays.map((d) => (
+                <button
+                  key={d.dateStr}
+                  type="button"
+                  onClick={() => setSelectedDate(d.dateStr)}
+                  className={`flex flex-col items-center justify-center min-w-[36px] h-10 px-1.5 rounded-md text-[11px] transition-all ${
+                    d.isSelected
+                      ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                      : d.isToday
+                      ? 'border border-primary/40 text-primary bg-primary/5 hover:bg-primary/10'
+                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <span className="text-[10px] leading-tight opacity-80">{d.dayName}</span>
+                  <span className="font-semibold leading-tight">{d.dayNum}</span>
+                </button>
+              ))}
             </div>
 
             <div className="flex items-center gap-2">
@@ -336,6 +440,41 @@ export function HabitsView() {
         onOpenChange={setIsFormOpen}
         habitToEdit={habitToEdit}
       />
+
+      {/* In-App Habit Delete Confirmation Dialog */}
+      <Dialog
+        open={Boolean(habitToDelete)}
+        onOpenChange={(open) => {
+          if (!open) setHabitToDelete(null)
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="h-5 w-5" />
+              <span>Delete Habit</span>
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete{' '}
+              <strong className="text-foreground">{habitToDelete?.title}</strong>? All associated daily check-ins and streaks will be removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setHabitToDelete(null)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+            >
+              Delete Habit
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

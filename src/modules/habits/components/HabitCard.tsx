@@ -339,27 +339,56 @@ export function HabitCard({
               <span className="font-medium text-foreground">{numericPercent}%</span>
             </div>
             <Progress value={numericPercent} className="h-2" />
-            <div className="flex items-center justify-end gap-2 pt-1">
+            <div className="flex items-center justify-end gap-1.5 pt-1 flex-wrap">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 aria-label="Decrease value"
-                className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-0"
-                onClick={() => handleNumericChange(-1)}
+                className="h-8 px-2 text-xs"
+                onClick={() => handleNumericChange((habit.targetValue || 1) >= 100 ? -250 : -1)}
                 disabled={currentNumericValue <= 0}
               >
-                <Minus className="h-4 w-4" />
+                <Minus className="h-3.5 w-3.5 mr-0.5" />
+                <span>{(habit.targetValue || 1) >= 100 ? '250' : '1'}</span>
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 aria-label="Increase value"
-                className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-0"
-                onClick={() => handleNumericChange(1)}
+                className="h-8 px-2 text-xs"
+                onClick={() => handleNumericChange((habit.targetValue || 1) >= 100 ? 250 : 1)}
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5 mr-0.5" />
+                <span>{(habit.targetValue || 1) >= 100 ? '250' : '1'}</span>
+              </Button>
+              {(habit.targetValue || 1) >= 500 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
+                  onClick={() => handleNumericChange(500)}
+                >
+                  +500
+                </Button>
+              )}
+              <Button
+                type="button"
+                variant={isCompleted ? 'default' : 'outline'}
+                size="sm"
+                className={cn('h-8 px-2.5 text-xs font-medium', isCompleted && 'bg-primary text-primary-foreground')}
+                onClick={() => {
+                  if (isCompleted) {
+                    setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: 0 })
+                  } else {
+                    setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: habit.targetValue || 1 })
+                  }
+                }}
+              >
+                <Check className="h-3.5 w-3.5 mr-1" />
+                {isCompleted ? 'Done' : 'Complete'}
               </Button>
             </div>
           </div>
