@@ -81,13 +81,32 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const isFirstRender = useRef(true)
-  const latestValuesRef = useRef({ noteId, title, content, tags, projectId, pinned, color })
+  const onSaveRef = useRef(onSave)
+  const isSavingRef = useRef(false)
+  const isMountedRef = useRef(true)
 
-  // Keep latest values in ref for flushing on close/unmount
+  // Track the last saved state to prevent redundant or loop saves
+  const lastSavedRef = useRef({
+    noteId: initialNote?.id,
+    title: initialNote?.title || '',
+    content: initialNote?.content || '',
+    tagsStr: JSON.stringify(initialNote?.tags || []),
+    projectId: initialNote?.projectId,
+    pinned: initialNote?.pinned || false,
+    color: initialNote?.color || ''
+  })
+
+  // Always keep onSaveRef current
   useEffect(() => {
-    latestValuesRef.current = { noteId, title, content, tags, projectId, pinned, color }
-  }, [noteId, title, content, tags, projectId, pinned, color])
+    onSaveRef.current = onSave
+  })
+
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
+  }, [])
 
   const { data: projects = [] } = useProjects()
   const { data: existingTags = [] } = useTags()
@@ -117,54 +136,96 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     }
   }
 
-  const handleSave = useCallback(async () => {
-    const current = latestValuesRef.current
-    if (!current.title.trim() && !current.content.trim() && !current.noteId) {
+  const performSave = useCallback(async () => {
+    const trimmedTitle = title.trim()
+    const tagsStr = JSON.stringify(tags)
+
+    // Skip if note is empty and never created
+    if (!trimmedTitle && !content.trim() && !noteId) {
+      if (isMountedRef.current) setSaveStatus('saved')
       return
     }
 
-    setSaveStatus('saving')
+    // Skip if unchanged
+    const last = lastSavedRef.current
+    if (
+      last.noteId === noteId &&
+      last.title === trimmedTitle &&
+      last.content === content &&
+      last.tagsStr === tagsStr &&
+      last.projectId === projectId &&
+      last.pinned === pinned &&
+      last.color === color
+    ) {
+      if (isMountedRef.current) setSaveStatus('saved')
+      return
+    }
+
+    if (isSavingRef.current) return
+    isSavingRef.current = true
+    if (isMountedRef.current) setSaveStatus('saving')
+
     try {
-      if (current.noteId) {
-        await onSave({
-          id: current.noteId,
+      if (noteId) {
+        await onSaveRef.current({
+          id: noteId,
           input: {
-            title: current.title.trim() || 'Untitled Note',
-            content: current.content,
-            tags: current.tags,
-            projectId: current.projectId || undefined,
-            pinned: current.pinned,
-            color: current.color || undefined,
+            title: trimmedTitle || 'Untitled Note',
+            content,
+            tags,
+            projectId: projectId || undefined,
+            pinned,
+            color: color || undefined,
             wordCount: stats.wordCount
           }
         })
+        lastSavedRef.current = {
+          noteId,
+          title: trimmedTitle,
+          content,
+          tagsStr,
+          projectId,
+          pinned,
+          color
+        }
       } else {
-        const created = await onSave({
-          title: current.title.trim() || 'Untitled Note',
-          content: current.content,
-          tags: current.tags,
-          projectId: current.projectId || undefined,
-          pinned: current.pinned,
-          color: current.color || undefined,
+        const created = await onSaveRef.current({
+          title: trimmedTitle || 'Untitled Note',
+          content,
+          tags,
+          projectId: projectId || undefined,
+          pinned,
+          color: color || undefined,
           wordCount: stats.wordCount,
           archived: false
         })
         if (created && created.id) {
           setNoteId(created.id)
+          lastSavedRef.current = {
+            noteId: created.id,
+            title: trimmedTitle,
+            content,
+            tagsStr,
+            projectId,
+            pinned,
+            color
+          }
         }
       }
-      setSaveStatus('saved')
+      if (isMountedRef.current) setSaveStatus('saved')
     } catch {
-      setSaveStatus('unsaved')
+      if (isMountedRef.current) setSaveStatus('unsaved')
+    } finally {
+      isSavingRef.current = false
     }
-  }, [stats.wordCount, onSave])
+  }, [noteId, title, content, tags, projectId, pinned, color, stats.wordCount])
 
   // Keyboard shortcut listener for Cmd+S / Ctrl+S and Esc for Zen mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        handleSave()
+        performSave()
       }
       if (e.key === 'Escape' && isZenMode) {
         setIsZenMode(false)
@@ -173,12 +234,24 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSave, isZenMode])
+  }, [performSave, isZenMode])
 
-  // Debounced auto-save effect
+  // Debounced auto-save effect on user changes
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
+    const trimmedTitle = title.trim()
+    const tagsStr = JSON.stringify(tags)
+    const last = lastSavedRef.current
+
+    const isDirty =
+      last.noteId !== noteId ||
+      last.title !== trimmedTitle ||
+      last.content !== content ||
+      last.tagsStr !== tagsStr ||
+      last.projectId !== projectId ||
+      last.pinned !== pinned ||
+      last.color !== color
+
+    if (!isDirty) {
       return
     }
 
@@ -188,22 +261,22 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     }
 
     autoSaveTimerRef.current = setTimeout(() => {
-      handleSave()
-    }, 600)
+      performSave()
+    }, 700)
 
     return () => {
       if (autoSaveTimerRef.current) {
         clearTimeout(autoSaveTimerRef.current)
       }
     }
-  }, [title, content, tags, projectId, pinned, color, handleSave])
+  }, [noteId, title, content, tags, projectId, pinned, color, performSave])
 
   // Flush save on close
   const handleClose = async () => {
     if (autoSaveTimerRef.current) {
       clearTimeout(autoSaveTimerRef.current)
     }
-    await handleSave()
+    await performSave()
     onClose()
   }
 

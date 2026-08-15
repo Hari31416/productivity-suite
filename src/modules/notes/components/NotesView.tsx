@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import {
   Plus,
   Search,
@@ -103,22 +103,19 @@ export function NotesView() {
     }
   }, [filteredNotes, showArchived])
 
-  const handleSaveNote = async (
-    noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }
-  ): Promise<Note | void> => {
-    if ('id' in noteData) {
-      await updateNoteMutation.mutateAsync(noteData)
-      // Update local state if editing
-      if (editingNote && editingNote.id === noteData.id) {
-        setEditingNote((prev) => (prev ? { ...prev, ...noteData.input } : null))
+  const handleSaveNote = useCallback(
+    async (
+      noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }
+    ): Promise<Note | void> => {
+      if ('id' in noteData) {
+        await updateNoteMutation.mutateAsync(noteData)
+      } else {
+        const created = await createNoteMutation.mutateAsync(noteData)
+        return created
       }
-    } else {
-      const created = await createNoteMutation.mutateAsync(noteData)
-      setEditingNote(created)
-      setIsCreatingNew(false)
-      return created
-    }
-  }
+    },
+    [updateNoteMutation, createNoteMutation]
+  )
 
   const handleExportAll = async () => {
     if (notes.length === 0) return
