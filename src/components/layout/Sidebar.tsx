@@ -39,9 +39,6 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
                 <span className="text-sm font-semibold tracking-tight leading-tight">
                   Productivity
                 </span>
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-mono">
-                  Offline Suite
-                </span>
               </div>
             </div>
           ) : (

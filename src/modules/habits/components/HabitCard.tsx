@@ -24,7 +24,7 @@ import {
   Pencil
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
-import { DEFAULT_HABIT_CATEGORIES } from '../constants'
+import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
 import { getHabitSlots } from '../utils/intervalCalculator'
 import { calculateStreak, isHabitCompletedOnDate } from '../utils/streakCalculator'
 import {
@@ -212,7 +212,13 @@ export function HabitCard({
     return isCompleted ? 100 : 0
   }, [habit, currentNumericValue, currentTimerMinutes, isCompleted])
 
-  return (
+    const HabitIcon = getHabitIconComponent(
+      habit.icon,
+      habit.title,
+      habit.categoryId
+    )
+
+    return (
     <Card
       className={cn(
         'transition-all hover:shadow-md',
@@ -224,9 +230,15 @@ export function HabitCard({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3 min-w-0">
             <div
-              className="mt-1 h-3.5 w-3.5 rounded-full shrink-0"
-              style={{ backgroundColor: habit.color || '#3b82f6' }}
-            />
+              className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border shrink-0 shadow-2xs"
+              style={{
+                backgroundColor: `${habit.color || '#3b82f6'}15`,
+                borderColor: `${habit.color || '#3b82f6'}40`,
+                color: habit.color || '#3b82f6'
+              }}
+            >
+              <HabitIcon className="h-4 w-4" />
+            </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3

@@ -29,24 +29,10 @@ import {
   Check,
   Activity,
   BarChart3,
-  Flame,
-  Bed,
-  Smile,
-  Smartphone,
-  PenTool,
-  Droplets,
-  Laptop,
-  Dumbbell,
-  BookOpen,
-  Footprints,
-  Cpu,
-  Sparkles,
-  Heart,
-  Briefcase,
-  Zap
+  Flame
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
-import { DEFAULT_HABIT_CATEGORIES } from '../constants'
+import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
 import { isHabitCompletedOnDate, isHabitScheduledOnDate } from '../utils/streakCalculator'
 import { useToggleHabitLog, useSetHabitLogValue } from '../hooks/useHabits'
 import { fireConfetti } from '@/lib/confetti'
@@ -58,27 +44,6 @@ interface HabitWeekOverviewProps {
   selectedDate: string
   onSelectDate: (date: string) => void
   onEditHabit?: (habit: Habit) => void
-}
-
-// Helper to choose a representative icon for a habit
-function getHabitIcon(habit: Habit) {
-  const text = (habit.title + ' ' + (habit.icon || '') + ' ' + (habit.categoryId || '')).toLowerCase()
-  
-  if (text.includes('sleep') || text.includes('bed') || text.includes('rest')) return Bed
-  if (text.includes('meditat') || text.includes('mindful') || text.includes('calm') || text.includes('peace') || text.includes('relax')) return Smile
-  if (text.includes('phone') || text.includes('screen') || text.includes('social') || text.includes('digital') || text.includes('app')) return Smartphone
-  if (text.includes('write') || text.includes('journal') || text.includes('pen') || text.includes('note') || text.includes('essay')) return PenTool
-  if (text.includes('water') || text.includes('drink') || text.includes('hydrat')) return Droplets
-  if (text.includes('code') || text.includes('work') || text.includes('laptop') || text.includes('computer') || text.includes('dev')) return Laptop
-  if (text.includes('gym') || text.includes('workout') || text.includes('exercise') || text.includes('lift') || text.includes('dumb')) return Dumbbell
-  if (text.includes('read') || text.includes('book') || text.includes('learn') || text.includes('study')) return BookOpen
-  if (text.includes('walk') || text.includes('step') || text.includes('run') || text.includes('hike') || text.includes('jog')) return Footprints
-  if (text.includes('brain') || text.includes('chess') || text.includes('logic') || text.includes('puzzle') || text.includes('ai')) return Cpu
-  if (text.includes('health') || text.includes('heart') || text.includes('diet')) return Heart
-  if (text.includes('productiv') || text.includes('task') || text.includes('focus')) return Briefcase
-  if (text.includes('energy') || text.includes('fast') || text.includes('speed')) return Zap
-  
-  return Sparkles
 }
 
 export function HabitWeekOverview({
@@ -398,7 +363,11 @@ export function HabitWeekOverview({
 
                   {/* One column per habit */}
                   {activeHabits.map((habit) => {
-                    const IconComponent = getHabitIcon(habit)
+                    const IconComponent = getHabitIconComponent(
+                      habit.icon,
+                      habit.title,
+                      habit.categoryId
+                    )
                     const category = DEFAULT_HABIT_CATEGORIES.find(
                       (c) => c.id === habit.categoryId
                     )

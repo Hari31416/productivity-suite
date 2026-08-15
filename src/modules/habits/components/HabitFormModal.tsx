@@ -20,7 +20,7 @@ import type {
   HabitFrequencyType,
   HabitTargetType
 } from '../types'
-import { DEFAULT_HABIT_CATEGORIES, PRESET_COLORS } from '../constants'
+import { DEFAULT_HABIT_CATEGORIES, PRESET_COLORS, HABIT_ICONS } from '../constants'
 import { useCreateHabit, useUpdateHabit } from '../hooks/useHabits'
 import { cn } from '@/lib/utils'
 
@@ -51,6 +51,7 @@ export function HabitFormModal({
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState(PRESET_COLORS[0])
+  const [icon, setIcon] = useState('Bed')
   const [categoryId, setCategoryId] = useState('health')
   const [frequencyType, setFrequencyType] = useState<HabitFrequencyType>('daily')
   const [targetDaysOfWeek, setTargetDaysOfWeek] = useState<number[]>([1, 2, 3, 4, 5])
@@ -69,6 +70,7 @@ export function HabitFormModal({
       setTitle(habitToEdit.title)
       setDescription(habitToEdit.description || '')
       setColor(habitToEdit.color || PRESET_COLORS[0])
+      setIcon(habitToEdit.icon || 'Bed')
       setCategoryId(habitToEdit.categoryId || 'health')
       setFrequencyType(habitToEdit.frequencyType)
       setTargetDaysOfWeek(habitToEdit.targetDaysOfWeek || [1, 2, 3, 4, 5])
@@ -84,6 +86,7 @@ export function HabitFormModal({
       setTitle('')
       setDescription('')
       setColor(PRESET_COLORS[0])
+      setIcon('Bed')
       setCategoryId('health')
       setFrequencyType('daily')
       setTargetDaysOfWeek([1, 2, 3, 4, 5])
@@ -120,6 +123,7 @@ export function HabitFormModal({
         title: title.trim(),
         description: description.trim() || undefined,
         color,
+        icon,
         categoryId,
         frequencyType,
         targetDaysOfWeek:
@@ -414,6 +418,31 @@ export function HabitFormModal({
                   aria-label={`Select color ${c}`}
                 />
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Habit Icon</label>
+            <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 pt-1">
+              {HABIT_ICONS.map((item) => {
+                const IconComponent = item.icon
+                const isSelected = (icon || '').toLowerCase() === item.name.toLowerCase()
+                return (
+                  <button
+                    key={item.name}
+                    type="button"
+                    onClick={() => setIcon(item.name)}
+                    className={cn(
+                      'h-9 rounded-lg border flex items-center justify-center text-muted-foreground transition-all hover:text-foreground hover:bg-muted/60',
+                      isSelected && 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-offset-1 ring-offset-background'
+                    )}
+                    title={item.label}
+                    aria-label={item.label}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                  </button>
+                )
+              })}
             </div>
           </div>
 
