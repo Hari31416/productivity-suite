@@ -339,19 +339,92 @@ export function HabitWeekOverview({
       </div>
 
       {subView === 'matrix' ? (
-        /* Matrix Grid Container */
-        <div className="rounded-xl border bg-card text-card-foreground shadow-xs overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full border-collapse text-left text-sm">
-              <thead>
-                <tr className="border-b bg-muted/40 text-xs font-medium text-muted-foreground">
-                  {/* Date Column */}
-                  <th className="py-3 px-4 min-w-[160px] font-semibold text-foreground">
-                    <div className="flex items-center gap-2">
-                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                      <span>Date</span>
-                    </div>
-                  </th>
+        <>
+          {/* Mobile Day-by-Day Card View (< md) */}
+          <div className="md:hidden space-y-3">
+            {dayRows.map((row) => (
+              <div
+                key={row.dateStr}
+                className={cn(
+                  'rounded-xl border bg-card p-3 shadow-xs space-y-2.5 transition-all',
+                  row.isToday && 'border-primary/50 bg-primary/5 ring-1 ring-primary/20'
+                )}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span
+                      onClick={() => onSelectDate(row.dateStr)}
+                      className={cn(
+                        'font-semibold text-xs cursor-pointer hover:underline',
+                        row.isToday ? 'text-primary' : 'text-foreground'
+                      )}
+                    >
+                      {row.formattedFull}
+                    </span>
+                    {row.isToday && (
+                      <Badge variant="secondary" className="h-4 px-1.5 text-[9px] bg-primary/20 text-primary font-semibold">
+                        Today
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold">
+                    <span className="text-muted-foreground text-[11px]">
+                      {row.completedCount}/{row.scheduledCount}
+                    </span>
+                    <span className="text-primary">{row.percentage}%</span>
+                  </div>
+                </div>
+
+                {/* Progress bar */}
+                <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                  <div
+                    className={cn(
+                      'h-full transition-all duration-300 rounded-full',
+                      row.percentage === 100 ? 'bg-emerald-500' : 'bg-primary'
+                    )}
+                    style={{ width: `${row.percentage}%` }}
+                  />
+                </div>
+
+                {/* Habit chips grid */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                  {row.habitStatuses.map(({ habit, isScheduled, isCompleted }) => {
+                    if (!isScheduled) return null
+                    return (
+                      <button
+                        key={habit.id}
+                        type="button"
+                        onClick={() => handleCellToggle(habit, row.dateStr)}
+                        className={cn(
+                          'flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-medium border transition-all',
+                          isCompleted
+                            ? 'bg-primary text-primary-foreground border-primary shadow-2xs font-semibold'
+                            : 'bg-muted/50 text-muted-foreground border-border hover:text-foreground'
+                        )}
+                      >
+                        {isCompleted && <Check className="h-3 w-3" />}
+                        <span className="truncate max-w-[100px]">{habit.title}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Matrix Grid Container (>= md) */}
+          <div className="hidden md:block rounded-xl border bg-card text-card-foreground shadow-xs overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/40 text-xs font-medium text-muted-foreground">
+                    {/* Date Column */}
+                    <th className="py-3 px-4 min-w-[160px] font-semibold text-foreground">
+                      <div className="flex items-center gap-2">
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                        <span>Date</span>
+                      </div>
+                    </th>
 
                   {/* Daily Progress Bar Column */}
                   <th className="py-3 px-4 min-w-[180px] font-semibold text-foreground">
@@ -535,6 +608,7 @@ export function HabitWeekOverview({
             </table>
           </div>
         </div>
+        </>
       ) : (
         /* Weekly Progress Chart Sub-view */
         <div className="grid gap-4 sm:grid-cols-1 lg:grid-cols-3">

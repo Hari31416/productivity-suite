@@ -184,67 +184,68 @@ export function TasksView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Top Header Bar */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Tasks & Projects</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-2">
+        <div className="hidden sm:block">
+          <h2 className="text-xl font-bold tracking-tight">Tasks & Projects</h2>
+          <p className="text-xs text-muted-foreground">
             Manage your projects, deadlines, priorities, and subtask checklists.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
           {/* View Mode Toggle */}
-          <div className="inline-flex rounded-lg border p-1 bg-muted/40 text-xs">
+          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs">
             <button
               type="button"
               onClick={() => setViewMode('list')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
                 viewMode === 'list'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <List className="h-4 w-4" />
-              <span className="hidden sm:inline">List</span>
+              <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs">List</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('calendar')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
                 viewMode === 'calendar'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <CalendarIcon className="h-4 w-4" />
-              <span className="hidden sm:inline">Calendar</span>
+              <CalendarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs">Calendar</span>
             </button>
 
             <button
               type="button"
               onClick={() => setViewMode('kanban')}
               className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-colors',
+                'flex items-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors',
                 viewMode === 'kanban'
-                  ? 'bg-background text-foreground shadow-sm'
+                  ? 'bg-background text-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              <Kanban className="h-4 w-4" />
-              <span className="hidden sm:inline">Kanban</span>
+              <Kanban className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+              <span className="text-xs">Kanban</span>
             </button>
           </div>
 
           <Button
+            size="sm"
             onClick={() => handleOpenNewTask()}
-            className="gap-2 shadow-sm shrink-0"
+            className="h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5" />
             <span>New Task</span>
           </Button>
         </div>
@@ -486,25 +487,25 @@ export function TasksView() {
 
           {/* Quick Add Task Input with Smart Parser */}
           <div className="space-y-1.5">
-            <form onSubmit={handleQuickAddTask} className="flex gap-2 items-center">
+            <form onSubmit={handleQuickAddTask} className="flex gap-1.5 sm:gap-2 items-center">
               <Input
-                placeholder="Add task... (supports !urgent, @tomorrow, #project, #tag)"
+                placeholder="Add task... (!urgent, @tomorrow, #tag)"
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
-                className="h-10 text-sm"
+                className="h-9 text-xs sm:text-sm flex-1 min-w-0"
               />
               <select
                 value={quickPriority}
                 onChange={(e) => setQuickPriority(e.target.value as PriorityLevel)}
-                className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                className="h-9 rounded-md border bg-background px-2 sm:px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0"
                 aria-label="Task priority"
               >
                 <option value="low">Low</option>
-                <option value="medium">Medium</option>
+                <option value="medium">Med</option>
                 <option value="high">High</option>
                 <option value="urgent">Urgent</option>
               </select>
-              <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
+              <Button type="submit" size="sm" className="h-9 px-3 sm:px-4 text-xs font-medium shrink-0" disabled={!quickTitle.trim()}>
                 Add
               </Button>
             </form>

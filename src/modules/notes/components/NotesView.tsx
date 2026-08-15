@@ -155,38 +155,38 @@ export function NotesView() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Top Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Notepad</h2>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between gap-2">
+        <div className="hidden sm:block">
+          <h2 className="text-xl font-bold tracking-tight">Notepad</h2>
+          <p className="text-xs text-muted-foreground">
             Write markdown notes, organize ideas with tags, and search your thoughts instantly.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportAll}
             disabled={notes.length === 0 || isExporting}
-            className="gap-1.5"
+            className="h-8 gap-1.5 text-xs px-2.5"
             title="Export all notes to a zip archive"
           >
-            <Download className="h-4 w-4" />
-            <span>{isExporting ? 'Exporting...' : 'Export All (.zip)'}</span>
+            <Download className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export (.zip)'}</span>
           </Button>
 
-          <Button onClick={handleStartCreate} className="gap-1.5">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" onClick={handleStartCreate} className="h-8 gap-1.5 shadow-xs text-xs px-3">
+            <Plus className="h-3.5 w-3.5" />
             <span>New Note</span>
           </Button>
         </div>
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 shadow-xs md:flex-row md:items-center md:justify-between">
+      <div className="flex flex-col gap-2.5 rounded-xl border bg-card p-2.5 sm:p-3 shadow-xs md:flex-row md:items-center md:justify-between">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input

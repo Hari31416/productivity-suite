@@ -199,67 +199,67 @@ export function HabitsView() {
   }, [filteredHabits, selectedDate, showArchived, sortBy, allRangeLogs])
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Habit Tracker</h2>
-          <p className="text-sm text-muted-foreground">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex items-center justify-between gap-2">
+        <div className="hidden sm:block">
+          <h2 className="text-xl font-bold tracking-tight">Habit Tracker</h2>
+          <p className="text-xs text-muted-foreground">
             Track daily check-ins, recurring sub-day intervals, and streak analytics.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="flex items-center rounded-lg border bg-muted/30 p-1">
+        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
+          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs">
             <Button
               variant={viewMode === 'tracker' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-7 text-xs px-2 sm:px-3 gap-1"
               onClick={() => setViewMode('tracker')}
             >
               <Activity className="h-3.5 w-3.5" />
-              <span>Daily Tracker</span>
+              <span>Daily</span>
             </Button>
             <Button
               variant={viewMode === 'week' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-7 text-xs px-2 sm:px-3 gap-1"
               onClick={() => setViewMode('week')}
             >
               <CalendarIcon className="h-3.5 w-3.5" />
-              <span>Week Overview</span>
+              <span>Week</span>
             </Button>
             <Button
               variant={viewMode === 'analytics' ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 text-xs gap-1.5"
+              className="h-7 text-xs px-2 sm:px-3 gap-1"
               onClick={() => setViewMode('analytics')}
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>Analytics</span>
             </Button>
           </div>
-          <Button onClick={handleCreateNew} className="gap-2">
-            <Plus className="h-4 w-4" />
+          <Button size="sm" onClick={handleCreateNew} className="h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3">
+            <Plus className="h-3.5 w-3.5" />
             <span>New Habit</span>
           </Button>
         </div>
       </div>
 
       {viewMode === 'tracker' ? (
-        <div className="space-y-5">
+        <div className="space-y-3 sm:space-y-5">
           {/* Historical Date Indicator Banner */}
           {!isCurrentDateToday && (
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 shadow-xs">
-              <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-                <CalendarIcon className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 shadow-xs">
+              <div className="flex items-center gap-2 text-xs">
+                <CalendarIcon className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-400" />
                 <span>
-                  Viewing historical log for <strong>{format(selectedDateObj, 'EEEE, MMMM d, yyyy')}</strong>
+                  Viewing <strong>{format(selectedDateObj, 'EEE, MMM d, yyyy')}</strong>
                 </span>
               </div>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={handleToday}
-                className="h-8 text-xs bg-background hover:bg-background/90 border-amber-500/40 text-foreground shrink-0 self-start sm:self-auto font-medium"
+                className="h-7 text-xs bg-background hover:bg-background/90 border-amber-500/40 text-foreground shrink-0 self-start sm:self-auto font-medium"
               >
                 Return to Today
               </Button>
@@ -267,19 +267,19 @@ export function HabitsView() {
           )}
 
           {/* Quick-Add Bar */}
-          <form onSubmit={handleQuickAdd} className="flex gap-2 items-center">
-            <div className="relative flex-1">
+          <form onSubmit={handleQuickAdd} className="flex gap-1.5 sm:gap-2 items-center">
+            <div className="relative flex-1 min-w-0">
               <Input
-                placeholder="Quick add a daily habit (press Enter)..."
+                placeholder="Quick add daily habit..."
                 value={quickTitle}
                 onChange={(e) => setQuickTitle(e.target.value)}
-                className="h-10 text-sm"
+                className="h-9 text-xs sm:text-sm"
               />
             </div>
             <select
               value={quickCategory}
               onChange={(e) => setQuickCategory(e.target.value)}
-              className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              className="h-9 rounded-md border bg-background px-2 sm:px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0 max-w-[130px]"
             >
               {DEFAULT_HABIT_CATEGORIES.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -287,85 +287,73 @@ export function HabitsView() {
                 </option>
               ))}
             </select>
-            <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
-              Add Habit
+            <Button type="submit" size="sm" className="h-9 px-3 sm:px-4 text-xs font-medium shrink-0" disabled={!quickTitle.trim()}>
+              Add
             </Button>
           </form>
 
           {/* Date Navigation & Rolling Week Strip */}
-          <div className="flex flex-col gap-3 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handlePrevDay}
-                aria-label="Previous day"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={isCurrentDateToday ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs px-3"
-                onClick={handleToday}
-              >
-                Today
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={handleNextDay}
-                aria-label="Next day"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <div className="ml-2 flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold">
-                  {format(selectedDateObj, 'EEEE, MMMM d, yyyy')}
-                </span>
+          <div className="flex flex-col gap-2 rounded-xl border bg-card p-2.5 sm:p-3 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+            <div className="flex items-center justify-between sm:justify-start gap-1 sm:gap-1.5">
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={handlePrevDay}
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={isCurrentDateToday ? 'default' : 'outline'}
+                  size="sm"
+                  className="h-8 text-xs px-2.5"
+                  onClick={handleToday}
+                >
+                  Today
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={handleNextDay}
+                  aria-label="Next day"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                <span>{format(selectedDateObj, 'MMM d, yyyy')}</span>
               </div>
             </div>
 
             {/* Rolling 7-day clickable buttons */}
-            <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+            <div className="flex items-center justify-between sm:justify-center gap-1 overflow-x-auto py-0.5">
               {weekDays.map((d) => (
                 <button
                   key={d.dateStr}
                   type="button"
                   onClick={() => setSelectedDate(d.dateStr)}
-                  className={`flex flex-col items-center justify-center min-w-[36px] h-10 px-1.5 rounded-md text-[11px] transition-all ${
+                  className={`flex flex-col items-center justify-center flex-1 sm:flex-initial min-w-[32px] sm:min-w-[36px] h-9 sm:h-10 px-1 rounded-md text-[11px] transition-all ${
                     d.isSelected
-                      ? 'bg-primary text-primary-foreground font-bold shadow-sm'
+                    ? 'bg-primary text-primary-foreground font-bold shadow-xs'
                       : d.isToday
                       ? 'border border-primary/40 text-primary bg-primary/5 hover:bg-primary/10'
                       : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <span className="text-[10px] leading-tight opacity-80">{d.dayName}</span>
-                  <span className="font-semibold leading-tight">{d.dayNum}</span>
+                  <span className="text-[9px] sm:text-[10px] leading-tight opacity-80">{d.dayName}</span>
+                  <span className="font-semibold leading-tight text-xs">{d.dayNum}</span>
                 </button>
               ))}
             </div>
-
-            <div className="flex items-center gap-2">
-              <Input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => {
-                  if (e.target.value) {
-                    setSelectedDate(e.target.value)
-                  }
-                }}
-                className="h-8 w-36 text-xs"
-              />
-            </div>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               <Button
                 variant={selectedCategory === 'all' ? 'default' : 'outline'}
                 size="sm"

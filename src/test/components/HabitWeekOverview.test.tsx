@@ -68,11 +68,11 @@ describe('HabitWeekOverview Component', () => {
     expect(screen.getByRole('button', { name: /log habits/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /weekly progress chart/i })).toBeInTheDocument()
 
-    // Verify table headers
+    // Verify table headers & responsive habit items
     expect(screen.getByText('Date')).toBeInTheDocument()
     expect(screen.getByText('Progress Bar')).toBeInTheDocument()
-    expect(screen.getByText('Morning Yoga')).toBeInTheDocument()
-    expect(screen.getByText('Read Books')).toBeInTheDocument()
+    expect(screen.getAllByText('Morning Yoga').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Read Books').length).toBeGreaterThan(0)
 
     // Verify summary row
     expect(screen.getByText(/AVERAGE \/ TOTAL/i)).toBeInTheDocument()

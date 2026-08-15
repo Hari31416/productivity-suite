@@ -178,20 +178,20 @@ export function TaskKanbanView({
               onDragLeave={(e) => handleDragLeave(e, column.id)}
               onDrop={(e) => handleDrop(e, column.id)}
               className={cn(
-                'flex flex-col rounded-xl border bg-muted/20 p-3 min-h-[400px] md:min-h-[480px] transition-all',
+                'flex flex-col rounded-xl border bg-muted/20 p-2.5 sm:p-3 min-h-[220px] md:min-h-[480px] transition-all',
                 column.borderColor,
                 isDragTarget && 'ring-2 ring-primary/80 bg-primary/5',
                 isHiddenOnMobile && 'hidden md:flex'
               )}
             >
               {/* Column Header */}
-              <div className="flex items-center justify-between pb-3 mb-2 border-b">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between pb-2 mb-2 border-b">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Icon className={cn('h-4 w-4', column.color)} />
-                  <span className="font-semibold text-sm text-foreground">
+                  <span className="font-semibold text-xs sm:text-sm text-foreground">
                     {column.title}
                   </span>
-                  <Badge variant="secondary" className="text-[11px] h-5 px-1.5 font-normal">
+                  <Badge variant="secondary" className="text-[10px] sm:text-[11px] h-4.5 px-1.5 font-normal">
                     {columnTasks.length}
                   </Badge>
                 </div>
@@ -200,23 +200,23 @@ export function TaskKanbanView({
                   variant="ghost"
                   size="sm"
                   onClick={() => onAddTask?.(column.id)}
-                  className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 hover:bg-background/80"
+                  className="h-7 w-7 min-h-[28px] min-w-[28px] p-0 hover:bg-background/80"
                   aria-label={`Add task to ${column.title}`}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
 
               {/* Task list */}
-              <div className="space-y-2.5 flex-1">
+              <div className="space-y-2 flex-1">
                 {columnTasks.length === 0 ? (
-                  <div className="h-28 flex flex-col items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
+                  <div className="h-20 flex flex-col items-center justify-center rounded-lg border border-dashed text-xs text-muted-foreground">
                     <span>No tasks</span>
                     <Button
                       variant="link"
                       size="sm"
                       onClick={() => onAddTask?.(column.id)}
-                      className="text-xs h-auto p-0 mt-1 min-h-[36px]"
+                      className="text-xs h-auto p-0 mt-0.5"
                     >
                       + Add task
                     </Button>

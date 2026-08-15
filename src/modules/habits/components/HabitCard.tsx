@@ -221,29 +221,29 @@ export function HabitCard({
     return (
     <Card
       className={cn(
-        'transition-all hover:shadow-md',
+        'transition-all hover:shadow-xs',
         habit.archived && 'opacity-60 bg-muted/30',
         isCompleted && 'border-primary/40 bg-primary/5'
       )}
     >
-      <CardContent className="p-4 sm:p-5 space-y-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
+      <CardContent className="p-3 sm:p-4 space-y-2.5 sm:space-y-3.5">
+        <div className="flex items-start justify-between gap-2.5">
+          <div className="flex items-start gap-2.5 min-w-0">
             <div
-              className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg border shrink-0 shadow-2xs"
+              className="mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border shrink-0 shadow-2xs"
               style={{
                 backgroundColor: `${habit.color || '#3b82f6'}15`,
                 borderColor: `${habit.color || '#3b82f6'}40`,
                 color: habit.color || '#3b82f6'
               }}
             >
-              <HabitIcon className="h-4 w-4" />
+              <HabitIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
             </div>
             <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h3
                   className={cn(
-                    'font-semibold text-base leading-snug truncate',
+                    'font-semibold text-sm sm:text-base leading-snug truncate',
                     isCompleted && 'line-through text-muted-foreground'
                   )}
                 >

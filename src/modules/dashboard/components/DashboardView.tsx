@@ -127,28 +127,28 @@ export function DashboardView() {
   }, [])
 
   return (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-4 sm:space-y-6 pb-6">
       {/* Header Banner & Score */}
-      <div className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-card via-card to-primary/5 p-6 shadow-sm">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 shadow-xs">
+        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
               <Calendar className="h-3.5 w-3.5" />
               <span>{formattedDate}</span>
             </div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl text-foreground">
+            <h1 className="text-xl font-bold tracking-tight sm:text-3xl text-foreground">
               {greeting}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Track your habits, prioritize daily tasks, and capture insights all in one place.
             </p>
 
             {/* Quick action buttons */}
-            <div className="flex flex-wrap items-center gap-2 pt-3">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3">
               <Button
                 size="sm"
                 onClick={() => setTaskModalOpen(true)}
-                className="gap-1.5 h-8 text-xs font-medium"
+                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Task</span>
@@ -157,7 +157,7 @@ export function DashboardView() {
                 size="sm"
                 variant="outline"
                 onClick={() => setHabitModalOpen(true)}
-                className="gap-1.5 h-8 text-xs font-medium"
+                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>New Habit</span>
@@ -166,7 +166,7 @@ export function DashboardView() {
                 size="sm"
                 variant="outline"
                 onClick={() => setNoteModalOpen(true)}
-                className="gap-1.5 h-8 text-xs font-medium"
+                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>New Note</span>
@@ -177,13 +177,13 @@ export function DashboardView() {
           {/* Daily Productivity Score Card (Clickable for breakdown) */}
           <div
             onClick={() => setScoreModalOpen(true)}
-            className="flex w-full flex-col gap-3 rounded-xl border bg-background/80 p-4 backdrop-blur sm:w-80 shrink-0 cursor-pointer hover:border-primary/50 hover:shadow-md transition-all group"
+            className="flex w-full flex-col gap-2.5 sm:gap-3 rounded-xl border bg-background/80 p-3 sm:p-4 backdrop-blur sm:w-80 shrink-0 cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
             title="Click to view full score breakdown"
           >
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-amber-500 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Zap className="h-3.5 w-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Daily Score
                 </span>
               </div>
@@ -193,17 +193,17 @@ export function DashboardView() {
             </div>
 
             <div className="flex items-baseline justify-between">
-              <span className="text-3xl font-bold tracking-tight text-foreground">
+              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
                 {score}%
               </span>
               <span className="text-xs text-muted-foreground">
-                {completedHabitsCount + completedTasksCount} of {todayHabits.length + todayTasks.length} items done
+                {completedHabitsCount + completedTasksCount} of {todayHabits.length + todayTasks.length} done
               </span>
             </div>
 
-            <Progress value={score} className="h-2" />
+            <Progress value={score} className="h-1.5 sm:h-2" />
 
-            <div className="grid grid-cols-2 gap-2 pt-1 text-[11px] text-muted-foreground">
+            <div className="grid grid-cols-2 gap-2 pt-0.5 text-[11px] text-muted-foreground">
               <div className="flex items-center justify-between border-r pr-2">
                 <span>Habits:</span>
                 <span className="font-medium text-foreground">
@@ -217,26 +217,22 @@ export function DashboardView() {
                 </span>
               </div>
             </div>
-
-            <div className="text-[10px] text-center text-primary font-medium opacity-80 group-hover:opacity-100 transition-opacity">
-              Tap for detailed score breakdown &rarr;
-            </div>
           </div>
         </div>
       </div>
 
       {/* Quick Overview Summary Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <Card className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Activity className="h-5 w-5" />
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
+        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">Active Habits</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold">{habits.length}</span>
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Active Habits</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base sm:text-lg font-bold">{habits.length}</span>
               {maxStreak > 0 && (
-                <span className="text-[11px] text-amber-500 font-medium flex items-center gap-0.5">
+                <span className="text-[10px] sm:text-[11px] text-amber-500 font-medium flex items-center">
                   <Flame className="h-3 w-3" />
                   {maxStreak}d
                 </span>
@@ -245,47 +241,44 @@ export function DashboardView() {
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-5 w-5" />
+        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">Tasks To-Do</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold">
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Tasks To-Do</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base sm:text-lg font-bold">
                 {tasks.filter((t) => t.status !== 'done').length}
               </span>
               {urgentTasksCount > 0 && (
-                <span className="text-[11px] text-red-500 font-medium">
-                  {urgentTasksCount} urgent
+                <span className="text-[10px] sm:text-[11px] text-red-500 font-medium">
+                  {urgentTasksCount} urg
                 </span>
               )}
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-            <FileText className="h-5 w-5" />
+        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
+            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">Notes & Docs</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-bold">{notes.length}</span>
-              <span className="text-[11px] text-muted-foreground">
-                {notes.filter((n) => n.pinned).length} pinned
-              </span>
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Notes & Docs</p>
+            <div className="flex items-baseline gap-1">
+              <span className="text-base sm:text-lg font-bold">{notes.length}</span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
-            <FolderKanban className="h-5 w-5" />
+        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
+          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
+            <FolderKanban className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate">Active Projects</p>
-            <span className="text-lg font-bold">{projects.length}</span>
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Active Projects</p>
+            <span className="text-base sm:text-lg font-bold">{projects.length}</span>
           </div>
         </Card>
       </div>

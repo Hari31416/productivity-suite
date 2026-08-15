@@ -185,9 +185,9 @@ export function TaskCalendarView({
       </div>
 
       {/* Calendar Grid & Selected Day Drawer */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Grid */}
-        <div className="lg:col-span-2 rounded-xl border bg-card shadow-sm overflow-hidden">
+        <div className="lg:col-span-2 rounded-xl border bg-card shadow-xs overflow-hidden">
           {/* Weekday headers */}
           <div className="grid grid-cols-7 border-b bg-muted/40 text-center py-2 text-xs font-semibold text-muted-foreground">
             {weekDayHeaders.map((day) => (

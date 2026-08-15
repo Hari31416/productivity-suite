@@ -26,32 +26,32 @@ export function Header({
   const { theme, setTheme } = useTheme()
 
   return (
-    <header className="sticky top-0 z-40 flex min-h-[3.75rem] w-full items-center justify-between border-b bg-background/95 px-4 pt-[env(safe-area-inset-top,0px)] pb-2 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
-      <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background/95 px-3 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {onToggleSidebar && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="md:hidden h-10 w-10 min-h-[44px] min-w-[44px]"
+            className="md:hidden h-9 w-9 min-h-[36px] min-w-[36px] shrink-0"
             aria-label="Toggle navigation menu"
           >
             <Menu className="h-5 w-5" />
           </Button>
         )}
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight text-foreground sm:text-xl">
+        <div className="min-w-0">
+          <h1 className="text-base font-semibold tracking-tight text-foreground sm:text-xl truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-muted-foreground hidden sm:block">
+            <p className="text-xs text-muted-foreground hidden sm:block truncate">
               {subtitle}
             </p>
           )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* Command Palette Trigger */}
         {onOpenCommandPalette && (
           <Button

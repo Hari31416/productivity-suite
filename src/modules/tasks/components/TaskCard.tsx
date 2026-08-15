@@ -181,17 +181,17 @@ export function TaskCard({
       draggable={draggable}
       onDragStart={(e) => onDragStart?.(e, task)}
       className={cn(
-        'group relative rounded-lg border bg-card p-3 shadow-sm transition-all hover:shadow-md hover:border-foreground/20',
+        'group relative rounded-lg border bg-card p-2.5 sm:p-3 shadow-xs transition-all hover:shadow-sm hover:border-foreground/20',
         isDone && 'bg-muted/30 opacity-75',
         isSelected && 'border-primary ring-2 ring-primary/20 bg-primary/5',
         draggable && 'cursor-grab active:cursor-grabbing',
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2.5">
-        <div className="flex items-start gap-2.5 flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-start gap-2 flex-1 min-w-0">
           {draggable && (
-            <div className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0 pt-0.5">
+            <div className="hidden sm:block text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0 pt-0.5">
               <GripVertical className="h-4 w-4" />
             </div>
           )}
