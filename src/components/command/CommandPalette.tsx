@@ -18,6 +18,7 @@ import {
   Dialog,
   DialogContent
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { useTheme } from '@/core/theme/useTheme'
 import { useHabits } from '@/modules/habits/hooks/useHabits'
 import { useTasks } from '@/modules/tasks/hooks/useTasks'
@@ -375,8 +376,38 @@ export function CommandPalette({
           className="max-h-80 overflow-y-auto p-2 divide-y divide-border/40"
         >
           {filteredCommands.length === 0 ? (
-            <div className="py-8 text-center text-xs text-muted-foreground">
-              No matching commands or items found for "{query}".
+            <div className="py-6 px-4 text-center space-y-3">
+              <p className="text-xs text-muted-foreground">
+                No matching commands or items found for "{query}".
+              </p>
+              {query.trim() && (
+                <div className="flex items-center justify-center gap-2 flex-wrap pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => {
+                      onOpenChange(false)
+                      onOpenTaskModal()
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Create Task "{query.trim().slice(0, 18)}"</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5"
+                    onClick={() => {
+                      onOpenChange(false)
+                      onOpenNoteModal()
+                    }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    <span>Create Note "{query.trim().slice(0, 18)}"</span>
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-1">

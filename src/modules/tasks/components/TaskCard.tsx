@@ -22,7 +22,8 @@ import {
   Archive,
   ArchiveRestore,
   ListChecks,
-  AlertTriangle
+  AlertTriangle,
+  GripVertical
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -189,6 +190,11 @@ export function TaskCard({
     >
       <div className="flex items-start justify-between gap-2.5">
         <div className="flex items-start gap-2.5 flex-1 min-w-0">
+          {draggable && (
+            <div className="text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0 pt-0.5">
+              <GripVertical className="h-4 w-4" />
+            </div>
+          )}
           {selectable ? (
             <button
               type="button"
@@ -242,75 +248,69 @@ export function TaskCard({
                     className="h-2 w-2 rounded-full shrink-0"
                     style={{ backgroundColor: project.color || '#3b82f6' }}
                   />
-                  <span className="truncate max-w-[100px]">{project.name}</span>
+                  <span className="truncate max-w-[120px]">{project.name}</span>
                 </div>
               )}
             </div>
 
             {task.description && !compact && (
-              <p className="text-xs text-muted-foreground line-clamp-2 pr-2">
+              <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
                 {task.description}
               </p>
             )}
 
+            {/* Meta badges: due date, subtasks, tags, estimated minutes */}
             <div className="flex items-center gap-3 pt-1 flex-wrap text-xs text-muted-foreground">
               {task.dueDate && (
                 <div
                   className={cn(
-                    'flex items-center gap-1',
-                    dateInfo.isOverdue && !isDone && 'text-destructive font-medium',
-                    dateInfo.isToday && !isDone && 'text-primary font-medium'
+                    'flex items-center gap-1 font-medium',
+                    dateInfo.isOverdue && 'text-red-600 dark:text-red-400 font-semibold',
+                    dateInfo.isToday && 'text-blue-600 dark:text-blue-400 font-semibold'
                   )}
                 >
-                  {dateInfo.isOverdue && !isDone ? (
-                    <AlertTriangle className="h-3 w-3" />
+                  {dateInfo.isOverdue ? (
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   ) : (
-                    <Calendar className="h-3 w-3" />
+                    <Calendar className="h-3.5 w-3.5 shrink-0" />
                   )}
-                  <span>
-                    {dateInfo.label}
-                    {task.dueTime && ` at ${task.dueTime}`}
-                  </span>
+                  <span>{dateInfo.label}</span>
                 </div>
               )}
 
-              {task.estimatedMinutes && (
+              {totalSubtasks > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setExpanded(!expanded)}
+                  className="flex items-center gap-1 hover:text-foreground transition-colors font-medium"
+                >
+                  <ListChecks className="h-3.5 w-3.5 shrink-0" />
+                  <span>
+                    {completedSubtasks}/{totalSubtasks}
+                  </span>
+                  {expanded ? (
+                    <ChevronDown className="h-3 w-3 shrink-0" />
+                  ) : (
+                    <ChevronRight className="h-3 w-3 shrink-0" />
+                  )}
+                </button>
+              )}
+
+              {task.estimatedMinutes && task.estimatedMinutes > 0 && (
                 <div className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
+                  <Clock className="h-3.5 w-3.5 shrink-0" />
                   <span>{formatEstimatedMinutes(task.estimatedMinutes)}</span>
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => setExpanded(!expanded)}
-                className={cn(
-                  'flex items-center gap-1 px-1.5 py-0.5 rounded text-xs transition-colors',
-                  expanded
-                    ? 'bg-primary/10 text-primary font-medium'
-                    : 'hover:bg-muted text-muted-foreground hover:text-foreground'
-                )}
-                title={expanded ? 'Collapse subtasks' : 'View / Add subtasks'}
-              >
-                <ListChecks className="h-3.5 w-3.5" />
-                <span>
-                  {totalSubtasks > 0 ? `${completedSubtasks}/${totalSubtasks} subtasks` : 'Add subtasks'}
-                </span>
-                {expanded ? (
-                  <ChevronDown className="h-3 w-3 ml-0.5" />
-                ) : (
-                  <ChevronRight className="h-3 w-3 ml-0.5" />
-                )}
-              </button>
-
               {task.tags && task.tags.length > 0 && (
                 <div className="flex items-center gap-1 flex-wrap">
-                  <Tag className="h-3 w-3 shrink-0" />
                   {task.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="text-[10px] bg-secondary/80 text-secondary-foreground px-1.5 py-0.2 rounded"
+                      className="inline-flex items-center text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded"
                     >
+                      <Tag className="h-2.5 w-2.5 mr-0.5" />
                       {tag}
                     </span>
                   ))}
@@ -320,91 +320,77 @@ export function TaskCard({
           </div>
         </div>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-10 w-10 sm:h-7 sm:w-7 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 p-0 opacity-80 hover:opacity-100 group-hover:opacity-100 shrink-0"
-              aria-label="Task options"
-            >
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => onEdit?.(task)}>
-              <Edit2 className="h-3.5 w-3.5 mr-2" />
-              <span>Edit Task</span>
-            </DropdownMenuItem>
+        {/* Right action menus */}
+        <div className="flex items-center gap-1 shrink-0">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] p-0 text-muted-foreground hover:text-foreground"
+                aria-label="Task options"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={() => onEdit?.(task)}>
+                <Edit2 className="h-3.5 w-3.5 mr-2" />
+                Edit Task
+              </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => setExpanded(true)}>
-              <ListChecks className="h-3.5 w-3.5 mr-2" />
-              <span>Manage Subtasks</span>
-            </DropdownMenuItem>
-
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>
-                <span className="flex items-center gap-2">
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{
-                      backgroundColor: STATUS_CONFIG[task.status]?.color || '#64748b'
-                    }}
-                  />
-                  <span>Move Status</span>
-                </span>
-              </DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                {(Object.keys(STATUS_CONFIG) as TaskStatus[]).map((status) => (
-                  <DropdownMenuItem
-                    key={status}
-                    onClick={() => handleStatusChange(status)}
-                    className={cn(task.status === status && 'font-semibold bg-muted/60')}
-                  >
-                    <span
-                      className="h-2 w-2 rounded-full mr-2"
-                      style={{ backgroundColor: STATUS_CONFIG[status].color }}
-                    />
-                    <span>{STATUS_CONFIG[status].label}</span>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger>
+                  <span className="text-xs">Change Status</span>
+                </DropdownMenuSubTrigger>
+                <DropdownMenuSubContent>
+                  <DropdownMenuItem onClick={() => handleStatusChange('todo')}>
+                    To Do
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+                  <DropdownMenuItem onClick={() => handleStatusChange('in_progress')}>
+                    In Progress
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('blocked')}>
+                    Blocked
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleStatusChange('done')}>
+                    Done
+                  </DropdownMenuItem>
+                </DropdownMenuSubContent>
+              </DropdownMenuSub>
 
-            <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-            <DropdownMenuItem
-              onClick={() =>
-                archiveMutation.mutate({ id: task.id, archived: !task.archived })
-              }
-            >
-              {task.archived ? (
-                <>
-                  <ArchiveRestore className="h-3.5 w-3.5 mr-2" />
-                  <span>Unarchive</span>
-                </>
-              ) : (
-                <>
-                  <Archive className="h-3.5 w-3.5 mr-2" />
-                  <span>Archive</span>
-                </>
-              )}
-            </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => archiveMutation.mutate({ id: task.id, archived: !task.archived })}>
+                {task.archived ? (
+                  <>
+                    <ArchiveRestore className="h-3.5 w-3.5 mr-2" />
+                    Restore Task
+                  </>
+                ) : (
+                  <>
+                    <Archive className="h-3.5 w-3.5 mr-2" />
+                    Archive Task
+                  </>
+                )}
+              </DropdownMenuItem>
 
-            <DropdownMenuItem
-              onClick={() => deleteMutation.mutate(task.id)}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-2" />
-              <span>Delete</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem
+                onClick={() => deleteMutation.mutate(task.id)}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-2" />
+                Delete Task
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
 
+      {/* Expandable Subtasks Checklist */}
       {expanded && (
-        <div className="mt-3 pt-3 border-t pl-6">
-          <SubtaskList taskId={task.id} showProgress={totalSubtasks > 0} />
+        <div className="mt-3 pt-3 border-t pl-7">
+          <SubtaskList taskId={task.id} />
         </div>
       )}
     </div>

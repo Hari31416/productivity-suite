@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { CheckSquare, Square, ArrowRight, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { CheckSquare, Square, ArrowRight, AlertTriangle, CheckCircle2, Plus } from 'lucide-react'
 import { useTasks, useUpdateTaskStatus } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { PRIORITY_CONFIG } from './TaskCard'
@@ -92,9 +92,22 @@ export function TaskDashboardWidget() {
 
           <div className="space-y-2">
             {featuredTasks.length === 0 ? (
-              <p className="text-xs text-muted-foreground py-4 text-center">
-                No urgent tasks or tasks due today.
-              </p>
+              <div className="py-4 text-center space-y-2">
+                <p className="text-xs text-muted-foreground">
+                  No urgent tasks or tasks due today.
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    window.location.hash = '#/tasks'
+                  }}
+                  className="h-7 text-xs gap-1.5"
+                >
+                  <Plus className="h-3 w-3" />
+                  <span>Open Tasks</span>
+                </Button>
+              </div>
             ) : (
               featuredTasks.map((task) => {
                 const isDone = task.status === 'done'

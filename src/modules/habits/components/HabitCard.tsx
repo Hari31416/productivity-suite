@@ -32,6 +32,7 @@ import {
   useSetHabitLogValue
 } from '../hooks/useHabits'
 import { cn } from '@/lib/utils'
+import { fireConfetti } from '@/lib/confetti'
 
 interface HabitCardProps {
   habit: Habit
@@ -99,6 +100,9 @@ export function HabitCard({
   }, [habit, logs])
 
   const handleToggleBoolean = () => {
+    if (!isCompleted) {
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#f59e0b'] })
+    }
     toggleMutation.mutate({
       habitId: habit.id,
       date: selectedDate
@@ -116,6 +120,9 @@ export function HabitCard({
   const handleNumericChange = (delta: number) => {
     const target = habit.targetValue || 1
     const nextVal = Math.max(0, currentNumericValue + delta)
+    if (nextVal >= target && currentNumericValue < target) {
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
+    }
     setValueMutation.mutate({
       habitId: habit.id,
       date: selectedDate,
@@ -129,6 +136,9 @@ export function HabitCard({
     const parsed = parseFloat(directValueInput)
     if (!isNaN(parsed) && parsed >= 0) {
       const target = habit.targetValue || 1
+      if (parsed >= target && currentNumericValue < target) {
+        fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
+      }
       setValueMutation.mutate({
         habitId: habit.id,
         date: selectedDate,
@@ -447,6 +457,7 @@ export function HabitCard({
                   if (isCompleted) {
                     setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: 0 })
                   } else {
+                    fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
                     setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: habit.targetValue || 1 })
                   }
                 }}

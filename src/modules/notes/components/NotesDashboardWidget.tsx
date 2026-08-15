@@ -109,7 +109,7 @@ export function NotesDashboardWidget() {
                         key={note.id}
                         onClick={navigateToNotes}
                         className={cn(
-                          'flex cursor-pointer items-center justify-between rounded-md border p-2 text-xs transition-colors hover:bg-muted/40'
+                          'flex cursor-pointer flex-col gap-0.5 rounded-md border p-2 text-xs transition-colors hover:bg-muted/40'
                         )}
                         style={
                           note.color
@@ -117,10 +117,17 @@ export function NotesDashboardWidget() {
                             : undefined
                         }
                       >
-                        <span className="truncate text-foreground">{note.title}</span>
-                        <span className="shrink-0 text-[10px] text-muted-foreground">
-                          {formattedDate}
-                        </span>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate font-medium text-foreground">{note.title}</span>
+                          <span className="shrink-0 text-[10px] text-muted-foreground">
+                            {formattedDate}
+                          </span>
+                        </div>
+                        {note.content && (
+                          <p className="text-[11px] text-muted-foreground line-clamp-1 truncate">
+                            {note.content.replace(/[#*`_\[\]]/g, '').trim()}
+                          </p>
+                        )}
                       </div>
                     )
                   })}

@@ -29,6 +29,7 @@ import type {
 } from '../types'
 import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
+import { parseSmartTaskInput } from '../utils/smartTaskParser'
 import { ProjectSidebar } from './ProjectSidebar'
 import { TaskListView } from './views/TaskListView'
 import { TaskCalendarView } from './views/TaskCalendarView'
@@ -53,6 +54,12 @@ export function TasksView() {
   const [defaultDueDate, setDefaultDueDate] = useState<string | undefined>(undefined)
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus | undefined>(undefined)
 
+  const { data: projects = [] } = useProjects(false)
+
+  const parsedQuickTask = useMemo(() => {
+    return parseSmartTaskInput(quickTitle, projects)
+  }, [quickTitle, projects])
+
   const activeFilter: TaskFilter = useMemo(() => {
     return {
       projectId: selectedProjectId,
@@ -75,7 +82,6 @@ export function TasksView() {
   ])
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(activeFilter)
-  const { data: projects = [] } = useProjects(false)
   const { data: tags = [] } = useTaskTags()
   const createTaskMutation = useCreateTask()
 
@@ -95,16 +101,19 @@ export function TasksView() {
     if (!trimmed) return
 
     const todayStr = format(new Date(), 'yyyy-MM-dd')
-    const dueDate = selectedSmartFilter === 'today' ? todayStr : undefined
+    const finalDueDate = parsedQuickTask.dueDate || (selectedSmartFilter === 'today' ? todayStr : undefined)
+    const finalPriority = parsedQuickTask.priority || quickPriority
+    const finalProjectId = parsedQuickTask.projectId || selectedProjectId
+    const finalTitle = parsedQuickTask.title || trimmed
 
     await createTaskMutation.mutateAsync({
       taskData: {
-        title: trimmed,
-        projectId: selectedProjectId,
-        priority: quickPriority,
+        title: finalTitle,
+        projectId: finalProjectId,
+        priority: finalPriority,
         status: 'todo',
-        dueDate,
-        tags: [],
+        dueDate: finalDueDate,
+        tags: parsedQuickTask.tags,
         archived: false
       }
     })
@@ -349,6 +358,102 @@ export function TasksView() {
             </div>
           </div>
 
+          {/* Active Filter Chips Banner */}
+          {hasActiveFilters && (
+            <div className="flex items-center gap-1.5 flex-wrap px-1 text-xs">
+              <span className="text-muted-foreground font-medium text-[11px]">Active filters:</span>
+              {selectedSmartFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal">
+                  <span>Filter: {selectedSmartFilter}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedSmartFilter('all')}
+                    className="hover:text-foreground"
+                    aria-label="Remove smart filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {selectedProjectId && activeProject && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ backgroundColor: activeProject.color || '#3b82f6' }}
+                  />
+                  <span>Project: {activeProject.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedProjectId(undefined)}
+                    className="hover:text-foreground"
+                    aria-label="Remove project filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {priorityFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal capitalize">
+                  <span>Priority: {priorityFilter}</span>
+                  <button
+                    type="button"
+                    onClick={() => setPriorityFilter('all')}
+                    className="hover:text-foreground"
+                    aria-label="Remove priority filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {statusFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal capitalize">
+                  <span>Status: {statusFilter.replace('_', ' ')}</span>
+                  <button
+                    type="button"
+                    onClick={() => setStatusFilter('all')}
+                    className="hover:text-foreground"
+                    aria-label="Remove status filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {tagFilter !== 'all' && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal">
+                  <span>Tag: #{tagFilter}</span>
+                  <button
+                    type="button"
+                    onClick={() => setTagFilter('all')}
+                    className="hover:text-foreground"
+                    aria-label="Remove tag filter"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {searchQuery && (
+                <Badge variant="secondary" className="gap-1 text-xs font-normal">
+                  <span>Search: "{searchQuery}"</span>
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              <button
+                type="button"
+                onClick={handleResetFilters}
+                className="text-[11px] text-primary hover:underline ml-1 cursor-pointer"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+
           {/* Mobile Sidebar Collapsible */}
           {showMobileSidebar && (
             <div className="md:hidden border rounded-xl p-3 bg-card shadow-sm">
@@ -379,28 +484,58 @@ export function TasksView() {
             </div>
           </div>
 
-          {/* Quick Add Task Input */}
-          <form onSubmit={handleQuickAddTask} className="flex gap-2 items-center">
-            <Input
-              placeholder="Add a task and press Enter..."
-              value={quickTitle}
-              onChange={(e) => setQuickTitle(e.target.value)}
-              className="h-10 text-sm"
-            />
-            <select
-              value={quickPriority}
-              onChange={(e) => setQuickPriority(e.target.value as PriorityLevel)}
-              className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-            <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
-              Add
-            </Button>
-          </form>
+          {/* Quick Add Task Input with Smart Parser */}
+          <div className="space-y-1.5">
+            <form onSubmit={handleQuickAddTask} className="flex gap-2 items-center">
+              <Input
+                placeholder="Add task... (supports !urgent, @tomorrow, #project, #tag)"
+                value={quickTitle}
+                onChange={(e) => setQuickTitle(e.target.value)}
+                className="h-10 text-sm"
+              />
+              <select
+                value={quickPriority}
+                onChange={(e) => setQuickPriority(e.target.value as PriorityLevel)}
+                className="h-10 rounded-md border bg-background px-3 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                aria-label="Task priority"
+              >
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+                <option value="urgent">Urgent</option>
+              </select>
+              <Button type="submit" size="sm" className="h-10 px-4 text-xs font-medium" disabled={!quickTitle.trim()}>
+                Add
+              </Button>
+            </form>
+
+            {/* Smart Token Live Preview */}
+            {(parsedQuickTask.priority || parsedQuickTask.dueDate || parsedQuickTask.projectName || parsedQuickTask.tags.length > 0) && (
+              <div className="flex items-center gap-1.5 text-[11px] px-1 flex-wrap text-muted-foreground">
+                <span className="font-medium text-foreground">Parsed:</span>
+                {parsedQuickTask.priority && (
+                  <Badge variant="outline" className="text-[10px] h-4 py-0 capitalize border-amber-500/40 text-amber-600 dark:text-amber-400">
+                    !{parsedQuickTask.priority}
+                  </Badge>
+                )}
+                {parsedQuickTask.dueDate && (
+                  <Badge variant="outline" className="text-[10px] h-4 py-0 border-blue-500/40 text-blue-600 dark:text-blue-400">
+                    @{parsedQuickTask.dueDate}
+                  </Badge>
+                )}
+                {parsedQuickTask.projectName && (
+                  <Badge variant="outline" className="text-[10px] h-4 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                    #{parsedQuickTask.projectName}
+                  </Badge>
+                )}
+                {parsedQuickTask.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-[10px] h-4 py-0">
+                    #{tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
 
           {/* Views Area */}
           {viewMode === 'list' && (

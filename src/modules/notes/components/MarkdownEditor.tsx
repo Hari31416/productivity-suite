@@ -18,7 +18,11 @@ import {
   Eye,
   Edit3,
   Folder,
-  ListTree
+  ListTree,
+  Maximize2,
+  Minimize2,
+  Check,
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -33,6 +37,7 @@ import { MarkdownRenderer, extractHeadings, type MarkdownHeading } from '../util
 import { getNoteStats } from '../utils/noteStats'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useTags, useFindOrCreateTag } from '../hooks/useTags'
+import { cn } from '@/lib/utils'
 import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
 interface MarkdownEditorProps {
@@ -66,6 +71,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const [color, setColor] = useState(initialNote?.color || '')
   const [viewMode, setViewMode] = useState<ViewMode>('split')
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'unsaved'>('saved')
+  const [isZenMode, setIsZenMode] = useState(false)
 
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -133,18 +139,21 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     }
   }, [initialNote, title, content, tags, projectId, pinned, color, stats.wordCount, onSave])
 
-  // Keyboard shortcut listener for Cmd+S / Ctrl+S
+  // Keyboard shortcut listener for Cmd+S / Ctrl+S and Esc for Zen mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
         handleSave()
       }
+      if (e.key === 'Escape' && isZenMode) {
+        setIsZenMode(false)
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handleSave])
+  }, [handleSave, isZenMode])
 
   // Debounced auto-save effect
   useEffect(() => {
@@ -212,7 +221,14 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   }
 
   return (
-    <div className="flex h-full min-h-[600px] flex-col rounded-xl border bg-card text-card-foreground shadow-sm">
+    <div
+      className={cn(
+        'flex flex-col rounded-xl border bg-card text-card-foreground shadow-sm transition-all',
+        isZenMode
+          ? 'fixed inset-0 z-50 h-screen w-screen rounded-none border-none p-4 sm:p-6 bg-background overflow-y-auto'
+          : 'h-full min-h-[600px]'
+      )}
+    >
       {/* Top Header Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b px-4 py-3">
         <div className="flex flex-1 items-center gap-3">
@@ -325,19 +341,44 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             </DropdownMenu>
           )}
 
+          {/* Zen Focus Mode Button */}
+          <Button
+            type="button"
+            variant={isZenMode ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setIsZenMode(!isZenMode)}
+            className="h-8 px-2 text-xs gap-1"
+            title={isZenMode ? 'Exit Zen Focus Mode (Esc)' : 'Zen Focus Mode'}
+          >
+            {isZenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            <span className="hidden sm:inline">{isZenMode ? 'Exit Zen' : 'Zen'}</span>
+          </Button>
+
           {/* Save Status / Button */}
           <Button
             type="button"
-            variant="outline"
+            variant={saveStatus === 'saved' ? 'outline' : 'default'}
             size="sm"
             onClick={handleSave}
             disabled={saveStatus === 'saving'}
-            className="gap-1.5"
+            className="gap-1.5 min-w-[76px]"
           >
-            <Save className="h-3.5 w-3.5" />
-            <span className="text-xs">
-              {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? 'Saved' : 'Save'}
-            </span>
+            {saveStatus === 'saving' ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                <span className="text-xs">Saving...</span>
+              </>
+            ) : saveStatus === 'saved' ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-xs text-emerald-600 dark:text-emerald-400">Saved</span>
+              </>
+            ) : (
+              <>
+                <Save className="h-3.5 w-3.5" />
+                <span className="text-xs">Save</span>
+              </>
+            )}
           </Button>
 
           {/* Close Editor */}
@@ -418,12 +459,12 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
 
       {/* Formatting Toolbar */}
       {viewMode !== 'preview' && (
-        <div className="flex flex-wrap items-center gap-1 border-b bg-muted/40 px-3 py-1.5 text-muted-foreground">
+        <div className="flex items-center gap-1 border-b bg-muted/40 px-3 py-1.5 text-muted-foreground overflow-x-auto whitespace-nowrap scrollbar-none">
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('# ', '', 'Heading 1')}
             title="Heading 1"
           >
@@ -433,7 +474,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('## ', '', 'Heading 2')}
             title="Heading 2"
           >
@@ -443,20 +484,20 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('### ', '', 'Heading 3')}
             title="Heading 3"
           >
             <Heading3 className="h-3.5 w-3.5" />
           </Button>
 
-          <div className="mx-1 h-4 w-px bg-border" />
+          <div className="mx-1 h-4 w-px bg-border shrink-0" />
 
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('**', '**', 'bold text')}
             title="Bold"
           >
@@ -466,7 +507,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('*', '*', 'italic text')}
             title="Italic"
           >
@@ -476,20 +517,20 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('`', '`', 'code')}
             title="Inline Code"
           >
             <Code className="h-3.5 w-3.5" />
           </Button>
 
-          <div className="mx-1 h-4 w-px bg-border" />
+          <div className="mx-1 h-4 w-px bg-border shrink-0" />
 
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('- ', '', 'List item')}
             title="Bullet List"
           >
@@ -499,7 +540,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('- [ ] ', '', 'Task item')}
             title="Task List"
           >
@@ -509,7 +550,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() => insertFormatting('> ', '', 'Quote text')}
             title="Blockquote"
           >
@@ -519,7 +560,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 w-7 p-0"
+            className="h-7 w-7 p-0 shrink-0"
             onClick={() =>
               insertFormatting(
                 '| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |\n'
