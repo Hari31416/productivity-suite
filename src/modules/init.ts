@@ -1,5 +1,6 @@
 import { moduleRegistry } from '@/core/modules/registry'
 import { HabitsView } from './habits/HabitsView'
+import { HabitDashboardWidget } from './habits/components/HabitDashboardWidget'
 import { TasksView } from './tasks/TasksView'
 import { NotesView } from './notes/NotesView'
 import { SettingsView } from './settings/SettingsView'
@@ -14,6 +15,7 @@ export function initializeModules(): void {
     iconName: 'Activity',
     route: '/habits',
     navOrder: 1,
+    dashboardWidget: HabitDashboardWidget,
     routes: [
       {
         path: '/habits',
