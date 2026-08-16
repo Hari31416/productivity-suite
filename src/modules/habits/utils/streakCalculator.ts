@@ -43,18 +43,21 @@ export function isHabitCompletedOnDate(habit: Habit, logsForDate: HabitLog[]): b
       }
       return sum + (log.completed ? target : 0)
     }, 0)
-    return totalValue >= target || logsForDate.some((log) => log.completed)
+    return totalValue >= target
   }
 
   if (habit.targetType === 'timer') {
-    const target = habit.targetValue || 0
-    const totalSeconds = logsForDate.reduce((sum, log) => {
-      if (typeof log.durationSeconds === 'number') {
-        return sum + log.durationSeconds
+    const targetMinutes = habit.targetValue || 1
+    const totalMinutes = logsForDate.reduce((sum, log) => {
+      if (typeof log.durationSeconds === 'number' && log.durationSeconds > 0) {
+        return sum + Math.round(log.durationSeconds / 60)
       }
-      return sum + (log.completed ? target : 0)
+      if (typeof log.value === 'number') {
+        return sum + log.value
+      }
+      return sum + (log.completed ? targetMinutes : 0)
     }, 0)
-    return totalSeconds >= target || logsForDate.some((log) => log.completed)
+    return totalMinutes >= targetMinutes
   }
 
   return logsForDate.some((log) => log.completed)

@@ -106,6 +106,52 @@ describe('streakCalculator', () => {
       ]
       expect(isHabitCompletedOnDate(habit, completedLogs)).toBe(true)
     })
+
+    it('evaluates timer habit completion accurately against target minutes', () => {
+      const timerHabit: Habit = {
+        id: 'h3',
+        title: 'Focus Deep Work',
+        color: '#10b981',
+        frequencyType: 'daily',
+        targetType: 'timer',
+        targetValue: 2, // 2 minutes target
+        createdAt: '2026-08-01T00:00:00.000Z',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+        archived: false
+      }
+
+      // 60 seconds logged (1 minute out of 2 min) -> should NOT be completed!
+      const partialLogs: HabitLog[] = [
+        {
+          id: 'l1',
+          habitId: 'h3',
+          date: '2026-08-15',
+          timestamp: '2026-08-15T08:00:00.000Z',
+          durationSeconds: 60,
+          value: 1,
+          completed: false,
+          createdAt: '2026-08-15T08:00:00.000Z',
+          updatedAt: '2026-08-15T08:00:00.000Z'
+        }
+      ]
+      expect(isHabitCompletedOnDate(timerHabit, partialLogs)).toBe(false)
+
+      // 120 seconds logged (2 minutes out of 2 min) -> completed!
+      const fullLogs: HabitLog[] = [
+        {
+          id: 'l2',
+          habitId: 'h3',
+          date: '2026-08-15',
+          timestamp: '2026-08-15T08:00:00.000Z',
+          durationSeconds: 120,
+          value: 2,
+          completed: true,
+          createdAt: '2026-08-15T08:00:00.000Z',
+          updatedAt: '2026-08-15T08:00:00.000Z'
+        }
+      ]
+      expect(isHabitCompletedOnDate(timerHabit, fullLogs)).toBe(true)
+    })
   })
 
   describe('isHabitScheduledOnDate', () => {
