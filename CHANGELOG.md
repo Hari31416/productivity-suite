@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-08-16
+
+### Added
+
+- **Dedicated Focus Timer for Duration Habits**:
+  - Interactive SVG circular countdown timer with pause, play, reset, and direct duration editing.
+  - Duration adjustment buttons (-10m, -5m, +5m, +10m) and dynamic autofill for remaining target time.
+  - Inline progress editing with direct minute input for fast adjustments.
+- **Interactive Dotted Progress Segments**:
+  - 10-step ratio progress bar in habit hero header for numeric and timer habits with direct dot tap selection.
+
+### Changed
+
+- **Streamlined Habit Detail Layout**:
+  - Integrated streak metrics (Current Streak, Best Streak, All-Time Total) directly into hero card.
+  - Consolidated top action buttons into Edit button and More actions dropdown menu (Pin, Archive, Delete).
+  - Compacted About and Schedule Context section into lightweight metadata strip.
+- **Monthly History and Visual Calendar Refinements**:
+  - Unified calendar header with inline month navigation.
+  - Converted bulky metric cards into a single compact segmented summary strip.
+  - Scoped monthly calendar metrics strictly to the selected habit ID.
+- **Header Simplification**:
+  - Removed redundant theme switcher from main top bar in favor of Settings view.
+
+### Fixed
+
+- **Timer Duration Completion Calculation**:
+  - Fixed streak calculator comparison bug to accurately convert logged duration seconds to minutes before checking target completion.
+  - Prevented timer habits with partial durations from prematurely showing completed status.
+
 ## [0.2.0] - 2026-08-16
 
 ### Added
