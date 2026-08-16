@@ -16,11 +16,19 @@ import {
   Plus,
   Pencil,
   Sparkles,
-  Info
+  Info,
+  MoreVertical
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import {
   Dialog,
   DialogContent,
@@ -314,50 +322,47 @@ export function HabitDetailView({
           <span>Back to Habits</span>
         </Button>
 
-        <div className="flex items-center gap-1 sm:gap-1.5">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleFavorite}
-            className={cn(
-              'px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl transition-all',
-              habit.pinned && 'bg-amber-500/10 text-amber-600 border-amber-500/30'
-            )}
-            title={habit.pinned ? 'Unpin habit' : 'Pin to top'}
-          >
-            <Star className={cn('h-3.5 w-3.5', habit.pinned && 'fill-current text-amber-500')} />
-            <span className="hidden sm:inline">{habit.pinned ? 'Pinned' : 'Pin'}</span>
-          </Button>
-
+        <div className="flex items-center gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={() => setIsEditModalOpen(true)}
-            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl"
+            className="px-3 h-8 text-xs gap-1.5 rounded-xl font-medium"
           >
             <Edit2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Edit</span>
+            <span>Edit</span>
           </Button>
 
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleArchive}
-            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl"
-          >
-            <Archive className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{habit.archived ? 'Restore' : 'Archive'}</span>
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsDeleteDialogOpen(true)}
-            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Delete</span>
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 rounded-xl"
+                aria-label="More habit actions"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-44">
+              <DropdownMenuItem onClick={handleToggleFavorite} className="gap-2 cursor-pointer">
+                <Star className={cn('h-4 w-4', habit.pinned && 'fill-current text-amber-500')} />
+                <span>{habit.pinned ? 'Unpin Habit' : 'Pin to Top'}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleArchive} className="gap-2 cursor-pointer">
+                <Archive className="h-4 w-4" />
+                <span>{habit.archived ? 'Restore Habit' : 'Archive Habit'}</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>Delete Habit</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
 
