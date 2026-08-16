@@ -3,3 +3,4 @@
 - The UI should look good on both mobile and desktop. Though, mobile is focus.
 - The app will be shared android app, so the components, features etc should be build keeping in mind that they must work on android app.
 - When ask to do a release, follow instructions in `RELEASE_PROCESS.md`. Make sure to also update `CHANGELOG.md`
+- For running and visually inspecting the app on Android emulator or physical device, follow instructions in `ANDROID_AUTOMATION.md`
