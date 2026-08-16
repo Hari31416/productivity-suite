@@ -112,27 +112,31 @@ export function formatEstimatedMinutes(minutes?: number): string {
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
-  { label: string; dotClass: string; borderClass: string }
+  { label: string; dotClass: string; borderClass: string; color: string }
 > = {
   urgent: {
     label: 'Urgent Priority',
     dotClass: 'bg-red-500 ring-red-500/20',
-    borderClass: 'border-l-red-500'
+    borderClass: 'border-l-red-500',
+    color: '#ef4444'
   },
   high: {
     label: 'High Priority',
     dotClass: 'bg-amber-500 ring-amber-500/20',
-    borderClass: 'border-l-amber-500'
+    borderClass: 'border-l-amber-500',
+    color: '#f59e0b'
   },
   medium: {
     label: 'Medium Priority',
     dotClass: 'bg-blue-500 ring-blue-500/20',
-    borderClass: 'border-l-blue-500'
+    borderClass: 'border-l-blue-500',
+    color: '#3b82f6'
   },
   low: {
     label: 'Low Priority',
-    dotClass: 'bg-zinc-400 ring-zinc-400/20',
-    borderClass: 'border-l-zinc-400'
+    dotClass: 'bg-emerald-500 ring-emerald-500/20',
+    borderClass: 'border-l-emerald-500',
+    color: '#10b981'
   }
 }
 
