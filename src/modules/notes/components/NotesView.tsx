@@ -167,7 +167,8 @@ export function NotesView() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top Action Bar & Filter Chips (No duplicate title banner) */}
-      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      {/* Top Action Bar & Filter Chips (No duplicate title banner) */}
+      <div className="flex items-center justify-between gap-2">
         {/* Quick Filter Chips (All / Pinned / Recent) */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
           <Button
@@ -197,13 +198,13 @@ export function NotesView() {
           </Button>
         </div>
 
-        <div className="flex items-center justify-end gap-2 ml-auto">
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportAll}
             disabled={notes.length === 0 || isExporting}
-            className="h-8 gap-1.5 text-xs px-3 rounded-xl"
+            className="h-8 gap-1.5 text-xs px-2.5 sm:px-3 rounded-xl"
             title="Export all notes to a zip archive"
           >
             <Download className="h-3.5 w-3.5" />
