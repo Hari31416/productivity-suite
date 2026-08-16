@@ -876,7 +876,7 @@ export function TaskFormModal({
                       handleAddTag()
                     }
                   }}
-                  placeholder="Type tag and press Enter"
+                  placeholder="Add tag (type and tap Add)"
                   className="h-8.5 pl-8 text-xs sm:text-sm"
                 />
               </div>
@@ -886,7 +886,7 @@ export function TaskFormModal({
                 size="sm"
                 onClick={handleAddTag}
                 disabled={!tagInput.trim()}
-                className="h-8.5 px-2.5 text-xs shrink-0"
+                className="h-8.5 px-3 text-xs shrink-0 min-h-[36px]"
               >
                 <Plus className="h-3.5 w-3.5 mr-1" />
                 Add Tag
@@ -897,15 +897,16 @@ export function TaskFormModal({
                 {tags.map((tag) => (
                   <span
                     key={tag}
-                    className="inline-flex items-center gap-1 text-xs bg-secondary text-secondary-foreground px-2 py-0.5 rounded-md font-medium"
+                    className="inline-flex items-center gap-1.5 text-xs bg-secondary text-secondary-foreground pl-2.5 pr-1 py-0.5 rounded-md font-medium"
                   >
-                    <span>{tag}</span>
+                    <span>#{tag}</span>
                     <button
                       type="button"
                       onClick={() => handleRemoveTag(tag)}
-                      className="hover:text-destructive focus:outline-none"
+                      className="hover:text-destructive focus:outline-none p-1 rounded min-w-[28px] min-h-[28px] flex items-center justify-center"
+                      aria-label={`Remove tag ${tag}`}
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </span>
                 ))}

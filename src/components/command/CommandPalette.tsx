@@ -444,7 +444,7 @@ export function CommandPalette({
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            'font-medium truncate',
+                            'font-medium text-xs sm:text-sm line-clamp-1 sm:truncate',
                             isSelected ? 'text-primary-foreground' : 'text-foreground'
                           )}
                         >
@@ -453,7 +453,7 @@ export function CommandPalette({
                         {command.subtitle && (
                           <p
                             className={cn(
-                              'text-[11px] truncate',
+                              'text-[11px] line-clamp-1 sm:truncate',
                               isSelected ? 'text-primary-foreground/80' : 'text-muted-foreground'
                             )}
                           >
@@ -483,8 +483,8 @@ export function CommandPalette({
           )}
         </div>
 
-        {/* Footer shortcuts */}
-        <div className="border-t bg-muted/30 px-3 py-2 flex items-center justify-between text-[11px] text-muted-foreground">
+        {/* Footer shortcuts (Desktop only) */}
+        <div className="hidden sm:flex border-t bg-muted/30 px-3 py-2 items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
               <kbd className="rounded border bg-background px-1 py-0.5 font-mono text-[10px]">

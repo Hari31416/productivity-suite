@@ -40,7 +40,7 @@ export function Header({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-muted-foreground hidden sm:block truncate">{subtitle}</p>
+            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">{subtitle}</p>
           )}
         </div>
       </div>
@@ -52,7 +52,7 @@ export function Header({
             variant="outline"
             size="sm"
             onClick={onOpenCommandPalette}
-            className="h-9 w-9 min-h-[36px] min-w-[36px] p-0 sm:w-48 sm:h-8 sm:px-3 gap-1.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:justify-between"
+            className="h-10 w-10 sm:w-48 sm:h-8 sm:px-3 p-0 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 gap-1.5 text-xs text-muted-foreground hover:text-foreground font-normal sm:justify-between"
             aria-label="Search and command palette"
           >
             <div className="flex items-center gap-1.5">
@@ -84,8 +84,8 @@ export function Header({
             size="icon"
             onClick={() => onRouteChange('/settings')}
             className={cn(
-              'h-9 w-9 min-h-[36px] min-w-[36px] sm:h-8 sm:w-8',
-              activeRoute === '/settings' && 'border-primary text-primary bg-primary/10'
+              'h-10 w-10 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0',
+              activeRoute === '/settings' && 'border-muted text-muted-foreground bg-muted/40'
             )}
             aria-label="Open settings"
             title="Settings"

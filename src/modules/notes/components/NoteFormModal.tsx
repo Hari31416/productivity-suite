@@ -202,7 +202,7 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
               <label className="text-xs font-medium text-muted-foreground block mb-1">Tags</label>
               <div className="flex items-center gap-2">
                 <Input
-                  placeholder="Add tag and press Enter"
+                  placeholder="Add tag (type and tap Add)"
                   value={tagInput}
                   onChange={(e) => setTagInput(e.target.value)}
                   onKeyDown={(e) => {
@@ -218,6 +218,7 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
                   variant="outline"
                   size="sm"
                   onClick={() => handleAddTag(tagInput)}
+                  className="min-h-[36px]"
                 >
                   <TagIcon className="h-3.5 w-3.5 mr-1" />
                   Add
@@ -229,15 +230,16 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 bg-secondary text-secondary-foreground text-xs px-2 py-0.5 rounded-md"
+                      className="inline-flex items-center gap-1.5 bg-secondary text-secondary-foreground text-xs pl-2.5 pr-1 py-0.5 rounded-md"
                     >
                       #{tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-destructive"
+                        className="hover:text-destructive p-1 rounded min-w-[28px] min-h-[28px] flex items-center justify-center"
+                        aria-label={`Remove tag ${tag}`}
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
                     </span>
                   ))}
