@@ -29,7 +29,7 @@ export function BottomNav({ activeRoute, onRouteChange }: BottomNavProps) {
               'flex min-h-[48px] min-w-[48px] flex-1 flex-col items-center justify-center gap-1 rounded-lg py-1 text-xs font-medium transition-colors',
               isActive
                 ? 'text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground'
+                : 'text-foreground/70 hover:text-foreground'
             )}
             aria-current={isActive ? 'page' : undefined}
           >

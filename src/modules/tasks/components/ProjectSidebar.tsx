@@ -126,7 +126,7 @@ export function ProjectSidebar({
   return (
     <div className={cn('flex flex-col h-full space-y-6', className)}>
       <div className="space-y-1">
-        <div className="px-2 pb-2 text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+        <div className="px-2 pb-2 text-[11px] font-bold tracking-wider text-foreground/70 uppercase">
           Views & Filters
         </div>
         {SMART_FILTERS.map((item) => {
@@ -142,7 +142,7 @@ export function ProjectSidebar({
                 'w-full flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors text-left',
                 isSelected
                   ? 'bg-primary/10 text-primary font-semibold'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                  : 'text-foreground/80 hover:text-foreground hover:bg-muted/50'
               )}
             >
               <div className="flex items-center gap-2.5 min-w-0">
@@ -152,7 +152,7 @@ export function ProjectSidebar({
               <Badge
                 variant={isSelected ? 'default' : 'secondary'}
                 className={cn(
-                  'text-[11px] h-5 px-1.5 font-normal shrink-0',
+                  'text-[11px] h-5 px-1.5 font-medium shrink-0',
                   item.alert && !isSelected && 'bg-destructive/15 text-destructive border-none'
                 )}
               >
@@ -165,7 +165,7 @@ export function ProjectSidebar({
 
       <div className="space-y-1">
         <div className="flex items-center justify-between px-2 pb-2">
-          <span className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">
+          <span className="text-[11px] font-bold tracking-wider text-foreground/70 uppercase">
             Projects
           </span>
           <Button
@@ -173,7 +173,7 @@ export function ProjectSidebar({
             variant="ghost"
             size="sm"
             onClick={handleNewProject}
-            className="h-5 px-1.5 text-xs text-muted-foreground hover:text-foreground"
+            className="h-5 px-1.5 text-xs text-foreground/70 hover:text-foreground"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             New
@@ -204,7 +204,7 @@ export function ProjectSidebar({
                   'group flex items-center justify-between px-2.5 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors',
                   isSelected
                     ? 'bg-primary/10 text-primary font-semibold'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                    : 'text-foreground/80 hover:text-foreground hover:bg-muted/50'
                 )}
               >
                 <button

@@ -75,7 +75,7 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
                   'group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
                   isActive
                     ? 'bg-primary text-primary-foreground shadow-sm'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                    : 'text-foreground/80 hover:bg-accent hover:text-foreground',
                   collapsed && 'justify-center px-2'
                 )}
                 aria-current={isActive ? 'page' : undefined}
@@ -84,7 +84,7 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
                   name={module.iconName}
                   className={cn(
                     'h-4 w-4 shrink-0 transition-transform group-hover:scale-110',
-                    isActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'
+                    isActive ? 'text-primary-foreground' : 'text-foreground/60 group-hover:text-foreground'
                   )}
                 />
                 {!collapsed && (
@@ -115,7 +115,7 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
             size="sm"
             onClick={() => setCollapsed(!collapsed)}
             className={cn(
-              'w-full text-muted-foreground hover:text-foreground',
+              'w-full text-foreground/70 hover:text-foreground',
               collapsed ? 'px-0 justify-center' : 'justify-start gap-2'
             )}
             aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
