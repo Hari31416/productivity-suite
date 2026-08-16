@@ -40,43 +40,34 @@ Redesigned the habit tracking experience with dedicated detail screens, streamli
   - Scoped monthly log tracking and history calculation in [`HabitMonthlyCalendar.tsx`](../src/modules/habits/components/HabitMonthlyCalendar.tsx).
   - Unified header with inline month switcher and compact 4-metric summary strip.
 
-## 3. Task Detail View and Execution Workspace
+## 3. Task Detail View and Execution Workspace [Completed]
 
-Provide a dedicated slide-over panel and full-view workspace for complex task execution, time tracking, and contextual attachments. Once ready, task notification deep links will directly route and open this execution workspace.
+Provide a dedicated full-view execution workspace and detail drawer for task execution, time tracking, rich markdown notes, interactive subtasks, and connected references. Task notification deep links route directly to this execution workspace.
 
-### Task Hero and Property Header
+### Implemented Capabilities
 
-- **Deep Link Notification Landing Target**:
-  - Direct destination when clicking task reminder notifications (`#/tasks?taskId=<id>`), transitioning from the modal popover to the full task workspace drawer.
-- **Status and Priority Controls**:
-  - Quick-switch status dropdown (To Do, In Progress, Blocked, Done).
-  - Priority selector with color badge indicators (Low, Medium, High, Urgent).
-- **Project Association and Due Date**:
-  - Project pill with custom color dot and quick project reassignment.
-  - Date and time picker with relative due badges (Today, Tomorrow, Overdue).
+- **Dedicated Task Execution Workspace**:
+  - Direct destination when clicking task reminder notifications (`#/tasks?taskId=<id>`) and task cards in [`TaskDetailView.tsx`](../src/modules/tasks/components/TaskDetailView.tsx).
+  - Integrated navigation top bar with quick Mark Done, Edit modal launcher, Archive/Restore, and Delete confirmation dialog.
+- **Task Hero and Property Header**:
+  - Hero header displaying task title, status pill, priority pill, project association, and relative due badges (Today, Tomorrow, Overdue).
+  - Quick-switch status dropdown (`To Do`, `In Progress`, `Blocked`, `Done`) with color dots.
+  - Priority selector dropdown (`Low`, `Medium`, `High`, `Urgent`) with color badge indicators.
+  - Project association selector with custom color dot and quick project reassignment.
+  - Due date & time display with relative formatting.
 - **Rich Markdown Description**:
-  - Expandable full-fidelity markdown preview and edit mode for requirements, links, and code snippets.
-
-### Interactive Subtasks Checklist
-
-- **Progress Overview**:
-  - Completion ratio badge and visual progress bar (e.g. `4 of 5 subtasks completed - 80%`).
-- **Inline Management**:
-  - Quick subtask creation input, drag-and-drop reordering, and instant checkbox toggling.
-
-### Task-Linked Focus Timer Hub
-
-- **Embedded Circular Timer**:
-  - Mini circular countdown timer widget with 25-minute Pomodoro presets and custom durations.
-- **Time Spent vs Estimate Tracker**:
-  - Visual comparison bar comparing estimated task duration against accumulated active timer sessions.
-
-### Context and Linked References
-
-- **Connected Notes**:
-  - Section listing all markdown notes referencing or tagged with this task.
-- **Recurrence Schedule and History**:
-  - Recurrence interval details, parent template link, and creation / completion timestamps.
+  - Expandable full-fidelity markdown preview (using [`MarkdownRenderer`](../src/modules/notes/utils/markdownParser.tsx)) with support for headers, links, code blocks, tables, and checklists.
+  - Inline toggleable edit mode with save / cancel actions.
+- **Interactive Subtasks Checklist**:
+  - Completion ratio badge and visual progress bar (e.g. `4 of 5 subtasks completed (80%)`) in [`SubtaskList.tsx`](../src/modules/tasks/components/SubtaskList.tsx).
+  - Inline subtask creation input, move up / down reordering controls, instant checkbox toggling, and deletion.
+- **Task-Linked Focus Timer Hub**:
+  - Reusable circular timer engine in [`CircularFocusTimer.tsx`](../src/components/timer/CircularFocusTimer.tsx) shared between tasks and habits.
+  - Embedded circular countdown timer widget with 25-minute Pomodoro presets (+5m, +10m, 50m block, custom duration edit dialog) in [`TaskFocusTimer.tsx`](../src/modules/tasks/components/TaskFocusTimer.tsx).
+  - Time Spent vs Estimate comparison bar comparing estimated task duration against accumulated active timer sessions (`actualMinutes` vs `estimatedMinutes`).
+- **Context and Linked References**:
+  - Connected notes list discovering markdown notes associated with the task project, matching tags, or title references, with a 1-click "Create Connected Note" button.
+  - Recurrence schedule description, active reminder notification count, and creation, update, and completion timestamps.
 
 ## 4. Advanced Habit Notifications
 

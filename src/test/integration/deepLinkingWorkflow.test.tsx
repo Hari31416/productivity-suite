@@ -35,7 +35,7 @@ describe('Deep Linking and Action Routing Integration Workflow', () => {
     resetNotificationListenersSetupForTesting()
   })
 
-  it('automatically opens task edit modal and highlights card when taskId is in route hash', async () => {
+  it('automatically opens dedicated task detail workspace when taskId is in route hash', async () => {
     const task = await taskRepository.createTask({
       title: 'Deep Link Test Task',
       priority: 'high',
@@ -51,19 +51,18 @@ describe('Deep Linking and Action Routing Integration Workflow', () => {
       </QueryClientProvider>
     )
 
-    // Verify modal is automatically opened with task details
+    // Verify dedicated Task Details View is rendered with hero header, focus timer, subtasks
     await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('Deep Link Test Task')).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Deep Link Test Task' })
+      ).toBeInTheDocument()
+      expect(screen.getByText('Task Focus Timer')).toBeInTheDocument()
+      expect(screen.getByText('Subtasks Checklist')).toBeInTheDocument()
     })
 
-    // Verify card DOM element has the deep link id
-    const taskCard = document.getElementById(`task-card-${task.id}`)
-    expect(taskCard).toBeInTheDocument()
-
-    // Close the dialog and verify hash is reset
-    const cancelBtn = screen.getByRole('button', { name: /cancel/i })
-    fireEvent.click(cancelBtn)
+    // Click back button and verify hash is reset
+    const backBtn = screen.getByRole('button', { name: /back to tasks/i })
+    fireEvent.click(backBtn)
 
     await waitFor(() => {
       expect(window.location.hash).toBe('#/tasks')
