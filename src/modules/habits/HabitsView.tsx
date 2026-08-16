@@ -200,23 +200,6 @@ export function HabitsView() {
     return list
   }, [filteredHabits, selectedDate, showArchived, sortBy, allRangeLogs])
 
-  // Quick summary metrics for overview cards
-  const { maxBestStreak, avgConsistency, activeCount } = useMemo(() => {
-    const active = habits.filter((h) => !h.archived)
-    if (active.length === 0) {
-      return { maxBestStreak: 0, avgConsistency: 0, activeCount: 0 }
-    }
-    const streaks = active.map((h) => calculateStreak(h, allRangeLogs, selectedDate))
-    const maxStreak = Math.max(...streaks.map((s) => s.currentStreak || s.bestStreak || 0), 0)
-    const sumConsistency = streaks.reduce((acc, s) => acc + (s.completionRate30Days || 0), 0)
-    const avg = Math.round(sumConsistency / active.length)
-    return {
-      maxBestStreak: maxStreak,
-      avgConsistency: avg,
-      activeCount: active.length
-    }
-  }, [habits, allRangeLogs, selectedDate])
-
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Top Controls: Segmented Tabs & Actions (No duplicate title banner) */}
@@ -260,33 +243,6 @@ export function HabitsView() {
           <span>New Habit</span>
         </Button>
       </div>
-
-      {/* Metric Summary Cards (from mockups) */}
-      {viewMode === 'tracker' && (
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
-          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
-            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Best Streak</div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{maxBestStreak}</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
-            </div>
-          </Card>
-          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
-            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Consistency</div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{avgConsistency}%</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">30-day</span>
-            </div>
-          </Card>
-          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
-            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Active</div>
-            <div className="mt-1 flex items-baseline gap-1">
-              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{activeCount}</span>
-              <span className="text-[10px] sm:text-xs text-muted-foreground">habits</span>
-            </div>
-          </Card>
-        </div>
-      )}
 
       {viewMode === 'tracker' ? (
         <div className="space-y-3 sm:space-y-5">
