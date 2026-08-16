@@ -222,27 +222,39 @@ export function SettingsView() {
     setIsTestingNotification(true)
     setNotificationFeedback(null)
     try {
+      let targetHabitId = 'habit_drink_water'
+      let targetTaskId = 'task_explore_app'
+
+      try {
+        const firstHabit = await db.habits.toCollection().first()
+        if (firstHabit) targetHabitId = firstHabit.id
+        const firstTask = await db.tasks.toCollection().first()
+        if (firstTask) targetTaskId = firstTask.id
+      } catch {
+        // Use defaults
+      }
+
       const payload =
         type === 'habit'
           ? {
-              title: 'Habit Reminder: Hydration',
-              body: 'Time to drink water! Click this notification to open Hydration check-in.',
-              data: { habitId: 'habit_drink_water' }
+              title: 'Habit Reminder: Daily Check-in',
+              body: 'Time for your habit routine! Tap to open check-in.',
+              data: { habitId: targetHabitId }
             }
           : {
-              title: 'Task Reminder: Explore App',
-              body: 'Time to review your project tasks. Click to view task details.',
-              data: { taskId: 'task_explore_app' }
+              title: 'Task Reminder: Scheduled Task',
+              body: 'Time to review your tasks. Tap to view task details.',
+              data: { taskId: targetTaskId }
             }
 
       const sent = await sendLocalNotification(payload)
       if (sent) {
         setNotificationFeedback(
-          `Test ${type === 'habit' ? 'Habit' : 'Task'} notification sent. Click the desktop banner to test deep linking.`
+          `Test ${type === 'habit' ? 'Habit' : 'Task'} notification sent. Tap or click the alert to test deep linking.`
         )
       } else {
         setNotificationFeedback(
-          'Failed to trigger notification. Please check browser permission settings.'
+          'Failed to trigger notification. Please check app/browser permission settings.'
         )
       }
       setNotificationPermission(getNotificationPermission())

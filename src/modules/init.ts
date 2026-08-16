@@ -9,8 +9,10 @@ import { NotesView } from './notes/NotesView'
 import { NotesDashboardWidget } from './notes/components/NotesDashboardWidget'
 import { SettingsView } from './settings/SettingsView'
 import { taskRepository } from './tasks/repository/taskRepository'
+import { habitRepository } from './habits/repository/habitRepository'
 import {
   rescheduleAllTaskReminders,
+  rescheduleAllHabitReminders,
   sendLocalNotification
 } from '@/core/notifications/notificationService'
 import { db } from '@/core/db'
@@ -117,6 +119,8 @@ export function initializeModules(queryClient?: QueryClient): void {
       .then(() => taskRepository.syncRecurringInstances(30))
       .then(() => taskRepository.getAllTasks({ includeArchived: false }))
       .then((tasks) => rescheduleAllTaskReminders(tasks))
+      .then(() => habitRepository.getAllHabits(false))
+      .then((habits) => rescheduleAllHabitReminders(habits))
       .catch(() => {
         // Silently continue if initial background sync encounters an issue
       })

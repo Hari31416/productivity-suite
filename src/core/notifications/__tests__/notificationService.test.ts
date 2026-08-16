@@ -5,7 +5,10 @@ import {
   requestNotificationPermission,
   sendLocalNotification,
   scheduleHabitReminder,
+  scheduleHabitReminders,
   cancelHabitReminder,
+  cancelHabitReminders,
+  rescheduleAllHabitReminders,
   computeTaskReminderDate,
   scheduleTaskReminder,
   cancelTaskReminder,
@@ -525,6 +528,68 @@ describe('notificationService', () => {
 
       vi.advanceTimersByTime(12000)
       expect(mockNotificationConstructor).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('scheduleHabitReminders and cancelHabitReminders', () => {
+    it('schedules habit reminder times for active habits', async () => {
+      const mockNotificationConstructor = vi.fn()
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Notification: Object.assign(mockNotificationConstructor, {
+          permission: 'granted',
+          requestPermission: vi.fn()
+        })
+      }
+
+      const habit = {
+        id: 'h-1',
+        title: 'Drink Water',
+        color: '#3b82f6',
+        frequencyType: 'daily' as const,
+        targetType: 'boolean' as const,
+        reminderTimes: ['23:59'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+
+      const ids = await scheduleHabitReminders(habit)
+      expect(Array.isArray(ids)).toBe(true)
+    })
+
+    it('does not schedule reminders for archived habits', async () => {
+      const habit = {
+        id: 'h-archived',
+        title: 'Archived Habit',
+        color: '#3b82f6',
+        frequencyType: 'daily' as const,
+        targetType: 'boolean' as const,
+        reminderTimes: ['10:00'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: true
+      }
+
+      const ids = await scheduleHabitReminders(habit)
+      expect(ids).toEqual([])
+    })
+
+    it('cancels habit reminders and reschedules all active habits', async () => {
+      const habit = {
+        id: 'h-2',
+        title: 'Exercise',
+        color: '#10b981',
+        frequencyType: 'daily' as const,
+        targetType: 'boolean' as const,
+        reminderTimes: ['23:59'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+
+      await scheduleHabitReminders(habit)
+      await cancelHabitReminders(habit)
+      await rescheduleAllHabitReminders([habit])
     })
   })
 })

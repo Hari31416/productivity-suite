@@ -1,5 +1,9 @@
 import { db } from '@/core/db'
 import type { Habit, HabitLog, CreateHabitInput, UpdateHabitInput } from '../types'
+import {
+  scheduleHabitReminders,
+  cancelHabitReminders
+} from '@/core/notifications/notificationService'
 
 export const habitRepository = {
   async getAllHabits(includeArchived: boolean = false): Promise<Habit[]> {
@@ -23,6 +27,15 @@ export const habitRepository = {
       updatedAt: now
     }
     await db.habits.add(habit)
+
+    if (!habit.archived) {
+      try {
+        await scheduleHabitReminders(habit)
+      } catch {
+        // Ignore notification scheduling error in offline/test context
+      }
+    }
+
     return habit
   },
 
@@ -39,6 +52,16 @@ export const habitRepository = {
     }
 
     await db.habits.put(updated)
+
+    try {
+      await cancelHabitReminders(existing)
+      if (!updated.archived) {
+        await scheduleHabitReminders(updated)
+      }
+    } catch {
+      // Ignore notification scheduling error in offline/test context
+    }
+
     return updated
   },
 
@@ -47,6 +70,15 @@ export const habitRepository = {
   },
 
   async deleteHabit(id: string): Promise<void> {
+    const existing = await db.habits.get(id)
+    if (existing) {
+      try {
+        await cancelHabitReminders(existing)
+      } catch {
+        // Ignore notification cancellation error
+      }
+    }
+
     await db.transaction('rw', db.habits, db.habitLogs, async () => {
       await db.habitLogs.where('habitId').equals(id).delete()
       await db.habits.delete(id)

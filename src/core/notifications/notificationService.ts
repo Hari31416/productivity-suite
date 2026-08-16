@@ -1,4 +1,8 @@
 import type { Task, TaskReminder } from '@/modules/tasks/types'
+import type { Habit } from '@/modules/habits/types'
+import { format, addDays } from 'date-fns'
+import { isHabitScheduledOnDate } from '@/modules/habits/utils/streakCalculator'
+import { generateSubdayIntervalSlots } from '@/modules/habits/utils/intervalCalculator'
 
 export type NotificationPermissionStatus = 'granted' | 'denied' | 'default' | 'unsupported'
 
@@ -295,12 +299,42 @@ export async function sendLocalNotification(payload: NotificationPayload): Promi
   }
 }
 
+export function getHabitNotificationId(habitId: string, slotKey: string | number): number {
+  let hash = 0
+  const str = `habit_${habitId}_${slotKey}`
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash % 2000000000) + 1
+}
+
+export function getTaskNotificationId(taskId: string, reminderId: string | number): number {
+  let hash = 0
+  const str = `task_${taskId}_${reminderId}`
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash << 5) - hash + str.charCodeAt(i)
+    hash |= 0
+  }
+  return Math.abs(hash % 2000000000) + 1
+}
+
 export async function scheduleHabitReminder(
   options: HabitReminderOptions
 ): Promise<number | string | null> {
   const reminderId =
-    Math.floor(Date.now() % 1000000) +
-    (options.intervalIndex !== undefined ? options.intervalIndex : 0)
+    options.at && options.time
+      ? getHabitNotificationId(
+          options.habitId,
+          `${options.at.toISOString().slice(0, 10)}_${options.time}`
+        )
+      : options.at && options.intervalIndex !== undefined
+        ? getHabitNotificationId(
+            options.habitId,
+            `${options.at.toISOString().slice(0, 10)}_interval_${options.intervalIndex}`
+          )
+        : Math.floor(Date.now() % 1000000) +
+          (options.intervalIndex !== undefined ? options.intervalIndex : 0)
 
   const title = `Habit Reminder: ${options.habitTitle}`
   const body =
@@ -499,6 +533,100 @@ export async function rescheduleAllTaskReminders(tasks: Task[]): Promise<void> {
         })
       }
     }
+  }
+}
+
+export async function scheduleHabitReminders(habit: Habit): Promise<number[]> {
+  if (habit.archived) return []
+  const scheduledIds: number[] = []
+  const now = new Date()
+  const nowMs = now.getTime()
+
+  // Schedule for the next 7 days
+  for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
+    const targetDay = addDays(now, dayOffset)
+    const dateStr = format(targetDay, 'yyyy-MM-dd')
+
+    if (!isHabitScheduledOnDate(habit, targetDay)) {
+      continue
+    }
+
+    // 1. Fixed reminder times (e.g., ["08:00", "20:00"])
+    if (habit.reminderTimes && habit.reminderTimes.length > 0) {
+      for (const timeStr of habit.reminderTimes) {
+        const fullIso = `${dateStr}T${timeStr}:00`
+        const targetDate = new Date(fullIso)
+        if (!isNaN(targetDate.getTime()) && targetDate.getTime() > nowMs) {
+          const id = getHabitNotificationId(habit.id, `${dateStr}_${timeStr}`)
+          await scheduleHabitReminder({
+            habitId: habit.id,
+            habitTitle: habit.title,
+            time: timeStr,
+            at: targetDate,
+            body: `Time to complete your habit: ${habit.title}`
+          })
+          scheduledIds.push(id)
+        }
+      }
+    }
+
+    // 2. Subday interval slots
+    if (habit.frequencyType === 'subday_interval') {
+      const startTime = habit.timeWindow?.startTime || '08:00'
+      const endTime = habit.timeWindow?.endTime || '20:00'
+      const intervalHours = habit.intervalHours || 3
+      const slots = generateSubdayIntervalSlots(startTime, endTime, intervalHours)
+
+      for (const slot of slots) {
+        const timeStr = slot.startTime || '09:00'
+        const fullIso = `${dateStr}T${timeStr}:00`
+        const targetDate = new Date(fullIso)
+        if (!isNaN(targetDate.getTime()) && targetDate.getTime() > nowMs) {
+          const id = getHabitNotificationId(habit.id, `${dateStr}_interval_${slot.index}`)
+          await scheduleHabitReminder({
+            habitId: habit.id,
+            habitTitle: habit.title,
+            intervalIndex: slot.index,
+            at: targetDate,
+            body: `Time for interval #${slot.index + 1} check-in (${slot.label}) for: ${habit.title}`
+          })
+          scheduledIds.push(id)
+        }
+      }
+    }
+  }
+
+  return scheduledIds
+}
+
+export async function cancelHabitReminders(habit: Habit | { id: string }): Promise<void> {
+  const habitId = habit.id
+  const now = new Date()
+
+  // Cancel any potential IDs for the next 14 days
+  for (let dayOffset = -1; dayOffset < 14; dayOffset++) {
+    const targetDay = addDays(now, dayOffset)
+    const dateStr = format(targetDay, 'yyyy-MM-dd')
+
+    // Cancel possible reminder time slots
+    if ('reminderTimes' in habit && Array.isArray(habit.reminderTimes)) {
+      for (const timeStr of habit.reminderTimes) {
+        const id = getHabitNotificationId(habitId, `${dateStr}_${timeStr}`)
+        await cancelHabitReminder(id)
+      }
+    }
+    // Cancel subday slots
+    for (let slotIndex = 0; slotIndex < 24; slotIndex++) {
+      const id = getHabitNotificationId(habitId, `${dateStr}_interval_${slotIndex}`)
+      await cancelHabitReminder(id)
+    }
+  }
+}
+
+export async function rescheduleAllHabitReminders(habits: Habit[]): Promise<void> {
+  for (const habit of habits) {
+    if (habit.archived) continue
+    await scheduleHabitReminders(habit)
   }
 }
 
