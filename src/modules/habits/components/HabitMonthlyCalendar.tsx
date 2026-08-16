@@ -51,16 +51,17 @@ export function HabitMonthlyCalendar({ habit, logs, onSelectDate }: HabitMonthly
     return eachDayOfInterval({ start: monthStart, end: monthEnd })
   }, [monthStart, monthEnd])
 
-  // Map of date string -> logs
+  // Filter and map logs belonging exclusively to this habit
   const logsByDate = useMemo(() => {
     const map = new Map<string, HabitLog[]>()
     for (const log of logs) {
+      if (log.habitId !== habit.id) continue
       const existing = map.get(log.date) || []
       existing.push(log)
       map.set(log.date, existing)
     }
     return map
-  }, [logs])
+  }, [logs, habit.id])
 
   // Monthly Metrics Calculation
   const monthlyMetrics = useMemo(() => {

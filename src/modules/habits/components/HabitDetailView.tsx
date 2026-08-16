@@ -889,7 +889,11 @@ export function HabitDetailView({
       </Card>
 
       {/* Monthly History & Visual Calendar Component */}
-      <HabitMonthlyCalendar habit={habit} logs={allLogs} onSelectDate={(d) => setSelectedDate(d)} />
+      <HabitMonthlyCalendar
+        habit={habit}
+        logs={allLogs.filter((l) => l.habitId === habit.id)}
+        onSelectDate={(d) => setSelectedDate(d)}
+      />
 
       {/* Edit Habit Modal */}
       <HabitFormModal
