@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { moduleRegistry } from '@/core/modules/registry'
 import { DynamicIcon } from '@/components/icons/DynamicIcon'
 import { Button } from '@/components/ui/button'
@@ -32,18 +32,29 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
         <div className="flex h-16 items-center justify-between border-b px-4">
           {!collapsed ? (
             <div className="flex items-center gap-2.5 overflow-hidden">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-sm">
-                <LayoutGrid className="h-4 w-4" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#042F2E] border border-[#0A7A64]/40 p-1 shadow-sm">
+                <img
+                  src="/icon.png"
+                  alt="Productivity"
+                  className="h-full w-full object-contain rounded-[4px]"
+                />
               </div>
               <div className="flex flex-col truncate">
                 <span className="text-sm font-semibold tracking-tight leading-tight">
                   Productivity
                 </span>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  Suite
+                </span>
               </div>
             </div>
           ) : (
-            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold shadow-sm">
-              <LayoutGrid className="h-4 w-4" />
+            <div className="mx-auto flex h-8 w-8 items-center justify-center rounded-lg bg-[#042F2E] border border-[#0A7A64]/40 p-1 shadow-sm">
+              <img
+                src="/icon.png"
+                alt="Productivity"
+                className="h-full w-full object-contain rounded-[4px]"
+              />
             </div>
           )}
         </div>
