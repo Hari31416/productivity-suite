@@ -2,10 +2,12 @@
   "name": "local-productivity-suite",
   "private": true,
   "version": "0.1.0",
+  "packageManager": "pnpm@10.33.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:android": "tsc && vite build && npx cap sync android && cd android && ./gradlew assembleDebug",
     "test": "vitest run",
     "test:e2e": "playwright test"
   },
