@@ -32,6 +32,8 @@ export function AppShell({
         <Header
           title={title}
           subtitle={subtitle}
+          activeRoute={activeRoute}
+          onRouteChange={onRouteChange}
           onQuickAction={onQuickAction}
           onOpenCommandPalette={onOpenCommandPalette}
         />

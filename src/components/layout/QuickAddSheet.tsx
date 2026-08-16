@@ -1,11 +1,10 @@
-import { CheckSquare, Activity, FileText, X } from 'lucide-react'
+import { CheckSquare, Activity, FileText } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 
 export interface QuickAddSheetProps {
   open: boolean
@@ -32,17 +31,8 @@ export function QuickAddSheet({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md w-[92%] rounded-2xl p-0 gap-0 overflow-hidden border shadow-2xl bg-card">
-        <DialogHeader className="p-4 pb-2 border-b flex flex-row items-center justify-between">
+        <DialogHeader className="p-4 border-b">
           <DialogTitle className="text-base font-semibold">Quick Add</DialogTitle>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 rounded-full"
-            onClick={() => onOpenChange(false)}
-          >
-            <X className="h-4 w-4" />
-            <span className="sr-only">Close</span>
-          </Button>
         </DialogHeader>
 
         <div className="p-3 grid gap-2">
