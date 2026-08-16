@@ -361,25 +361,25 @@ export function HabitDetailView({
         </div>
       </div>
 
-      {/* Hero Header Card */}
+      {/* Hero Header Card with Integrated Streak Metrics */}
       <div
-        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border p-3.5 sm:p-5 shadow-xs transition-all"
+        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border p-4 sm:p-5 shadow-xs transition-all space-y-3.5"
         style={{
           background: `linear-gradient(135deg, ${themeColor}12 0%, var(--card) 60%)`
         }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {/* Icon Box */}
             <div
-              className="flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl shadow-xs transition-transform"
+              className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl shadow-xs transition-transform"
               style={{
                 backgroundColor: `${themeColor}22`,
                 color: themeColor,
                 border: `1.5px solid ${themeColor}35`
               }}
             >
-              <HabitIcon className="h-6 w-6 sm:h-8 sm:w-8" />
+              <HabitIcon className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
 
             <div className="min-w-0 space-y-1">
@@ -429,7 +429,7 @@ export function HabitDetailView({
             </div>
           </div>
 
-          {/* Quick Check-in Action Button */}
+          {/* Primary Check-in Action Button (For boolean or quick toggle) */}
           <div className="flex items-center justify-end sm:justify-start">
             <Button
               size="sm"
@@ -451,7 +451,7 @@ export function HabitDetailView({
                 }
               }}
               className={cn(
-                'h-9 sm:h-11 px-4 sm:px-5 rounded-xl font-semibold gap-1.5 text-xs sm:text-sm transition-all active:scale-95 shadow-xs w-full sm:w-auto',
+                'h-9 sm:h-10 px-4 sm:px-5 rounded-xl font-semibold gap-1.5 text-xs sm:text-sm transition-all active:scale-95 shadow-xs w-full sm:w-auto',
                 isCompletedToday
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   : 'bg-primary text-primary-foreground'
@@ -462,83 +462,49 @@ export function HabitDetailView({
             </Button>
           </div>
         </div>
+
+        {/* Integrated Streak & Stats Strip (Single clean segmented bar) */}
+        <div className="grid grid-cols-3 divide-x divide-border/60 rounded-xl bg-background/60 border py-2 px-1 text-center">
+          <div className="px-1">
+            <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+              Current Streak
+            </div>
+            <div className="text-sm sm:text-lg font-bold text-amber-500 flex items-center justify-center gap-1 mt-0.5">
+              <Flame className="h-3.5 w-3.5" />
+              <span>{streakInfo.currentStreak} days</span>
+            </div>
+          </div>
+          <div className="px-1">
+            <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+              Best Streak
+            </div>
+            <div className="text-sm sm:text-lg font-bold text-indigo-500 flex items-center justify-center gap-1 mt-0.5">
+              <Trophy className="h-3.5 w-3.5" />
+              <span>{streakInfo.bestStreak} days</span>
+            </div>
+          </div>
+          <div className="px-1">
+            <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+              All-Time Total
+            </div>
+            <div className="text-sm sm:text-lg font-bold text-foreground flex items-center justify-center gap-1 mt-0.5">
+              <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+              <span>{totalAllTimeCompletions} check-ins</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Streak and Key Metrics Grid (Single compact row on all screens) */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        {/* Current Streak */}
-        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
-          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
-            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-              <Flame className="h-4 w-4 sm:h-6 sm:w-6" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
-                Current Streak
-              </div>
-              <div className="flex items-baseline gap-0.5 sm:gap-1">
-                <span className="text-base sm:text-2xl font-bold text-amber-500">
-                  {streakInfo.currentStreak}
-                </span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Best Streak */}
-        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
-          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
-            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-              <Trophy className="h-4 w-4 sm:h-6 sm:w-6" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
-                Best Streak
-              </div>
-              <div className="flex items-baseline gap-0.5 sm:gap-1">
-                <span className="text-base sm:text-2xl font-bold text-indigo-500">
-                  {streakInfo.bestStreak}
-                </span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Total Completions */}
-        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
-          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
-            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              <Sparkles className="h-4 w-4 sm:h-6 sm:w-6" />
-            </div>
-            <div className="min-w-0">
-              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
-                All-Time Total
-              </div>
-              <div className="flex items-baseline gap-0.5 sm:gap-1">
-                <span className="text-base sm:text-2xl font-bold text-foreground">
-                  {totalAllTimeCompletions}
-                </span>
-                <span className="text-[10px] sm:text-xs text-muted-foreground">check-ins</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Today's Interactive Progress Tracker Card */}
-      <Card className="rounded-2xl border bg-card shadow-xs">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+      {/* Numeric Target Progress Workspace (Only for numeric habits) */}
+      {habit.targetType === 'numeric' && (
+        <Card className="rounded-2xl border bg-card shadow-xs">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold">
                 {isDateToday
                   ? "Today's Progress"
                   : `Progress on ${format(parseISO(selectedDate), 'MMM d')}`}
               </CardTitle>
-            </div>
-            <div className="flex items-center gap-2">
               <span
                 className={cn(
                   'text-xs font-bold px-2.5 py-1 rounded-full border',
@@ -550,291 +516,180 @@ export function HabitDetailView({
                 {progressPercentage}% Complete
               </span>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Numeric Target Progress Controls */}
-          {habit.targetType === 'numeric' && (
-            <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {isEditingDirect ? (
-                    <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={directValueInput}
-                        onChange={(e) => setDirectValueInput(e.target.value)}
-                        className="h-8 w-24 text-sm px-2"
-                        autoFocus
-                      />
-                      <Button type="submit" size="sm" className="h-8 px-2.5 text-xs font-medium">
-                        Set
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => setIsEditingDirect(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDirectValueInput(`${currentNumericValue}`)
-                        setIsEditingDirect(true)
-                      }}
-                      className="group flex items-center gap-1.5 hover:text-primary transition-colors text-left"
-                      title="Click to edit value directly"
-                    >
-                      <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                        {currentNumericValue}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        / {targetValue} {habit.unit || 'units'}
-                      </span>
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                    </button>
-                  )}
-                </div>
-
-                {/* Dynamic Stepper & Quick Add Chips (Proportional to the Target Number!) */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericChange(-stepConfig.primaryStep)}
-                    disabled={currentNumericValue <= 0}
-                    className="h-8 px-2.5 text-xs font-semibold gap-1 rounded-lg"
-                    title={`Subtract ${stepConfig.primaryStep}`}
-                  >
-                    <Minus className="h-3.5 w-3.5" />
-                    <span>{stepConfig.primaryStep > 1 ? stepConfig.primaryStep : ''}</span>
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleNumericChange(stepConfig.primaryStep)}
-                    className="h-8 px-2.5 text-xs font-semibold gap-1 rounded-lg"
-                    title={`Add ${stepConfig.primaryStep}`}
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>{stepConfig.primaryStep > 1 ? stepConfig.primaryStep : ''}</span>
-                  </Button>
-
-                  {stepConfig.quickAddValues.map((val) => (
-                    <Button
-                      key={val}
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleNumericChange(val)}
-                      className="h-8 px-2.5 text-xs font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground transition-all"
-                    >
-                      +{val}
+          <CardContent className="space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                {isEditingDirect ? (
+                  <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5">
+                    <Input
+                      type="number"
+                      min="0"
+                      value={directValueInput}
+                      onChange={(e) => setDirectValueInput(e.target.value)}
+                      className="h-8 w-24 text-sm px-2 font-semibold"
+                      autoFocus
+                    />
+                    <Button type="submit" size="sm" className="h-8 px-2.5 text-xs font-medium">
+                      Set
                     </Button>
-                  ))}
-                </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2 text-xs"
+                      onClick={() => setIsEditingDirect(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </form>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDirectValueInput(`${currentNumericValue}`)
+                      setIsEditingDirect(true)
+                    }}
+                    className="group flex items-center gap-1.5 hover:text-primary transition-colors text-left"
+                    title="Click to edit value directly"
+                  >
+                    <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                      {currentNumericValue}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      / {targetValue} {habit.unit || 'units'}
+                    </span>
+                    <Pencil className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                  </button>
+                )}
               </div>
 
-              {/* Visual Progress Dots (Max 10 dots, dynamic ratio) */}
-              {dotProgress && (
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex items-center gap-1.5">
-                    {Array.from({ length: dotProgress.totalDots }).map((_, idx) => {
-                      const isFilled = idx < dotProgress.activeDots
-                      return (
-                        <button
-                          key={idx}
-                          type="button"
-                          onClick={() => {
-                            if (!dotProgress.isRatio) {
-                              handleSetExactValue(idx + 1)
-                            } else {
-                              const ratio = (idx + 1) / dotProgress.totalDots
-                              handleSetExactValue(Math.round(ratio * targetValue))
-                            }
-                          }}
-                          className={cn(
-                            'h-3 flex-1 rounded-full transition-all hover:scale-105',
-                            isFilled
-                              ? 'shadow-xs'
-                              : 'bg-muted-foreground/20 hover:bg-muted-foreground/30'
-                          )}
-                          style={{
-                            backgroundColor: isFilled ? themeColor : undefined
-                          }}
-                          title={`Set progress to ${
-                            dotProgress.isRatio
-                              ? Math.round(((idx + 1) / dotProgress.totalDots) * targetValue)
-                              : idx + 1
-                          } ${habit.unit || 'units'}`}
-                          aria-label={`Step ${idx + 1}`}
-                        />
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
+              {/* Dynamic Stepper & Quick Add Chips (Proportional to the Target Number!) */}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNumericChange(-stepConfig.primaryStep)}
+                  disabled={currentNumericValue <= 0}
+                  className="h-8 px-2.5 text-xs font-semibold gap-1 rounded-lg"
+                  title={`Subtract ${stepConfig.primaryStep}`}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                  <span>{stepConfig.primaryStep > 1 ? stepConfig.primaryStep : ''}</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleNumericChange(stepConfig.primaryStep)}
+                  className="h-8 px-2.5 text-xs font-semibold gap-1 rounded-lg"
+                  title={`Add ${stepConfig.primaryStep}`}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{stepConfig.primaryStep > 1 ? stepConfig.primaryStep : ''}</span>
+                </Button>
+
+                {stepConfig.quickAddValues.map((val) => (
+                  <Button
+                    key={val}
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => handleNumericChange(val)}
+                    className="h-8 px-2.5 text-xs font-semibold rounded-lg hover:bg-primary hover:text-primary-foreground transition-all"
+                  >
+                    +{val}
+                  </Button>
+                ))}
+              </div>
             </div>
-          )}
 
-          {/* Timer Habit Progress */}
-          {habit.targetType === 'timer' && (
-            <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-2">
-                  {isEditingDirect ? (
-                    <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5">
-                      <Input
-                        type="number"
-                        min="0"
-                        value={directValueInput}
-                        onChange={(e) => setDirectValueInput(e.target.value)}
-                        className="h-8 w-24 text-sm px-2 font-semibold"
-                        autoFocus
-                      />
-                      <Button type="submit" size="sm" className="h-8 px-2.5 text-xs font-medium">
-                        Set
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 px-2 text-xs"
-                        onClick={() => setIsEditingDirect(false)}
-                      >
-                        Cancel
-                      </Button>
-                    </form>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDirectValueInput(`${currentTimerMinutes}`)
-                        setIsEditingDirect(true)
-                      }}
-                      className="group flex items-center gap-1.5 hover:text-primary transition-colors text-left"
-                      title="Click to edit timer minutes directly"
-                    >
-                      <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                        {currentTimerMinutes}
-                      </span>
-                      <span className="text-sm text-muted-foreground">/ {targetValue} min</span>
-                      <Pencil className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                    </button>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  {stepConfig.quickAddValues.map((mins) => (
-                    <Button
-                      key={mins}
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleTimerChange(mins)}
-                      className="h-8 px-2.5 text-xs font-semibold rounded-lg"
-                    >
-                      +{mins}m
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              {dotProgress && (
-                <div className="flex items-center gap-1.5 pt-1">
+            {/* Visual Progress Dots (Max 10 dots, dynamic ratio) */}
+            {dotProgress && (
+              <div className="space-y-1.5 pt-1">
+                <div className="flex items-center gap-1.5">
                   {Array.from({ length: dotProgress.totalDots }).map((_, idx) => {
                     const isFilled = idx < dotProgress.activeDots
                     return (
-                      <div
+                      <button
                         key={idx}
+                        type="button"
+                        onClick={() => {
+                          if (!dotProgress.isRatio) {
+                            handleSetExactValue(idx + 1)
+                          } else {
+                            const ratio = (idx + 1) / dotProgress.totalDots
+                            handleSetExactValue(Math.round(ratio * targetValue))
+                          }
+                        }}
                         className={cn(
-                          'h-3 flex-1 rounded-full transition-all',
-                          isFilled ? 'shadow-xs' : 'bg-muted-foreground/20'
+                          'h-3 flex-1 rounded-full transition-all hover:scale-105',
+                          isFilled
+                            ? 'shadow-xs'
+                            : 'bg-muted-foreground/20 hover:bg-muted-foreground/30'
                         )}
                         style={{
                           backgroundColor: isFilled ? themeColor : undefined
                         }}
+                        title={`Set progress to ${
+                          dotProgress.isRatio
+                            ? Math.round(((idx + 1) / dotProgress.totalDots) * targetValue)
+                            : idx + 1
+                        } ${habit.unit || 'units'}`}
+                        aria-label={`Step ${idx + 1}`}
                       />
                     )
                   })}
                 </div>
-              )}
-            </div>
-          )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-          {/* Boolean Habit Check-in Card */}
-          {habit.targetType === 'boolean' && (
-            <div className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
-              <div className="space-y-0.5">
-                <div className="text-sm font-semibold text-foreground">Daily Check-in</div>
-                <div className="text-xs text-muted-foreground">
-                  {isCompletedToday
-                    ? 'Completed for this day'
-                    : 'Mark as completed once done today'}
-                </div>
-              </div>
-              <Button
-                variant={isCompletedToday ? 'default' : 'outline'}
-                onClick={handleToggleBoolean}
-                className={cn(
-                  'gap-1.5 rounded-xl font-semibold',
-                  isCompletedToday && 'bg-emerald-600 hover:bg-emerald-700 text-white'
-                )}
-              >
-                <Check className="h-4 w-4" />
-                <span>{isCompletedToday ? 'Completed' : 'Mark Done'}</span>
-              </Button>
+      {/* Sub-day Interval Slots if applicable */}
+      {(habit.frequencyType === 'subday_interval' || habit.frequencyType === 'times_per_day') && (
+        <Card className="rounded-2xl border bg-card shadow-xs">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">Interval Checkpoints</span>
+              <span>
+                {
+                  slots.filter((slot) => {
+                    const log = dateLogs.find((l) => l.intervalIndex === slot.index)
+                    return log ? log.completed : false
+                  }).length
+                }{' '}
+                / {slots.length} completed
+              </span>
             </div>
-          )}
-
-          {/* Sub-day Interval Slots if applicable */}
-          {(habit.frequencyType === 'subday_interval' ||
-            habit.frequencyType === 'times_per_day') && (
-            <div className="space-y-2 pt-2 border-t">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span className="font-medium">Interval Checkpoints</span>
-                <span>
-                  {
-                    slots.filter((slot) => {
-                      const log = dateLogs.find((l) => l.intervalIndex === slot.index)
-                      return log ? log.completed : false
-                    }).length
-                  }{' '}
-                  / {slots.length} completed
-                </span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {slots.map((slot) => {
-                  const log = dateLogs.find((l) => l.intervalIndex === slot.index)
-                  const slotCompleted = log ? log.completed : false
-                  return (
-                    <Button
-                      key={slot.index}
-                      type="button"
-                      size="sm"
-                      variant={slotCompleted ? 'default' : 'outline'}
-                      onClick={() => handleToggleSlot(slot.index)}
-                      className={cn(
-                        'h-8 px-3 text-xs font-medium rounded-xl gap-1.5 transition-all',
-                        slotCompleted && 'bg-primary text-primary-foreground font-semibold'
-                      )}
-                    >
-                      {slotCompleted && <Check className="h-3.5 w-3.5" />}
-                      <span>{slot.label}</span>
-                    </Button>
-                  )
-                })}
-              </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 flex-wrap">
+              {slots.map((slot) => {
+                const log = dateLogs.find((l) => l.intervalIndex === slot.index)
+                const slotCompleted = log ? log.completed : false
+                return (
+                  <Button
+                    key={slot.index}
+                    type="button"
+                    size="sm"
+                    variant={slotCompleted ? 'default' : 'outline'}
+                    onClick={() => handleToggleSlot(slot.index)}
+                    className={cn(
+                      'h-8 px-3 text-xs font-medium rounded-xl gap-1.5 transition-all',
+                      slotCompleted && 'bg-primary text-primary-foreground font-semibold'
+                    )}
+                  >
+                    {slotCompleted && <Check className="h-3.5 w-3.5" />}
+                    <span>{slot.label}</span>
+                  </Button>
+                )
+              })}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Focus Timer Section (Only for Duration/Timer Habits) */}
       {habit.targetType === 'timer' && (
