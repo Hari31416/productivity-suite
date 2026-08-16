@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import {
   Plus,
   Search,
@@ -31,9 +31,11 @@ import { useTags } from '../hooks/useTags'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { exportAllNotesAsZip } from '../utils/noteExporter'
 import { useBackButton } from '@/core/platform/backButton'
+import { useHashRoute } from '@/core/router/hashRouter'
 import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
 export function NotesView() {
+  const { queryParams, navigate } = useHashRoute()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null)
@@ -47,7 +49,10 @@ export function NotesView() {
   const handleCloseEditor = useCallback(() => {
     setEditingNote(null)
     setIsCreatingNew(false)
-  }, [])
+    if (queryParams.noteId) {
+      navigate('/notes', undefined, true)
+    }
+  }, [navigate, queryParams.noteId])
 
   // Handle Android Back button inside Notes module
   useBackButton(
@@ -82,6 +87,16 @@ export function NotesView() {
   const { data: notes = [], isLoading } = useNotes({ archived: showArchived })
   const { data: tags = [] } = useTags()
   const { data: projects = [] } = useProjects()
+
+  // Deep Link / Router support: auto-open note in edit/preview mode
+  useEffect(() => {
+    if (queryParams.noteId && notes.length > 0) {
+      const targetNote = notes.find((n) => n.id === queryParams.noteId)
+      if (targetNote && editingNote?.id !== targetNote.id) {
+        setEditingNote(targetNote)
+      }
+    }
+  }, [queryParams.noteId, notes, editingNote?.id])
 
   // Mutations
   const createNoteMutation = useCreateNote()

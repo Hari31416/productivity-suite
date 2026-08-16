@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { format } from 'date-fns'
 import {
   List,
@@ -7,7 +7,8 @@ import {
   Plus,
   Search,
   X,
-  SlidersHorizontal
+  SlidersHorizontal,
+  ChevronLeft
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,20 +31,19 @@ import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { useBackButton } from '@/core/platform/backButton'
 import type { Task, TaskViewMode, PriorityLevel, TaskStatus, TaskFilter } from '../types'
-import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
+import { useTasks, useTask, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { parseSmartTaskInput } from '../utils/smartTaskParser'
-import { taskRepository } from '../repository/taskRepository'
 import { ProjectSidebar } from './ProjectSidebar'
 import { TaskListView } from './views/TaskListView'
 import { TaskCalendarView } from './views/TaskCalendarView'
 import { TaskKanbanView } from './views/TaskKanbanView'
 import { TaskFormModal } from './TaskFormModal'
+import { TaskDetailView } from './TaskDetailView'
 
 export function TasksView() {
   const { queryParams, navigate } = useHashRoute()
   const deepLinkedTaskId = queryParams.taskId
-  const processedDeepLinkRef = useRef<string | null>(null)
 
   const [viewMode, setViewMode] = useState<TaskViewMode>('list')
   const [selectedSmartFilter, setSelectedSmartFilter] = useState<string>('all')
@@ -73,13 +73,17 @@ export function TasksView() {
         setShowMobileSidebar(false)
         return true
       }
+      if (deepLinkedTaskId) {
+        navigate('/tasks', undefined, true)
+        return true
+      }
       if (viewMode !== 'list') {
         setViewMode('list')
         return true
       }
       return false
     },
-    Boolean(taskModalOpen || showMobileSidebar || viewMode !== 'list'),
+    Boolean(taskModalOpen || showMobileSidebar || deepLinkedTaskId || viewMode !== 'list'),
     10
   )
 
@@ -105,95 +109,19 @@ export function TasksView() {
   }, [selectedProjectId, selectedSmartFilter, priorityFilter, statusFilter, tagFilter, searchQuery])
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(activeFilter)
+  const { data: singleTask, isLoading: singleTaskLoading } = useTask(deepLinkedTaskId || '')
   const { data: tags = [] } = useTaskTags()
   const createTaskMutation = useCreateTask()
 
-  const highlightTaskCard = (taskId: string) => {
-    let attempts = 0
-    const tryHighlight = () => {
-      const el = document.getElementById(`task-card-${taskId}`)
-      if (el) {
-        el.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
-        el.classList.add(
-          'ring-2',
-          'ring-primary',
-          'ring-offset-2',
-          'ring-offset-background',
-          'shadow-lg',
-          'shadow-primary/25',
-          'transition-all',
-          'duration-300'
-        )
-        setTimeout(() => {
-          el.classList.remove(
-            'ring-2',
-            'ring-primary',
-            'ring-offset-2',
-            'ring-offset-background',
-            'shadow-lg',
-            'shadow-primary/25'
-          )
-        }, 3000)
-      } else if (attempts < 10) {
-        attempts++
-        setTimeout(tryHighlight, 100)
-      }
-    }
-    setTimeout(tryHighlight, 50)
-  }
-
-  // Auto-open and focus target task when taskId is present in route query params
-  useEffect(() => {
-    if (!deepLinkedTaskId) {
-      processedDeepLinkRef.current = null
-      return
-    }
-
-    if (processedDeepLinkRef.current === deepLinkedTaskId) {
-      return
-    }
-
-    let isMounted = true
-
-    const openDeepLinkedTask = async () => {
-      // First check in currently loaded tasks list
-      const matched = tasks.find((t) => t.id === deepLinkedTaskId)
-      if (matched) {
-        processedDeepLinkRef.current = deepLinkedTaskId
-        setTaskToEdit(matched)
-        setTaskModalOpen(true)
-        highlightTaskCard(deepLinkedTaskId)
-        return
-      }
-
-      // If not yet in list (or loading / filtered out), fetch directly from repository
-      try {
-        const directTask = await taskRepository.getTaskById(deepLinkedTaskId)
-        if (directTask && isMounted) {
-          processedDeepLinkRef.current = deepLinkedTaskId
-          setTaskToEdit(directTask)
-          setTaskModalOpen(true)
-          highlightTaskCard(deepLinkedTaskId)
-        }
-      } catch {
-        // Task not found
-      }
-    }
-
-    openDeepLinkedTask()
-
-    return () => {
-      isMounted = false
-    }
-  }, [deepLinkedTaskId, tasks])
+  const activeDetailTask = useMemo(() => {
+    if (!deepLinkedTaskId) return null
+    return tasks.find((t) => t.id === deepLinkedTaskId) || singleTask || null
+  }, [deepLinkedTaskId, tasks, singleTask])
 
   const handleModalOpenChange = (open: boolean) => {
     setTaskModalOpen(open)
     if (!open) {
       setTaskToEdit(null)
-      if (deepLinkedTaskId) {
-        navigate('/tasks', undefined, true)
-      }
     }
   }
 
@@ -242,10 +170,7 @@ export function TasksView() {
   }
 
   const handleEditTask = (task: Task) => {
-    setTaskToEdit(task)
-    setDefaultDueDate(undefined)
-    setDefaultStatus(undefined)
-    setTaskModalOpen(true)
+    navigate('/tasks', { taskId: task.id })
   }
 
   const activeProject = useMemo(() => {
@@ -308,6 +233,39 @@ export function TasksView() {
         .length
     }
   }, [tasks])
+
+  // Dedicated Task Details View / Execution Workspace Target
+  if (deepLinkedTaskId) {
+    if (activeDetailTask) {
+      return (
+        <TaskDetailView
+          task={activeDetailTask}
+          onBack={() => {
+            navigate('/tasks', undefined, true)
+          }}
+        />
+      )
+    }
+
+    if (singleTaskLoading || tasksLoading) {
+      return (
+        <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">
+          Loading task details...
+        </div>
+      )
+    }
+
+    // If task wasn't found
+    return (
+      <div className="space-y-4 py-12 text-center">
+        <p className="text-sm text-muted-foreground">Task not found or may have been deleted.</p>
+        <Button variant="outline" size="sm" onClick={() => navigate('/tasks', undefined, true)}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          <span>Return to Tasks</span>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
