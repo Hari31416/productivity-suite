@@ -80,7 +80,9 @@ export function NotesDashboardWidget() {
                   {pinnedNotes.map((note) => (
                     <div
                       key={note.id}
-                      onClick={navigateToNotes}
+                      onClick={() => {
+                        window.location.hash = `#/notes?noteId=${note.id}`
+                      }}
                       className="flex cursor-pointer items-center justify-between rounded-md border border-primary/20 bg-primary/5 p-2 text-xs transition-colors hover:bg-primary/10"
                     >
                       <span className="truncate font-medium text-foreground">{note.title}</span>
@@ -107,7 +109,9 @@ export function NotesDashboardWidget() {
                     return (
                       <div
                         key={note.id}
-                        onClick={navigateToNotes}
+                        onClick={() => {
+                          window.location.hash = `#/notes?noteId=${note.id}`
+                        }}
                         className={cn(
                           'flex cursor-pointer flex-col gap-0.5 rounded-md border p-2 text-xs transition-colors hover:bg-muted/40'
                         )}

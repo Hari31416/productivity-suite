@@ -113,21 +113,25 @@ export function TaskDashboardWidget() {
                 return (
                   <div
                     key={task.id}
+                    onClick={() => {
+                      window.location.hash = `#/tasks?taskId=${task.id}`
+                    }}
                     className={cn(
-                      'flex items-center justify-between p-2 rounded-md border text-xs transition-colors',
-                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : 'hover:bg-muted/30',
+                      'flex items-center justify-between p-2 rounded-md border text-xs transition-all cursor-pointer hover:border-primary/40 hover:bg-muted/30 group',
+                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : '',
                       isUrgent && !isDone && 'border-red-500/30 bg-red-500/5'
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
                       <button
                         type="button"
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation()
                           updateStatusMutation.mutate({
                             id: task.id,
                             status: isDone ? 'todo' : 'done'
                           })
-                        }
+                        }}
                         className="text-muted-foreground hover:text-primary transition-colors shrink-0"
                       >
                         {isDone ? (
@@ -140,7 +144,7 @@ export function TaskDashboardWidget() {
                       <div className="flex items-center gap-1.5 min-w-0 flex-1">
                         <span
                           className={cn(
-                            'font-medium truncate',
+                            'font-medium truncate group-hover:text-primary transition-colors',
                             isDone && 'line-through text-muted-foreground'
                           )}
                         >

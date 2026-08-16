@@ -94,9 +94,12 @@ export function HabitDashboardWidget() {
                 return (
                   <div
                     key={habit.id}
+                    onClick={() => {
+                      window.location.hash = `#/habits?habitId=${habit.id}`
+                    }}
                     className={cn(
-                      'flex items-center justify-between p-2 rounded-md border text-xs transition-colors',
-                      isCompleted ? 'bg-primary/5 border-primary/20' : 'hover:bg-muted/30'
+                      'flex items-center justify-between p-2 rounded-md border text-xs transition-all cursor-pointer hover:border-primary/40 hover:bg-muted/30 group',
+                      isCompleted ? 'bg-primary/5 border-primary/20' : ''
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0">
@@ -106,7 +109,7 @@ export function HabitDashboardWidget() {
                       />
                       <span
                         className={cn(
-                          'font-medium truncate',
+                          'font-medium truncate group-hover:text-primary transition-colors',
                           isCompleted && 'line-through text-muted-foreground'
                         )}
                       >
@@ -128,12 +131,13 @@ export function HabitDashboardWidget() {
                           'h-6 w-6 p-0 rounded-full',
                           isCompleted && 'bg-primary text-primary-foreground'
                         )}
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation()
                           toggleMutation.mutate({
                             habitId: habit.id,
                             date: todayStr
                           })
-                        }
+                        }}
                       >
                         <Check className="h-3 w-3" />
                       </Button>

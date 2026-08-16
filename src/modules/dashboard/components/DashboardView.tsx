@@ -27,6 +27,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { moduleRegistry } from '@/core/modules/registry'
+import { useHashRoute } from '@/core/router/hashRouter'
 import { useHabits, useHabitLogs, useToggleHabitLog } from '@/modules/habits/hooks/useHabits'
 import { useTasks, useUpdateTaskStatus } from '@/modules/tasks/hooks/useTasks'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
@@ -39,6 +40,7 @@ import { calculateDailyProductivityScore, getProductivityStatus } from '../utils
 import { cn } from '@/lib/utils'
 
 export function DashboardView() {
+  const { navigate } = useHashRoute()
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
   const formattedDate = format(today, 'EEEE, MMM d')
@@ -265,8 +267,9 @@ export function DashboardView() {
                 return (
                   <div
                     key={habit.id}
+                    onClick={() => navigate('/habits', { habitId: habit.id })}
                     className={cn(
-                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all',
+                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all cursor-pointer hover:shadow-2xs hover:border-primary/40 group',
                       isCompleted
                         ? 'bg-primary/5 border-primary/20'
                         : 'bg-background hover:bg-muted/40'
@@ -280,7 +283,7 @@ export function DashboardView() {
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            'font-semibold text-sm truncate',
+                            'font-semibold text-sm truncate group-hover:text-primary transition-colors',
                             isCompleted && 'line-through text-muted-foreground'
                           )}
                         >
@@ -307,7 +310,10 @@ export function DashboardView() {
 
                     <button
                       type="button"
-                      onClick={() => handleToggleHabit(habit.id)}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handleToggleHabit(habit.id)
+                      }}
                       className={cn(
                         'flex h-9 w-9 min-h-[36px] min-w-[36px] shrink-0 items-center justify-center rounded-xl transition-transform active:scale-95',
                         isCompleted
@@ -363,15 +369,19 @@ export function DashboardView() {
                 return (
                   <div
                     key={task.id}
+                    onClick={() => navigate('/tasks', { taskId: task.id })}
                     className={cn(
-                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all',
+                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all cursor-pointer hover:shadow-2xs hover:border-primary/40 group',
                       isDone ? 'bg-primary/5 border-primary/20' : 'bg-background hover:bg-muted/40'
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
                       <button
                         type="button"
-                        onClick={() => handleToggleTask(task.id, task.status)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleTask(task.id, task.status)
+                        }}
                         className={cn(
                           'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-all active:scale-95',
                           isDone
@@ -386,7 +396,7 @@ export function DashboardView() {
                       <div className="min-w-0 flex-1">
                         <p
                           className={cn(
-                            'font-semibold text-sm truncate',
+                            'font-semibold text-sm truncate group-hover:text-primary transition-colors',
                             isDone && 'line-through text-muted-foreground'
                           )}
                         >
@@ -431,12 +441,17 @@ export function DashboardView() {
 
       {/* Quick Overview Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Card
+          onClick={() => navigate('/habits')}
+          className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs cursor-pointer hover:border-primary/40 hover:shadow-2xs transition-all group"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <Activity className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate font-medium">Active Habits</p>
+            <p className="text-xs text-muted-foreground truncate font-medium group-hover:text-foreground transition-colors">
+              Active Habits
+            </p>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold">{habits.length}</span>
               {maxStreak > 0 && (
@@ -449,12 +464,17 @@ export function DashboardView() {
           </div>
         </Card>
 
-        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Card
+          onClick={() => navigate('/tasks')}
+          className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs cursor-pointer hover:border-primary/40 hover:shadow-2xs transition-all group"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <CheckCircle2 className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate font-medium">Tasks To-Do</p>
+            <p className="text-xs text-muted-foreground truncate font-medium group-hover:text-foreground transition-colors">
+              Tasks To-Do
+            </p>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold">
                 {tasks.filter((t) => t.status !== 'done').length}
@@ -466,24 +486,34 @@ export function DashboardView() {
           </div>
         </Card>
 
-        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Card
+          onClick={() => navigate('/notes')}
+          className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs cursor-pointer hover:border-primary/40 hover:shadow-2xs transition-all group"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <FileText className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate font-medium">Notes & Docs</p>
+            <p className="text-xs text-muted-foreground truncate font-medium group-hover:text-foreground transition-colors">
+              Notes & Docs
+            </p>
             <div className="flex items-baseline gap-1">
               <span className="text-lg font-bold">{notes.length}</span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+        <Card
+          onClick={() => navigate('/tasks')}
+          className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs cursor-pointer hover:border-primary/40 hover:shadow-2xs transition-all group"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary group-hover:scale-105 transition-transform">
             <FolderKanban className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs text-muted-foreground truncate font-medium">Projects</p>
+            <p className="text-xs text-muted-foreground truncate font-medium group-hover:text-foreground transition-colors">
+              Projects
+            </p>
             <span className="text-lg font-bold">{projects.length}</span>
           </div>
         </Card>
@@ -506,7 +536,8 @@ export function DashboardView() {
             {completedHabitsList.map((habit) => (
               <div
                 key={`completed-habit-${habit.id}`}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs"
+                onClick={() => navigate('/habits', { habitId: habit.id })}
+                className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs cursor-pointer hover:border-primary/40 hover:shadow-xs transition-all group"
               >
                 <div
                   className="h-3 w-3 rounded-full shrink-0"
@@ -514,7 +545,9 @@ export function DashboardView() {
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="font-medium text-foreground truncate">{habit.title}</span>
+                    <span className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                      {habit.title}
+                    </span>
                     <Badge
                       variant="outline"
                       className="text-[10px] h-4 px-1 py-0 text-primary border-primary/30 shrink-0"
@@ -534,12 +567,13 @@ export function DashboardView() {
               return (
                 <div
                   key={`completed-task-${task.id}`}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs"
+                  onClick={() => navigate('/tasks', { taskId: task.id })}
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs cursor-pointer hover:border-primary/40 hover:shadow-xs transition-all group"
                 >
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-medium text-foreground truncate line-through text-muted-foreground">
+                      <span className="font-medium text-foreground truncate line-through text-muted-foreground group-hover:text-foreground transition-colors">
                         {task.title}
                       </span>
                       {project && (
