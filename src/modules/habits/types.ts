@@ -24,6 +24,9 @@ export interface Habit {
   targetType: HabitTargetType
   targetValue?: number
   unit?: string
+  pinned?: boolean
+  reminderTimes?: string[]
+  motivationNotes?: string
   createdAt: string
   updatedAt: string
   archived: boolean
