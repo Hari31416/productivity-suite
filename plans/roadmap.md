@@ -19,10 +19,12 @@ Enable instant navigation to specific items when clicking system notifications.
 
 ## 2. Habit Tracker UI Overhaul
 
-Redesign the habit tracking experience with dedicated detail screens, streamlined creation forms, interactive circular timers, and monthly visual completion history.
+Redesign the habit tracking experience with dedicated detail screens, streamlined creation forms, interactive circular timers, and monthly visual completion history. Once the detail screen is ready, habit notification deep links will directly route and land on this dedicated view.
 
 ### Habit Details View
 
+- **Deep Link Notification Landing Target**:
+  - Direct destination when clicking habit reminder notifications (`#/habits?habitId=<id>`), transitioning from the modal popover to the full dedicated habit dashboard.
 - **Hero Header**:
   - Large icon and custom color accent.
   - Habit title, category pill (e.g. Health & Wellness), and type indicator (e.g. Daily - Counter).
@@ -70,7 +72,45 @@ Redesign the habit tracking experience with dedicated detail screens, streamline
   - Best streak achieved within the month.
   - Total time and counter aggregates.
 
-## 3. Advanced Habit Notifications
+## 3. Task Detail View and Execution Workspace
+
+Provide a dedicated slide-over panel and full-view workspace for complex task execution, time tracking, and contextual attachments. Once ready, task notification deep links will directly route and open this execution workspace.
+
+### Task Hero and Property Header
+
+- **Deep Link Notification Landing Target**:
+  - Direct destination when clicking task reminder notifications (`#/tasks?taskId=<id>`), transitioning from the modal popover to the full task workspace drawer.
+- **Status and Priority Controls**:
+  - Quick-switch status dropdown (To Do, In Progress, Blocked, Done).
+  - Priority selector with color badge indicators (Low, Medium, High, Urgent).
+- **Project Association and Due Date**:
+  - Project pill with custom color dot and quick project reassignment.
+  - Date and time picker with relative due badges (Today, Tomorrow, Overdue).
+- **Rich Markdown Description**:
+  - Expandable full-fidelity markdown preview and edit mode for requirements, links, and code snippets.
+
+### Interactive Subtasks Checklist
+
+- **Progress Overview**:
+  - Completion ratio badge and visual progress bar (e.g. `4 of 5 subtasks completed - 80%`).
+- **Inline Management**:
+  - Quick subtask creation input, drag-and-drop reordering, and instant checkbox toggling.
+
+### Task-Linked Focus Timer Hub
+
+- **Embedded Circular Timer**:
+  - Mini circular countdown timer widget with 25-minute Pomodoro presets and custom durations.
+- **Time Spent vs Estimate Tracker**:
+  - Visual comparison bar comparing estimated task duration against accumulated active timer sessions.
+
+### Context and Linked References
+
+- **Connected Notes**:
+  - Section listing all markdown notes referencing or tagged with this task.
+- **Recurrence Schedule and History**:
+  - Recurrence interval details, parent template link, and creation / completion timestamps.
+
+## 4. Advanced Habit Notifications
 
 - **Multiple Scheduled Times**:
   - Allow each habit to schedule distinct notification triggers throughout the day.
@@ -79,14 +119,14 @@ Redesign the habit tracking experience with dedicated detail screens, streamline
 - **Interval Check-in Automation**:
   - Smart interval recalculation that adjusts remaining reminders as daily targets are completed early.
 
-## 4. Unified Pomodoro and Task Focus Sessions
+## 5. Unified Pomodoro and Task Focus Sessions
 
 - **Task-Linked Timer Sessions**:
   - Run the circular focus timer against specific tasks (e.g. 25-minute Pomodoro block for a project task) to record actual time spent vs estimated duration.
 - **Offline Ambient Focus Audio**:
   - Lightweight Web Audio synthesis and offline ambient tracks (rain, white noise, cafe, binaural focus frequencies) playable during active focus timer sessions.
 
-## 5. Habit Stacking, Routines and Streak Protection
+## 6. Habit Stacking, Routines and Streak Protection
 
 - **Routine Stacking Chains**:
   - Group habits into structured sequence stacks (e.g. "Morning Routine": *Drink Water -> Stretch -> Meditation*).
@@ -95,33 +135,33 @@ Redesign the habit tracking experience with dedicated detail screens, streamline
   - Configure rest days for specific habits (e.g. gym workout 5 days/week with weekend rest) without breaking streak calculations.
   - Support manual streak freezes for travel or illness.
 
-## 6. Cross-Module Bi-Directional Linking
+## 7. Cross-Module Bi-Directional Linking
 
 - **Notes Linked to Tasks and Habits**:
   - Attach contextual markdown notes to tasks or habit check-ins for detailed documentation and reflection.
 - **Task and Habit Mentions in Notes**:
   - Quick auto-complete mentions (`@task-name` and `#habit-name`) within notes with interactive direct links.
 
-## 7. Android Home Screen Widgets
+## 8. Android Home Screen Widgets
 
 - **Habit Quick-Log Widget**:
   - Interactive Android AppWidget for logging daily habit completions with a single tap directly from the home screen.
 - **Daily Focus Task Widget**:
   - Home screen widget displaying high-priority and urgent tasks due today.
 
-## 8. Productivity Analytics and Weekly Review
+## 9. Productivity Analytics and Weekly Review
 
 - **Time-of-Day Consistency Heatmaps**:
   - Visual heatmap showing hourly distribution of habit completions and task wrap-ups.
 - **Weekly Review Digest**:
   - Automated weekly summary report generated every Sunday evaluating productivity score, streak milestones, and time allocation across projects.
 
-## 9. Security and Archive Encryption
+## 10. Security and Archive Encryption
 
 - **Password-Protected Backup Exports**:
   - Optional AES-GCM password encryption for JSON backup files to protect personal notes and task archives during off-device export and storage.
 
-## 10. Gamification, XP and Level Progression System
+## 11. Gamification, XP and Level Progression System
 
 Turn productivity and consistency into an engaging progression system with experience points (XP), dynamic level ranks, streak multipliers, and achievement badges.
 
