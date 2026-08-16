@@ -4,6 +4,7 @@ import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { setupNotificationListeners } from '@/core/notifications/notificationService'
+import { setupBackButton } from '@/core/platform/backButton'
 import { AppShell } from '@/components/layout/AppShell'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { QuickAddSheet } from '@/components/layout/QuickAddSheet'
@@ -40,50 +41,45 @@ export function App() {
     }
   }, [navigate])
 
-  // Android / Capacitor Back Button & Escape dismissal for modals
+  // Android / Capacitor Back Button & Escape dismissal for modals and navigation
   useEffect(() => {
-    const handleBack = (e: Event) => {
+    const cleanup = setupBackButton(() => {
       if (commandPaletteOpen) {
-        e.preventDefault()
         setCommandPaletteOpen(false)
-        return
+        return true
       }
       if (quickAddSheetOpen) {
-        e.preventDefault()
         setQuickAddSheetOpen(false)
-        return
+        return true
       }
       if (quickTaskModalOpen) {
-        e.preventDefault()
         setQuickTaskModalOpen(false)
-        return
+        return true
       }
       if (quickHabitModalOpen) {
-        e.preventDefault()
         setQuickHabitModalOpen(false)
-        return
+        return true
       }
       if (quickNoteModalOpen) {
-        e.preventDefault()
         setQuickNoteModalOpen(false)
-        return
+        return true
       }
-    }
+      if (pathname !== '/') {
+        navigate('/')
+        return true
+      }
+      return false
+    })
 
-    // Android webview / Capacitor backbutton event
-    document.addEventListener('backbutton', handleBack)
-    window.addEventListener('ionBackButton', handleBack)
-
-    return () => {
-      document.removeEventListener('backbutton', handleBack)
-      window.removeEventListener('ionBackButton', handleBack)
-    }
+    return cleanup
   }, [
     commandPaletteOpen,
     quickAddSheetOpen,
     quickTaskModalOpen,
     quickHabitModalOpen,
-    quickNoteModalOpen
+    quickNoteModalOpen,
+    pathname,
+    navigate
   ])
 
   const handleRouteChange = (route: string) => {

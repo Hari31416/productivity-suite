@@ -30,6 +30,7 @@ import {
 import { useTags } from '../hooks/useTags'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { exportAllNotesAsZip } from '../utils/noteExporter'
+import { useBackButton } from '@/core/platform/backButton'
 import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
 export function NotesView() {
@@ -41,6 +42,41 @@ export function NotesView() {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [isCreatingNew, setIsCreatingNew] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
+  const [filterMode, setFilterMode] = useState<'all' | 'pinned' | 'recent'>('all')
+
+  const handleCloseEditor = useCallback(() => {
+    setEditingNote(null)
+    setIsCreatingNew(false)
+  }, [])
+
+  // Handle Android Back button inside Notes module
+  useBackButton(
+    () => {
+      if (isCreatingNew || editingNote) {
+        handleCloseEditor()
+        return true
+      }
+      if (selectedTag || selectedProjectId || searchQuery || showArchived || filterMode !== 'all') {
+        setSelectedTag(null)
+        setSelectedProjectId(null)
+        setSearchQuery('')
+        setShowArchived(false)
+        setFilterMode('all')
+        return true
+      }
+      return false
+    },
+    Boolean(
+      isCreatingNew ||
+      editingNote ||
+      selectedTag ||
+      selectedProjectId ||
+      searchQuery ||
+      showArchived ||
+      filterMode !== 'all'
+    ),
+    10
+  )
 
   // Data fetching
   const { data: notes = [], isLoading } = useNotes({ archived: showArchived })
@@ -63,8 +99,6 @@ export function NotesView() {
     }
     return map
   }, [projects])
-
-  const [filterMode, setFilterMode] = useState<'all' | 'pinned' | 'recent'>('all')
 
   // Filter notes client-side for immediate responsiveness
   const filteredNotes = useMemo(() => {
@@ -142,11 +176,6 @@ export function NotesView() {
   const handleStartCreate = () => {
     setEditingNote(null)
     setIsCreatingNew(true)
-  }
-
-  const handleCloseEditor = () => {
-    setEditingNote(null)
-    setIsCreatingNew(false)
   }
 
   // Active Editor View (Modal or Full Screen)

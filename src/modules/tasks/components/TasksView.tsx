@@ -21,6 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
+import { useBackButton } from '@/core/platform/backButton'
 import type { Task, TaskViewMode, PriorityLevel, TaskStatus, TaskFilter } from '../types'
 import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
@@ -53,6 +54,27 @@ export function TasksView() {
   const [taskToEdit, setTaskToEdit] = useState<Task | null>(null)
   const [defaultDueDate, setDefaultDueDate] = useState<string | undefined>(undefined)
   const [defaultStatus, setDefaultStatus] = useState<TaskStatus | undefined>(undefined)
+
+  // Handle Android Back button inside Tasks module
+  useBackButton(
+    () => {
+      if (taskModalOpen) {
+        handleModalOpenChange(false)
+        return true
+      }
+      if (showMobileSidebar) {
+        setShowMobileSidebar(false)
+        return true
+      }
+      if (viewMode !== 'list') {
+        setViewMode('list')
+        return true
+      }
+      return false
+    },
+    Boolean(taskModalOpen || showMobileSidebar || viewMode !== 'list'),
+    10
+  )
 
   const { data: projects = [] } = useProjects(false)
 

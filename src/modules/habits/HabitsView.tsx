@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
+import { useBackButton } from '@/core/platform/backButton'
 import type { Habit } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
 import {
@@ -61,6 +62,38 @@ export function HabitsView() {
     'default'
   )
   const [showQuickAdd, setShowQuickAdd] = useState(false)
+
+  // Handle Android Back button inside Habits module
+  useBackButton(
+    () => {
+      if (habitToDelete) {
+        setHabitToDelete(null)
+        return true
+      }
+      if (isFormOpen) {
+        setIsFormOpen(false)
+        setHabitToEdit(null)
+        return true
+      }
+      if (showQuickAdd) {
+        setShowQuickAdd(false)
+        return true
+      }
+      if (deepLinkedHabitId) {
+        navigate('/habits', undefined, true)
+        return true
+      }
+      if (viewMode !== 'tracker') {
+        setViewMode('tracker')
+        return true
+      }
+      return false
+    },
+    Boolean(
+      habitToDelete || isFormOpen || showQuickAdd || deepLinkedHabitId || viewMode !== 'tracker'
+    ),
+    10
+  )
 
   const { data: habits = [], isLoading: habitsLoading } = useHabits(showArchived)
   const { data: singleHabit, isLoading: singleHabitLoading } = useHabit(deepLinkedHabitId || '')

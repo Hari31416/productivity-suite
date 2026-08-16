@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/dialog'
 import { moduleRegistry } from '@/core/modules/registry'
 import { useHashRoute } from '@/core/router/hashRouter'
+import { useBackButton } from '@/core/platform/backButton'
 import { useHabits, useHabitLogs, useToggleHabitLog } from '@/modules/habits/hooks/useHabits'
 import { useTasks, useUpdateTaskStatus } from '@/modules/tasks/hooks/useTasks'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
@@ -50,6 +51,31 @@ export function DashboardView() {
   const [taskModalOpen, setTaskModalOpen] = useState(false)
   const [noteModalOpen, setNoteModalOpen] = useState(false)
   const [scoreModalOpen, setScoreModalOpen] = useState(false)
+
+  // Handle Android Back button inside Dashboard
+  useBackButton(
+    () => {
+      if (scoreModalOpen) {
+        setScoreModalOpen(false)
+        return true
+      }
+      if (habitModalOpen) {
+        setHabitModalOpen(false)
+        return true
+      }
+      if (taskModalOpen) {
+        setTaskModalOpen(false)
+        return true
+      }
+      if (noteModalOpen) {
+        setNoteModalOpen(false)
+        return true
+      }
+      return false
+    },
+    Boolean(scoreModalOpen || habitModalOpen || taskModalOpen || noteModalOpen),
+    10
+  )
 
   // Data queries
   const { data: habits = [] } = useHabits(false)
