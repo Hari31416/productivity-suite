@@ -77,17 +77,17 @@ export function formatDueDate(dueDateStr?: string): {
       return { label: 'Today', isOverdue: false, isToday: true }
     }
     if (isTomorrow(taskDay)) {
-      return { label: 'Tomorrow', isOverdue: false, isToday: false }
+      return { label: 'Tom', isOverdue: false, isToday: false }
     }
     if (isYesterday(taskDay)) {
-      return { label: 'Yesterday', isOverdue: true, isToday: false }
+      return { label: 'Yest', isOverdue: true, isToday: false }
     }
 
     const isPastDate = isPast(taskDay)
     const formatted = format(date, 'MMM d')
 
     return {
-      label: isPastDate ? `Overdue (${formatted})` : formatted,
+      label: formatted,
       isOverdue: isPastDate,
       isToday: false
     }
