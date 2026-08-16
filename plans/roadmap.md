@@ -17,60 +17,28 @@ Enable instant navigation to specific items when clicking system notifications.
   - Native Android notification action listener via `@capacitor/local-notifications` (`localNotificationActionPerformed`).
   - Web browser `Notification.onclick` wired in [`notificationService.ts`](../src/core/notifications/notificationService.ts) to bring window to focus and navigate to target item hash route.
 
-## 2. Habit Tracker UI Overhaul
+## 2. Habit Tracker UI Overhaul [Completed]
 
-Redesign the habit tracking experience with dedicated detail screens, streamlined creation forms, interactive circular timers, and monthly visual completion history. Once the detail screen is ready, habit notification deep links will directly route and land on this dedicated view.
+Redesigned the habit tracking experience with dedicated detail screens, streamlined creation forms, interactive circular timers, and monthly visual completion history. Habit notification deep links directly route and land on this dedicated view.
 
-### Habit Details View
+### Implemented Capabilities
 
-- **Deep Link Notification Landing Target**:
-  - Direct destination when clicking habit reminder notifications (`#/habits?habitId=<id>`), transitioning from the modal popover to the full dedicated habit dashboard.
-- **Hero Header**:
-  - Large icon and custom color accent.
-  - Habit title, category pill (e.g. Health & Wellness), and type indicator (e.g. Daily - Counter).
-  - Favorite / Pin toggle.
-- **Streak Cards**:
-  - Current Streak counter with flame badge.
-  - Best Streak counter with trophy badge.
-- **Today Progress Tracker**:
-  - Discrete progress dot indicators (e.g. 8 of 8 glasses complete).
-  - Visual completion percentage badge.
-- **About and Context**:
-  - Habit description, motivation notes, and scheduled reminder times overview.
-- **Action Toolbar**:
-  - Edit habit and quick check-in actions.
-
-### Add and Edit Habit Form
-
-- **Segmented Type Selector**:
-  - Toggle between `Yes/No` (boolean), `Counter` (numeric targets), and `Timer` (duration-based) habit models.
-- **Target and Unit Configuration**:
-  - Dedicated numeric input with customizable unit selector (glasses, pages, reps, minutes).
-- **Frequency Options**:
-  - Daily, specific days of week, or custom sub-day intervals.
-- **Multi-Reminder Timeline**:
-  - Configurable multiple reminder times per day (e.g. `08:00`, `12:00`, `16:00`) with an inline `+ Add` reminder pill interface.
-
-### Dedicated Habit Focus Timer
-
-- **Circular Countdown Interface**:
-  - Radial SVG / Canvas progress ring showing elapsed vs remaining time.
-  - Central time display (`MM:SS`) with play / pause toggle.
-- **Session Metrics**:
-  - Completed sessions count for the day.
-  - Total accumulated time tracked.
-- **Controls**:
-  - Reset timer button.
-  - Finish session button to log completion directly to habit history.
-
-### Habit History and Monthly Calendar View
-
-- **Monthly Grid View**:
-  - Visual calendar month overview with filled completion dots for successful days.
-- **Monthly Summary Metrics**:
-  - Overall completion rate (e.g. `23 days complete - 74%`).
-  - Best streak achieved within the month.
-  - Total time and counter aggregates.
+- **Dedicated Habit Details View**:
+  - Direct destination when clicking habit reminder notifications (`#/habits?habitId=<id>`) in [`HabitDetailView.tsx`](../src/modules/habits/components/HabitDetailView.tsx).
+  - Hero header with custom color accents and integrated 3-column stats strip (Current Streak, Best Streak, All-Time Total).
+  - Consolidated top action bar featuring a primary Edit button and a More actions dropdown menu for Pin, Archive, and Delete.
+  - Interactive 10-step dotted segmented progress bar for numeric and timer habits with direct dot tap selection.
+  - Compact About, Motivation, and Scheduled Reminder metadata section.
+- **Add and Edit Habit Form**:
+  - Segmented Type Selector for `Yes/No` (boolean), `Counter` (numeric targets), and `Timer` (duration-based) models in [`HabitFormModal.tsx`](../src/modules/habits/components/HabitFormModal.tsx).
+  - Numeric input with customizable units and multi-reminder pill timeline.
+- **Dedicated Habit Focus Timer**:
+  - Radial SVG circular countdown progress ring with play, pause, reset, and direct duration editing in [`HabitFocusTimer.tsx`](../src/modules/habits/components/HabitFocusTimer.tsx).
+  - Proportional stepper buttons (-10m, -5m, +5m, +10m) and dynamic autofill for remaining target duration.
+  - Direct inline minute editing for quick manual adjustments.
+- **Habit History and Monthly Calendar View**:
+  - Scoped monthly log tracking and history calculation in [`HabitMonthlyCalendar.tsx`](../src/modules/habits/components/HabitMonthlyCalendar.tsx).
+  - Unified header with inline month switcher and compact 4-metric summary strip.
 
 ## 3. Task Detail View and Execution Workspace
 
@@ -129,7 +97,7 @@ Provide a dedicated slide-over panel and full-view workspace for complex task ex
 ## 6. Habit Stacking, Routines and Streak Protection
 
 - **Routine Stacking Chains**:
-  - Group habits into structured sequence stacks (e.g. "Morning Routine": *Drink Water -> Stretch -> Meditation*).
+  - Group habits into structured sequence stacks (e.g. "Morning Routine": _Drink Water -> Stretch -> Meditation_).
   - Completing one item in a stack prompts or activates the subsequent item.
 - **Streak Freeze and Planned Rest Days**:
   - Configure rest days for specific habits (e.g. gym workout 5 days/week with weekend rest) without breaking streak calculations.
@@ -198,4 +166,3 @@ Turn productivity and consistency into an engaging progression system with exper
   - Unlock achievements for logging 10, 50, and 200 hours of active timer sessions.
 - **Knowledge Scribe Badges**:
   - Unlock achievements for authoring 25, 100, and 500 structured markdown notes.
-
