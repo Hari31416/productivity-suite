@@ -37,19 +37,14 @@ import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
 import { isHabitScheduledOnDate, calculateStreak } from '@/modules/habits/utils/streakCalculator'
 import {
   calculateDailyProductivityScore,
-  getGreeting,
   getProductivityStatus
 } from '../utils/dashboardScore'
-import { useUserProfile } from '@/core/profile/useUserProfile'
 import { cn } from '@/lib/utils'
 
 export function DashboardView() {
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
   const formattedDate = format(today, 'EEEE, MMM d')
-  const { userName } = useUserProfile()
-  const baseGreeting = getGreeting(today)
-  const greeting = userName ? `${baseGreeting}, ${userName}` : baseGreeting
 
   // Modal states
   const [habitModalOpen, setHabitModalOpen] = useState(false)
@@ -158,20 +153,6 @@ export function DashboardView() {
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-6">
-      {/* Top Greeting */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-        <div>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
-            <span>{greeting}</span>
-            <span className="text-amber-500 text-lg sm:text-xl">👋</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>{formattedDate}</span>
-          </p>
-        </div>
-      </div>
-
       {/* Daily Progress Score Card (Mockup style) */}
       <Card
         onClick={() => setScoreModalOpen(true)}

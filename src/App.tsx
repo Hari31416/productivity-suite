@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { format } from 'date-fns'
 import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
 import { AppShell } from '@/components/layout/AppShell'
@@ -8,6 +9,8 @@ import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
 import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
 import { StartupModal } from '@/components/onboarding/StartupModal'
+import { useUserProfile } from '@/core/profile/useUserProfile'
+import { getGreeting } from '@/modules/dashboard/utils/dashboardScore'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
@@ -17,6 +20,8 @@ export function App() {
     }
     return '/'
   })
+
+  const { userName } = useUserProfile()
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [quickAddSheetOpen, setQuickAddSheetOpen] = useState(false)
@@ -101,13 +106,21 @@ export function App() {
   const ActiveComponent =
     activeModule?.routes[0]?.component || (() => <div>View not found</div>)
 
+  const today = new Date()
+  const baseGreeting = getGreeting(today)
+  const dashboardTitle = userName ? `${baseGreeting}, ${userName}` : baseGreeting
+  const formattedDate = format(today, 'EEEE, MMM d')
+
+  const title = currentRoute === '/' ? dashboardTitle : (activeModule ? activeModule.title : 'Productivity')
+  const subtitle = currentRoute === '/' ? formattedDate : (activeModule ? activeModule.description : undefined)
+
   return (
     <>
       <AppShell
         activeRoute={currentRoute}
         onRouteChange={handleRouteChange}
-        title={activeModule ? activeModule.title : 'Productivity'}
-        subtitle={activeModule ? activeModule.description : undefined}
+        title={title}
+        subtitle={subtitle}
         onQuickAction={() => setQuickAddSheetOpen(true)}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
       >
