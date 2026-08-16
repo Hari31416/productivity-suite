@@ -143,7 +143,30 @@ export function TaskKanbanView({ tasks, projects, onEditTask, onAddTask }: TaskK
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full space-y-2">
+      {/* Mobile Column Quick Switcher Ribbon */}
+      <div className="flex sm:hidden items-center justify-between gap-1 px-1 overflow-x-auto scrollbar-none pb-1">
+        {COLUMNS.map((col) => {
+          const count = (tasksByColumn[col.id] || []).length
+          return (
+            <button
+              key={col.id}
+              type="button"
+              onClick={() => {
+                const el = document.getElementById(`kanban-col-${col.id}`)
+                el?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+              }}
+              className="flex items-center gap-1.5 text-xs font-medium py-1 px-2.5 rounded-lg border bg-card text-muted-foreground hover:text-foreground active:border-primary/50 shrink-0"
+            >
+              <span>{col.title}</span>
+              <span className="text-[10px] font-semibold bg-muted px-1.5 py-0.2 rounded-full">
+                {count}
+              </span>
+            </button>
+          )
+        })}
+      </div>
+
       {/* Horizontal Multi-Column Board (Side-by-side with swipeable horizontal scroll on mobile) */}
       <div className="flex flex-row overflow-x-auto snap-x snap-mandatory gap-3 sm:gap-4 pb-6 pt-1 px-1 scrollbar-none items-start">
         {COLUMNS.map((column) => {
@@ -153,11 +176,12 @@ export function TaskKanbanView({ tasks, projects, onEditTask, onAddTask }: TaskK
           return (
             <div
               key={column.id}
+              id={`kanban-col-${column.id}`}
               onDragOver={(e) => handleDragOver(e, column.id)}
               onDragLeave={(e) => handleDragLeave(e, column.id)}
               onDrop={(e) => handleDrop(e, column.id)}
               className={cn(
-                'w-[82vw] sm:w-[300px] md:w-[320px] lg:flex-1 shrink-0 snap-start flex flex-col rounded-2xl border bg-muted/20 p-3 sm:p-3.5 min-h-[480px] transition-all shadow-2xs',
+                'w-[78vw] sm:w-[300px] md:w-[320px] lg:flex-1 shrink-0 snap-start flex flex-col rounded-2xl border bg-muted/20 p-3 sm:p-3.5 min-h-[480px] transition-all shadow-2xs',
                 isDragTarget && 'ring-2 ring-primary/80 bg-primary/5'
               )}
             >

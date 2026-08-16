@@ -1,13 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter
-} from '@/components/ui/card'
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -611,127 +604,135 @@ export function SettingsView() {
         </CardContent>
       </Card>
 
-      {/* Storage Diagnostics & Database Inspector */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0">
-          <div>
-            <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base font-semibold">Local Storage Diagnostics</CardTitle>
-            </div>
-            <CardDescription>
-              IndexedDB (LocalProductivitySuiteDB v1) consumption and persistence status.
-            </CardDescription>
+      {/* Advanced Diagnostics & Storage Details (Collapsible) */}
+      <details className="group rounded-2xl border bg-card/60 shadow-xs transition-all overflow-hidden">
+        <summary className="flex items-center justify-between p-4 cursor-pointer select-none font-semibold text-sm hover:bg-muted/40 transition-colors list-none">
+          <div className="flex items-center gap-2.5">
+            <Database className="h-4 w-4 text-muted-foreground group-open:text-primary transition-colors" />
+            <span>Developer Diagnostics & Raw Storage</span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={refreshStorageDiagnostics}
-            className="gap-1 text-xs"
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            <span>Refresh</span>
-          </Button>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Storage usage gauge */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-xl border p-4 bg-muted/10 space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Storage Usage Estimate</span>
-                <span className="font-mono text-foreground">
-                  {storageEstimate ? formatBytes(storageEstimate.usage) : 'Estimating...'}
-                </span>
-              </div>
-              {storageEstimate && storageEstimate.quota > 0 && (
-                <div className="text-[11px] text-muted-foreground">
-                  Quota: {formatBytes(storageEstimate.quota)} (
-                  {((storageEstimate.usage / storageEstimate.quota) * 100).toFixed(2)}% used)
-                </div>
-              )}
-            </div>
+          <span className="text-xs text-muted-foreground group-open:hidden">Tap to inspect</span>
+        </summary>
 
-            <div className="rounded-xl border p-4 bg-muted/10 flex items-center justify-between">
+        <div className="p-4 pt-2 space-y-4 border-t">
+          {/* Storage Diagnostics & Database Inspector */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <div>
-                <div className="text-xs font-semibold">Persistent Storage</div>
-                <div className="text-[11px] text-muted-foreground">
-                  {isPersisted
-                    ? 'Storage is persisted and protected from eviction.'
-                    : 'Best-effort browser storage (can be evicted if disk is full).'}
+                <h4 className="text-sm font-semibold">IndexedDB Storage Breakdown</h4>
+                <p className="text-xs text-muted-foreground">
+                  IndexedDB (LocalProductivitySuiteDB v1) consumption and persistence status.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={refreshStorageDiagnostics}
+                className="gap-1 text-xs"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                <span>Refresh</span>
+              </Button>
+            </div>
+
+            {/* Storage usage gauge */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="rounded-xl border p-4 bg-muted/10 space-y-2">
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Storage Usage Estimate</span>
+                  <span className="font-mono text-foreground">
+                    {storageEstimate ? formatBytes(storageEstimate.usage) : 'Estimating...'}
+                  </span>
                 </div>
+                {storageEstimate && storageEstimate.quota > 0 && (
+                  <div className="text-[11px] text-muted-foreground">
+                    Quota: {formatBytes(storageEstimate.quota)} (
+                    {((storageEstimate.usage / storageEstimate.quota) * 100).toFixed(2)}% used)
+                  </div>
+                )}
               </div>
-              {isPersisted ? (
-                <Badge variant="secondary" className="gap-1 text-emerald-600 dark:text-emerald-400">
-                  <ShieldCheck className="h-3.5 w-3.5" />
-                  Persisted
-                </Badge>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={handleRequestPersistence}
-                  disabled={isPersisting}
-                  className="text-xs gap-1"
-                >
-                  <Lock className="h-3.5 w-3.5" />
-                  <span>{isPersisting ? 'Requesting...' : 'Request Persist'}</span>
-                </Button>
-              )}
+
+              <div className="rounded-xl border p-4 bg-muted/10 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-semibold">Persistent Storage</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {isPersisted
+                      ? 'Storage is persisted and protected from eviction.'
+                      : 'Best-effort browser storage (can be evicted if disk is full).'}
+                  </div>
+                </div>
+                {isPersisted ? (
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-emerald-600 dark:text-emerald-400"
+                  >
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Persisted
+                  </Badge>
+                ) : (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleRequestPersistence}
+                    disabled={isPersisting}
+                    className="text-xs gap-1"
+                  >
+                    <Lock className="h-3.5 w-3.5" />
+                    <span>{isPersisting ? 'Requesting...' : 'Request Persist'}</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Table record counts */}
+            <div className="rounded-xl border divide-y text-xs">
+              <div className="flex items-center justify-between p-3 bg-muted/30 font-semibold">
+                <span>Database Table</span>
+                <span>Total Records</span>
+              </div>
+              {Object.entries(tableCounts).map(([tableName, count]) => (
+                <div key={tableName} className="flex items-center justify-between p-3">
+                  <span className="font-mono text-primary">{tableName}</span>
+                  <span className="font-semibold">{count}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <span>
+                Zero telemetry or third-party tracking. All data is exclusively stored offline.
+              </span>
             </div>
           </div>
 
-          {/* Table record counts */}
-          <div className="rounded-xl border divide-y text-xs">
-            <div className="flex items-center justify-between p-3 bg-muted/30 font-semibold">
-              <span>Database Table</span>
-              <span>Total Records</span>
+          {/* Danger Zone: Clear Data */}
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 space-y-3">
+            <div className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-4 w-4" />
+              <h4 className="text-sm font-semibold">Danger Zone</h4>
             </div>
-            {Object.entries(tableCounts).map(([tableName, count]) => (
-              <div key={tableName} className="flex items-center justify-between p-3">
-                <span className="font-mono text-primary">{tableName}</span>
-                <span className="font-semibold">{count}</span>
-              </div>
-            ))}
+            <p className="text-xs text-muted-foreground">
+              Permanently clear all records from all 7 Dexie IndexedDB tables. This action cannot be
+              undone. Please ensure you have exported a JSON backup beforehand.
+            </p>
+            <div className="flex justify-end pt-1">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setDeleteConfirmationInput('')
+                  setClearDataModalOpen(true)
+                }}
+                className="gap-1.5 text-xs"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Clear All Data</span>
+              </Button>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span>
-              Zero telemetry or third-party tracking. All data is exclusively stored offline.
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Danger Zone: Clear Data */}
-      <Card className="border-destructive/30 bg-destructive/5">
-        <CardHeader>
-          <div className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
-            <CardTitle className="text-base font-semibold">Danger Zone</CardTitle>
-          </div>
-          <CardDescription>
-            Permanently clear all records from all 7 Dexie IndexedDB tables.
-          </CardDescription>
-        </CardHeader>
-        <CardFooter className="flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">
-            This action cannot be undone. Please ensure you have exported a JSON backup beforehand.
-          </p>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => {
-              setDeleteConfirmationInput('')
-              setClearDataModalOpen(true)
-            }}
-            className="gap-1.5 text-xs"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-            <span>Clear All Data</span>
-          </Button>
-        </CardFooter>
-      </Card>
+        </div>
+      </details>
 
       {/* Import / Validation Modal */}
       <Dialog open={importModalOpen} onOpenChange={setImportModalOpen}>
