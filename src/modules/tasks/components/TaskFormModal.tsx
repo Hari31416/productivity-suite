@@ -488,7 +488,7 @@ export function TaskFormModal({
               <Input
                 type="number"
                 min="1"
-                step="5"
+                step="1"
                 value={estimatedMinutes}
                 onChange={(e) => setEstimatedMinutes(e.target.value)}
                 placeholder="e.g. 30"

@@ -66,6 +66,7 @@ export interface Task {
   dueDate?: string
   dueTime?: string
   estimatedMinutes?: number
+  actualMinutes?: number
   tags: string[]
   subtaskIds: string[]
   completedAt?: string
