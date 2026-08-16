@@ -302,30 +302,30 @@ export function HabitDetailView({
 
   return (
     <div className="space-y-5 pb-8 animate-in fade-in-50 duration-200">
-      {/* Top Navigation & Action Bar */}
-      <div className="flex items-center justify-between gap-3">
+      {/* Top Navigation & Actions Bar */}
+      <div className="flex items-center justify-between gap-2">
         <Button
           variant="ghost"
           size="sm"
           onClick={onBack}
-          className="gap-1.5 text-xs text-muted-foreground hover:text-foreground -ml-2 rounded-xl"
+          className="h-8 px-2 sm:px-3 gap-1 text-xs text-muted-foreground hover:text-foreground -ml-1 rounded-xl"
         >
           <ChevronLeft className="h-4 w-4" />
           <span>Back to Habits</span>
         </Button>
 
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5">
           <Button
             variant="outline"
             size="sm"
             onClick={handleToggleFavorite}
             className={cn(
-              'h-8 text-xs gap-1.5 rounded-xl transition-all',
-              habit.pinned && 'text-amber-500 border-amber-500/40 bg-amber-500/10'
+              'px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl transition-all',
+              habit.pinned && 'bg-amber-500/10 text-amber-600 border-amber-500/30'
             )}
             title={habit.pinned ? 'Unpin habit' : 'Pin to top'}
           >
-            <Star className={cn('h-3.5 w-3.5', habit.pinned && 'fill-amber-500')} />
+            <Star className={cn('h-3.5 w-3.5', habit.pinned && 'fill-current text-amber-500')} />
             <span className="hidden sm:inline">{habit.pinned ? 'Pinned' : 'Pin'}</span>
           </Button>
 
@@ -333,7 +333,7 @@ export function HabitDetailView({
             variant="outline"
             size="sm"
             onClick={() => setIsEditModalOpen(true)}
-            className="h-8 text-xs gap-1.5 rounded-xl"
+            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl"
           >
             <Edit2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Edit</span>
@@ -343,7 +343,7 @@ export function HabitDetailView({
             variant="outline"
             size="sm"
             onClick={handleArchive}
-            className="h-8 text-xs gap-1.5 rounded-xl"
+            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl"
           >
             <Archive className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">{habit.archived ? 'Restore' : 'Archive'}</span>
@@ -353,7 +353,7 @@ export function HabitDetailView({
             variant="outline"
             size="sm"
             onClick={() => setIsDeleteDialogOpen(true)}
-            className="h-8 text-xs gap-1.5 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+            className="px-2.5 sm:px-3 h-8 text-xs gap-1.5 rounded-xl text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
           >
             <Trash2 className="h-3.5 w-3.5" />
             <span className="hidden sm:inline">Delete</span>
@@ -363,42 +363,42 @@ export function HabitDetailView({
 
       {/* Hero Header Card */}
       <div
-        className="relative overflow-hidden rounded-3xl border p-5 sm:p-6 shadow-sm transition-all"
+        className="relative overflow-hidden rounded-2xl sm:rounded-3xl border p-3.5 sm:p-5 shadow-xs transition-all"
         style={{
           background: `linear-gradient(135deg, ${themeColor}12 0%, var(--card) 60%)`
         }}
       >
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-start sm:items-center gap-4">
-            {/* Large Icon Box */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            {/* Icon Box */}
             <div
-              className="flex h-16 w-16 sm:h-20 sm:w-20 shrink-0 items-center justify-center rounded-3xl shadow-sm transition-transform"
+              className="flex h-12 w-12 sm:h-16 sm:w-16 shrink-0 items-center justify-center rounded-2xl shadow-xs transition-transform"
               style={{
                 backgroundColor: `${themeColor}22`,
                 color: themeColor,
                 border: `1.5px solid ${themeColor}35`
               }}
             >
-              <HabitIcon className="h-8 w-8 sm:h-10 sm:w-10" />
+              <HabitIcon className="h-6 w-6 sm:h-8 sm:w-8" />
             </div>
 
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+            <div className="min-w-0 space-y-1">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-foreground truncate">
                   {habit.title}
                 </h1>
                 {habit.pinned && (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-md">
-                    <Star className="h-3 w-3 fill-current" />
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-amber-500 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded">
+                    <Star className="h-2.5 w-2.5 fill-current" />
                     <span>Pinned</span>
                   </span>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 flex-wrap text-xs">
+              <div className="flex items-center gap-1.5 flex-wrap text-[11px] sm:text-xs">
                 {category && (
                   <span
-                    className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-0.5 rounded-full border"
+                    className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-semibold px-2 py-0.5 rounded-full border"
                     style={{
                       backgroundColor: `${category.color}15`,
                       borderColor: `${category.color}35`,
@@ -413,12 +413,12 @@ export function HabitDetailView({
                   </span>
                 )}
 
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-0.5 rounded-full border">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border">
                   <Target className="h-3 w-3" />
                   <span>{frequencyLabel}</span>
                 </span>
 
-                <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground bg-muted/60 px-2.5 py-0.5 rounded-full border capitalize">
+                <span className="inline-flex items-center gap-1 text-[10px] sm:text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border capitalize">
                   {habit.targetType === 'timer'
                     ? `${targetValue} min Timer`
                     : habit.targetType === 'numeric'
@@ -429,10 +429,10 @@ export function HabitDetailView({
             </div>
           </div>
 
-          {/* Quick Check-in Giant Action Button */}
-          <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Quick Check-in Action Button */}
+          <div className="flex items-center justify-end sm:justify-start">
             <Button
-              size="lg"
+              size="sm"
               onClick={() => {
                 if (habit.targetType === 'numeric') {
                   if (isCompletedToday) {
@@ -451,68 +451,76 @@ export function HabitDetailView({
                 }
               }}
               className={cn(
-                'h-11 sm:h-12 px-5 rounded-2xl font-semibold gap-2 transition-all active:scale-95 shadow-xs',
+                'h-9 sm:h-11 px-4 sm:px-5 rounded-xl font-semibold gap-1.5 text-xs sm:text-sm transition-all active:scale-95 shadow-xs w-full sm:w-auto',
                 isCompletedToday
                   ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                   : 'bg-primary text-primary-foreground'
               )}
             >
-              <Check className="h-5 w-5 stroke-[2.5]" />
+              <Check className="h-4 w-4 stroke-[2.5]" />
               <span>{isCompletedToday ? 'Completed' : 'Check In'}</span>
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Streak and Key Metrics Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {/* Streak and Key Metrics Grid (Single compact row on all screens) */}
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {/* Current Streak */}
-        <Card className="rounded-2xl border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
-              <Flame className="h-6 w-6" />
+        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-amber-500/10 text-amber-500 border border-amber-500/20">
+              <Flame className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-muted-foreground">Current Streak</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-amber-500">
+              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+                Current Streak
+              </div>
+              <div className="flex items-baseline gap-0.5 sm:gap-1">
+                <span className="text-base sm:text-2xl font-bold text-amber-500">
                   {streakInfo.currentStreak}
                 </span>
-                <span className="text-xs text-muted-foreground">days</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Best Streak */}
-        <Card className="rounded-2xl border bg-card shadow-xs">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
-              <Trophy className="h-6 w-6" />
+        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-indigo-500/10 text-indigo-500 border border-indigo-500/20">
+              <Trophy className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-muted-foreground">Best Streak</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-indigo-500">{streakInfo.bestStreak}</span>
-                <span className="text-xs text-muted-foreground">days</span>
+              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+                Best Streak
+              </div>
+              <div className="flex items-baseline gap-0.5 sm:gap-1">
+                <span className="text-base sm:text-2xl font-bold text-indigo-500">
+                  {streakInfo.bestStreak}
+                </span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Total Completions */}
-        <Card className="rounded-2xl border bg-card shadow-xs col-span-2 sm:col-span-1">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              <Sparkles className="h-6 w-6" />
+        <Card className="rounded-xl sm:rounded-2xl border bg-card shadow-xs">
+          <CardContent className="p-2.5 sm:p-4 flex items-center gap-2 sm:gap-3">
+            <div className="hidden xs:flex h-8 w-8 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-lg sm:rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+              <Sparkles className="h-4 w-4 sm:h-6 sm:w-6" />
             </div>
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-muted-foreground">All-Time Total</div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-2xl font-bold text-foreground">
+              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground truncate">
+                All-Time Total
+              </div>
+              <div className="flex items-baseline gap-0.5 sm:gap-1">
+                <span className="text-base sm:text-2xl font-bold text-foreground">
                   {totalAllTimeCompletions}
                 </span>
-                <span className="text-xs text-muted-foreground">check-ins</span>
+                <span className="text-[10px] sm:text-xs text-muted-foreground">check-ins</span>
               </div>
             </div>
           </CardContent>

@@ -91,11 +91,27 @@ export function HabitMonthlyCalendar({ habit, logs, onSelectDate }: HabitMonthly
         totalCounterSum += val
         dayCompleted = val >= targetVal
       } else if (habit.targetType === 'timer') {
-        const mins = dayLogs.reduce((sum, l) => {
-          if (typeof l.durationSeconds === 'number') return sum + Math.round(l.durationSeconds / 60)
-          if (typeof l.value === 'number') return sum + l.value
-          return sum + (l.completed ? targetVal : 0)
-        }, 0)
+        let mins = 0
+        if (habit.frequencyType === 'subday_interval' || habit.frequencyType === 'times_per_day') {
+          mins = dayLogs.reduce((sum, l) => {
+            if (typeof l.durationSeconds === 'number' && l.durationSeconds > 0) {
+              return sum + Math.round(l.durationSeconds / 60)
+            }
+            if (typeof l.value === 'number') return sum + l.value
+            return sum + (l.completed ? targetVal : 0)
+          }, 0)
+        } else {
+          const primaryLog = dayLogs[0]
+          if (primaryLog) {
+            if (typeof primaryLog.durationSeconds === 'number' && primaryLog.durationSeconds > 0) {
+              mins = Math.round(primaryLog.durationSeconds / 60)
+            } else if (typeof primaryLog.value === 'number') {
+              mins = primaryLog.value
+            } else if (primaryLog.completed) {
+              mins = targetVal
+            }
+          }
+        }
         totalTimerMinutesSum += mins
         dayCompleted = mins >= targetVal
       } else {
@@ -305,12 +321,31 @@ export function HabitMonthlyCalendar({ habit, logs, onSelectDate }: HabitMonthly
                 }, 0)
                 isCompleted = dayValue >= targetVal
               } else if (habit.targetType === 'timer') {
-                dayValue = dayLogs.reduce((sum, l) => {
-                  if (typeof l.durationSeconds === 'number')
-                    return sum + Math.round(l.durationSeconds / 60)
-                  if (typeof l.value === 'number') return sum + l.value
-                  return sum + (l.completed ? targetVal : 0)
-                }, 0)
+                if (
+                  habit.frequencyType === 'subday_interval' ||
+                  habit.frequencyType === 'times_per_day'
+                ) {
+                  dayValue = dayLogs.reduce((sum, l) => {
+                    if (typeof l.durationSeconds === 'number' && l.durationSeconds > 0)
+                      return sum + Math.round(l.durationSeconds / 60)
+                    if (typeof l.value === 'number') return sum + l.value
+                    return sum + (l.completed ? targetVal : 0)
+                  }, 0)
+                } else {
+                  const primaryLog = dayLogs[0]
+                  if (primaryLog) {
+                    if (
+                      typeof primaryLog.durationSeconds === 'number' &&
+                      primaryLog.durationSeconds > 0
+                    ) {
+                      dayValue = Math.round(primaryLog.durationSeconds / 60)
+                    } else if (typeof primaryLog.value === 'number') {
+                      dayValue = primaryLog.value
+                    } else if (primaryLog.completed) {
+                      dayValue = targetVal
+                    }
+                  }
+                }
                 isCompleted = dayValue >= targetVal
               } else {
                 isCompleted = dayLogs.some((l) => l.completed)

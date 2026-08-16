@@ -1,7 +1,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Play, Pause, RotateCcw, Check, Plus, Timer } from 'lucide-react'
+import { Play, Pause, RotateCcw, Check, Plus, Minus, Timer, Sparkles, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
 import type { Habit, HabitLog } from '../types'
 import { useSetHabitLogValue } from '../hooks/useHabits'
 import { fireConfetti } from '@/lib/confetti'
@@ -26,13 +34,17 @@ export function HabitFocusTimer({
   const [isRunning, setIsRunning] = useState(false)
   const [sessionCompletedCount, setSessionCompletedCount] = useState(0)
 
+  // Direct duration edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [customMinutesInput, setCustomMinutesInput] = useState(`${Math.round(totalSeconds / 60)}`)
+
   const setValueMutation = useSetHabitLogValue()
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Calculate accumulated minutes tracked for today from habit logs
   const todayAccumulatedMinutes = useMemo(() => {
     return logs.reduce((sum, log) => {
-      if (typeof log.durationSeconds === 'number') {
+      if (typeof log.durationSeconds === 'number' && log.durationSeconds > 0) {
         return sum + Math.round(log.durationSeconds / 60)
       }
       if (typeof log.value === 'number') {
@@ -41,6 +53,8 @@ export function HabitFocusTimer({
       return sum + (log.completed ? targetMinutes : 0)
     }, 0)
   }, [logs, targetMinutes])
+
+  const remainingMinutes = Math.max(0, targetMinutes - todayAccumulatedMinutes)
 
   const prevTargetRef = useRef(targetMinutes)
   useEffect(() => {
@@ -89,10 +103,20 @@ export function HabitFocusTimer({
     setSecondsLeft(totalSeconds)
   }
 
-  const handleAddMinutes = (mins: number) => {
-    const additional = mins * 60
-    setTotalSeconds((prev) => prev + additional)
-    setSecondsLeft((prev) => prev + additional)
+  // Adjust duration by +mins or -mins
+  const handleAdjustMinutes = (mins: number) => {
+    const changeSeconds = mins * 60
+    setTotalSeconds((prev) => Math.max(60, prev + changeSeconds))
+    setSecondsLeft((prev) => Math.max(60, prev + changeSeconds))
+  }
+
+  // Set explicit minutes
+  const handleSetExactMinutes = (mins: number) => {
+    const validMins = Math.max(1, Math.min(720, mins))
+    setIsRunning(false)
+    const s = validMins * 60
+    setTotalSeconds(s)
+    setSecondsLeft(s)
   }
 
   const handleFinishSession = (durationMins?: number) => {
@@ -124,7 +148,7 @@ export function HabitFocusTimer({
     setSecondsLeft(totalSeconds)
   }
 
-  // Circular calculations
+  // Circular progress ring calculations
   const progressRatio = totalSeconds > 0 ? (totalSeconds - secondsLeft) / totalSeconds : 0
   const radius = 80
   const circumference = 2 * Math.PI * radius
@@ -152,17 +176,30 @@ export function HabitFocusTimer({
               </CardDescription>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border">
-            <span>Today:</span>
-            <strong className="text-foreground font-semibold">{todayAccumulatedMinutes} min</strong>
+          <div className="flex items-center gap-2">
+            {remainingMinutes > 0 ? (
+              <span className="text-xs text-muted-foreground bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium px-2.5 py-1 rounded-full border border-amber-500/20">
+                {remainingMinutes}m remaining
+              </span>
+            ) : (
+              <span className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium px-2.5 py-1 rounded-full border border-emerald-500/20">
+                Target Reached
+              </span>
+            )}
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border">
+              <span>Today:</span>
+              <strong className="text-foreground font-semibold">
+                {todayAccumulatedMinutes} min
+              </strong>
+            </div>
           </div>
         </div>
       </CardHeader>
 
-      <CardContent className="flex flex-col items-center pt-2 pb-6 space-y-5">
+      <CardContent className="flex flex-col items-center pt-1 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
         {/* Radial SVG Circular Countdown */}
         <div className="relative flex items-center justify-center">
-          <svg className="w-52 h-52 sm:w-60 sm:h-60 transform -rotate-90" viewBox="0 0 200 200">
+          <svg className="w-40 h-40 sm:w-56 sm:h-56 transform -rotate-90" viewBox="0 0 200 200">
             {/* Background Ring */}
             <circle
               cx="100"
@@ -191,16 +228,27 @@ export function HabitFocusTimer({
             />
           </svg>
 
-          {/* Central Time & State */}
+          {/* Central Time & State (Click to edit duration) */}
           <div className="absolute flex flex-col items-center justify-center text-center select-none">
-            <span className="font-mono text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
-              {`${minutesDisplay}:${secondsDisplay}`}
-            </span>
-            <span className="text-xs font-medium text-muted-foreground mt-1 capitalize">
+            <button
+              type="button"
+              onClick={() => {
+                setCustomMinutesInput(`${Math.round(totalSeconds / 60)}`)
+                setIsEditDialogOpen(true)
+              }}
+              className="group flex items-center justify-center gap-1 hover:scale-105 transition-transform"
+              title="Click to edit timer duration"
+            >
+              <span className="font-mono text-3xl sm:text-5xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                {`${minutesDisplay}:${secondsDisplay}`}
+              </span>
+              <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-0 group-hover:opacity-100 text-muted-foreground transition-opacity" />
+            </button>
+            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground mt-0.5 capitalize">
               {isRunning ? 'Focusing...' : secondsLeft === 0 ? 'Session Complete' : 'Ready'}
             </span>
             {sessionCompletedCount > 0 && (
-              <span className="text-[11px] font-semibold text-primary mt-1">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-primary mt-0.5">
                 {sessionCompletedCount} {sessionCompletedCount === 1 ? 'session' : 'sessions'}{' '}
                 completed
               </span>
@@ -209,7 +257,7 @@ export function HabitFocusTimer({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <Button
             variant="outline"
             size="icon"
@@ -257,30 +305,78 @@ export function HabitFocusTimer({
           </Button>
         </div>
 
-        {/* Quick Add Minutes & Preset Duration Buttons */}
+        {/* Time Adjustments: Steppers & Autofill Remaining */}
         <div className="flex items-center gap-1.5 flex-wrap justify-center pt-1">
-          {[5, 10, 15].map((m) => (
+          {/* Decrement Steppers */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAdjustMinutes(-10)}
+            disabled={secondsLeft <= 600}
+            className="h-7 text-xs px-2 rounded-full text-muted-foreground hover:text-foreground"
+            aria-label="Subtract 10 minutes"
+          >
+            <Minus className="h-3 w-3 mr-0.5" />
+            <span>10m</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAdjustMinutes(-5)}
+            disabled={secondsLeft <= 300}
+            className="h-7 text-xs px-2 rounded-full text-muted-foreground hover:text-foreground"
+            aria-label="Subtract 5 minutes"
+          >
+            <Minus className="h-3 w-3 mr-0.5" />
+            <span>5m</span>
+          </Button>
+
+          {/* Increment Steppers */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAdjustMinutes(5)}
+            className="h-7 text-xs px-2 rounded-full text-muted-foreground hover:text-foreground"
+            aria-label="Add 5 minutes"
+          >
+            <Plus className="h-3 w-3 mr-0.5" />
+            <span>5m</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleAdjustMinutes(10)}
+            className="h-7 text-xs px-2 rounded-full text-muted-foreground hover:text-foreground"
+            aria-label="Add 10 minutes"
+          >
+            <Plus className="h-3 w-3 mr-0.5" />
+            <span>10m</span>
+          </Button>
+
+          {/* Autofill Remaining button if remaining > 0 */}
+          {remainingMinutes > 0 && (
             <Button
-              key={m}
-              variant="outline"
+              variant="secondary"
               size="sm"
-              onClick={() => handleAddMinutes(m)}
-              className="h-7 text-xs px-2.5 rounded-full text-muted-foreground hover:text-foreground"
-              aria-label={`Add ${m} minutes`}
+              onClick={() => handleSetExactMinutes(remainingMinutes)}
+              className={cn(
+                'h-7 text-xs px-2.5 rounded-full font-medium gap-1',
+                totalSeconds === remainingMinutes * 60 &&
+                  'bg-primary text-primary-foreground font-semibold'
+              )}
             >
-              <Plus className="h-3 w-3 mr-0.5" />
-              <span>{m}m</span>
+              <Sparkles className="h-3 w-3" />
+              <span>Fill Remaining ({remainingMinutes}m)</span>
             </Button>
-          ))}
+          )}
+
+          {/* Presets */}
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => {
-              setIsRunning(false)
-              const s = 25 * 60
-              setTotalSeconds(s)
-              setSecondsLeft(s)
-            }}
+            onClick={() => handleSetExactMinutes(25)}
             className={cn(
               'h-7 text-xs px-2.5 rounded-full',
               totalSeconds === 25 * 60 && 'bg-muted font-semibold text-foreground'
@@ -288,8 +384,85 @@ export function HabitFocusTimer({
           >
             25m Pomodoro
           </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleSetExactMinutes(45)}
+            className={cn(
+              'h-7 text-xs px-2.5 rounded-full',
+              totalSeconds === 45 * 60 && 'bg-muted font-semibold text-foreground'
+            )}
+          >
+            45m
+          </Button>
         </div>
       </CardContent>
+
+      {/* Edit Duration Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-xs rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">Set Focus Duration</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-xs text-muted-foreground">Duration in minutes (1 to 720):</label>
+            <Input
+              type="number"
+              min={1}
+              max={720}
+              value={customMinutesInput}
+              onChange={(e) => setCustomMinutesInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  const val = parseInt(customMinutesInput, 10)
+                  if (!isNaN(val) && val > 0) {
+                    handleSetExactMinutes(val)
+                    setIsEditDialogOpen(false)
+                  }
+                }
+              }}
+              autoFocus
+              className="text-lg font-mono text-center h-11"
+            />
+            <div className="flex gap-1.5 flex-wrap justify-center pt-1">
+              {[10, 15, 20, 25, 30, 45, 60].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setCustomMinutesInput(`${m}`)}
+                  className="px-2 py-0.5 text-xs rounded-md bg-muted hover:bg-muted/80 text-foreground font-medium"
+                >
+                  {m}m
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditDialogOpen(false)}
+              className="rounded-xl flex-1"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => {
+                const val = parseInt(customMinutesInput, 10)
+                if (!isNaN(val) && val > 0) {
+                  handleSetExactMinutes(val)
+                  setIsEditDialogOpen(false)
+                }
+              }}
+              className="rounded-xl flex-1"
+            >
+              Set Duration
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
   )
 }

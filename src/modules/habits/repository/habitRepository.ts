@@ -111,6 +111,8 @@ export const habitRepository = {
     intervalIndex?: number,
     completed?: boolean
   ): Promise<HabitLog> {
+    const habit = await this.getHabitById(habitId)
+    const isTimer = habit?.targetType === 'timer'
     const logs = await this.getLogsForHabitAndDate(habitId, date)
     const existing = logs.find((l) =>
       intervalIndex !== undefined
@@ -124,7 +126,7 @@ export const habitRepository = {
       const updated: HabitLog = {
         ...existing,
         value,
-        durationSeconds: value * 60,
+        durationSeconds: isTimer ? value * 60 : undefined,
         completed: completed !== undefined ? completed : value > 0,
         updatedAt: now
       }
@@ -139,7 +141,7 @@ export const habitRepository = {
       timestamp: now,
       intervalIndex,
       value,
-      durationSeconds: value * 60,
+      durationSeconds: isTimer ? value * 60 : undefined,
       completed: completed !== undefined ? completed : value > 0,
       createdAt: now,
       updatedAt: now
