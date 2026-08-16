@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { db } from '@/core/db'
+import { saveAndExportTextFile } from '@/core/utils/fileExporter'
 import type {
   BackupArchiveData,
   BackupMetadata,
@@ -173,35 +174,7 @@ export async function generateBackupData(): Promise<BackupArchiveData> {
 }
 
 export async function triggerDownload(content: string, filename: string): Promise<void> {
-  if (typeof window === 'undefined' || typeof document === 'undefined') {
-    return
-  }
-  const blob = new Blob([content], { type: 'application/json' })
-
-  // Support Web Share API on mobile devices and Capacitor WebViews
-  if (typeof navigator !== 'undefined' && navigator.canShare && typeof File !== 'undefined') {
-    try {
-      const file = new File([blob], filename, { type: 'application/json' })
-      if (navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: filename
-        })
-        return
-      }
-    } catch {
-      // If user cancelled or sharing failed, fall back to link download
-    }
-  }
-
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = filename
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  await saveAndExportTextFile(content, filename, 'application/json')
 }
 
 export async function exportBackup(): Promise<BackupArchiveData> {
