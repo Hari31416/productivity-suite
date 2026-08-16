@@ -37,14 +37,24 @@ describe('dashboardScore', () => {
       expect(score).toBe(40)
     })
 
-    it('calculates 50/50 weighted score when both habits and tasks exist', () => {
+    it('calculates score based on total items completed when both habits and tasks exist', () => {
       const score = calculateDailyProductivityScore({
         habitsCompleted: 2,
-        habitsTotal: 2, // 100% * 0.5 = 50%
+        habitsTotal: 2,
         tasksCompleted: 1,
-        tasksTotal: 2 // 50% * 0.5 = 25%
+        tasksTotal: 2
       })
       expect(score).toBe(75)
+    })
+
+    it('calculates consistent score matching copy for habits 3/3 and tasks 0/1', () => {
+      const score = calculateDailyProductivityScore({
+        habitsCompleted: 3,
+        habitsTotal: 3,
+        tasksCompleted: 0,
+        tasksTotal: 1
+      })
+      expect(score).toBe(75) // 3 of 4 items completed = 75%
     })
 
     it('returns 100 when all habits and tasks are completed', () => {

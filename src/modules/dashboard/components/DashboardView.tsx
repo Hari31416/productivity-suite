@@ -266,7 +266,9 @@ export function DashboardView() {
             <div className="flex items-center gap-2">
               <Activity className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-bold text-foreground">Today's Focus</h2>
-              <span className="text-xs text-muted-foreground">({todayHabits.length} habits)</span>
+              <span className="text-xs text-muted-foreground">
+                ({todayHabits.length} {todayHabits.length === 1 ? 'habit' : 'habits'})
+              </span>
             </div>
             <Button
               variant="ghost"
@@ -367,7 +369,9 @@ export function DashboardView() {
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-4 w-4 text-primary" />
               <h2 className="text-sm font-bold text-foreground">Upcoming Tasks</h2>
-              <span className="text-xs text-muted-foreground">({upcomingTasks.length} tasks)</span>
+              <span className="text-xs text-muted-foreground">
+                ({upcomingTasks.length} {upcomingTasks.length === 1 ? 'task' : 'tasks'})
+              </span>
             </div>
             <Button
               variant="outline"
@@ -628,10 +632,10 @@ export function DashboardView() {
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-primary" />
             <h2 className="text-sm font-semibold tracking-tight text-foreground">
-              Module Focus & Action Items
+              Module Focus & Insights
             </h2>
           </div>
-          <span className="text-xs text-muted-foreground">Live updates</span>
+          <span className="text-xs text-muted-foreground">Summaries</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -703,9 +707,9 @@ export function DashboardView() {
             <div className="flex items-start gap-2 rounded-xl bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] leading-relaxed">
-                The Daily Productivity Score blends your habit completion rate (50%) and your due
-                task completion rate (50%). Checking in habits and clearing due tasks directly
-                elevates your score!
+                Your Daily Productivity Score represents the percentage of total scheduled habits
+                and due tasks completed today ({completedHabitsCount + completedTasksCount} of{' '}
+                {todayHabits.length + todayTasks.length} total items).
               </p>
             </div>
           </div>

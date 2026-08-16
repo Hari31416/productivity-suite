@@ -4,8 +4,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { CheckSquare, Square, ArrowRight, AlertTriangle, CheckCircle2, Plus } from 'lucide-react'
-import { useTasks, useUpdateTaskStatus } from '../hooks/useTasks'
+import { ArrowRight, AlertTriangle, CheckCircle2, Plus } from 'lucide-react'
+import { useTasks } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { PRIORITY_CONFIG } from './TaskCard'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,6 @@ export function TaskDashboardWidget() {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const { data: tasks = [], isLoading: tasksLoading } = useTasks({ includeArchived: false })
   const { data: projects = [] } = useProjects(false)
-  const updateStatusMutation = useUpdateTaskStatus()
 
   const projectMap = useMemo(() => {
     const map = new Map<string, string>()
@@ -68,7 +67,7 @@ export function TaskDashboardWidget() {
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-semibold">Today & Priorities</CardTitle>
+            <CardTitle className="text-sm font-semibold">Tasks Overview</CardTitle>
           </div>
           {todayTotalCount > 0 && (
             <Badge variant="secondary" className="text-xs font-normal">
@@ -81,7 +80,7 @@ export function TaskDashboardWidget() {
           {todayTotalCount > 0 && (
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Daily Completion</span>
+                <span>Today's Completion</span>
                 <span className="font-medium text-foreground">{completionPercentage}%</span>
               </div>
               <Progress value={completionPercentage} className="h-2" />
@@ -117,47 +116,31 @@ export function TaskDashboardWidget() {
                       window.location.hash = `#/tasks?taskId=${task.id}`
                     }}
                     className={cn(
-                      'flex items-center justify-between p-2 rounded-md border text-xs transition-all cursor-pointer hover:border-primary/40 hover:bg-muted/30 group',
-                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : '',
+                      'flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all cursor-pointer hover:border-primary/40 hover:bg-muted/30 group',
+                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : 'bg-background',
                       isUrgent && !isDone && 'border-red-500/30 bg-red-500/5'
                     )}
                   >
                     <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          updateStatusMutation.mutate({
-                            id: task.id,
-                            status: isDone ? 'todo' : 'done'
-                          })
-                        }}
-                        className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                      <span
+                        className={cn('h-2 w-2 rounded-full shrink-0', priority.dotClass)}
+                        title={`Priority: ${priority.label}`}
+                      />
+                      <span
+                        className={cn(
+                          'font-medium truncate group-hover:text-primary transition-colors',
+                          isDone && 'line-through text-muted-foreground'
+                        )}
                       >
-                        {isDone ? (
-                          <CheckSquare className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Square className="h-4 w-4" />
-                        )}
-                      </button>
+                        {task.title}
+                      </span>
 
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        <span
-                          className={cn(
-                            'font-medium truncate group-hover:text-primary transition-colors',
-                            isDone && 'line-through text-muted-foreground'
-                          )}
-                        >
-                          {task.title}
+                      {isUrgent && !isDone && (
+                        <span className="flex items-center gap-0.5 text-[10px] text-red-600 dark:text-red-400 font-semibold shrink-0">
+                          <AlertTriangle className="h-3 w-3" />
+                          Urgent
                         </span>
-
-                        {isUrgent && !isDone && (
-                          <span className="flex items-center gap-0.5 text-[10px] text-red-600 dark:text-red-400 font-semibold shrink-0">
-                            <AlertTriangle className="h-3 w-3" />
-                            Urgent
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
@@ -166,10 +149,12 @@ export function TaskDashboardWidget() {
                           {projectMap.get(task.projectId)}
                         </span>
                       )}
-                      <span
-                        className={cn('h-2 w-2 rounded-full', priority.dotClass)}
-                        title={`Priority: ${priority.label}`}
-                      />
+                      <Badge
+                        variant={isDone ? 'default' : 'outline'}
+                        className="text-[10px] h-4 px-1.5 py-0 font-normal"
+                      >
+                        {isDone ? 'Done' : 'Open'}
+                      </Badge>
                     </div>
                   </div>
                 )

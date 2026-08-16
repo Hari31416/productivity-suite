@@ -8,28 +8,15 @@ export interface ScoreInput {
 export function calculateDailyProductivityScore(input: ScoreInput): number {
   const { habitsCompleted, habitsTotal, tasksCompleted, tasksTotal } = input
 
-  const hasHabits = habitsTotal > 0
-  const hasTasks = tasksTotal > 0
-
-  if (!hasHabits && !hasTasks) {
+  const totalItems = habitsTotal + tasksTotal
+  if (totalItems <= 0) {
     return 0
   }
 
-  if (hasHabits && !hasTasks) {
-    const habitScore = Math.min(1, Math.max(0, habitsCompleted / habitsTotal))
-    return Math.round(habitScore * 100)
-  }
-
-  if (!hasHabits && hasTasks) {
-    const taskScore = Math.min(1, Math.max(0, tasksCompleted / tasksTotal))
-    return Math.round(taskScore * 100)
-  }
-
-  const habitRatio = Math.min(1, Math.max(0, habitsCompleted / habitsTotal))
-  const taskRatio = Math.min(1, Math.max(0, tasksCompleted / tasksTotal))
-
-  const combined = habitRatio * 0.5 + taskRatio * 0.5
-  return Math.round(combined * 100)
+  const completedItems =
+    Math.min(habitsCompleted, habitsTotal) + Math.min(tasksCompleted, tasksTotal)
+  const ratio = Math.min(1, Math.max(0, completedItems / totalItems))
+  return Math.round(ratio * 100)
 }
 
 export function getGreeting(date: Date = new Date()): string {

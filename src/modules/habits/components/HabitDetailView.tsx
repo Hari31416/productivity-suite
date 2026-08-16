@@ -438,6 +438,7 @@ export function HabitDetailView({
           <div className="flex items-center justify-end sm:justify-start">
             <Button
               size="sm"
+              variant={isCompletedToday ? 'outline' : 'default'}
               onClick={() => {
                 if (habit.targetType === 'numeric') {
                   if (isCompletedToday) {
@@ -458,7 +459,7 @@ export function HabitDetailView({
               className={cn(
                 'h-9 sm:h-10 px-4 sm:px-5 rounded-xl font-semibold gap-1.5 text-xs sm:text-sm transition-all active:scale-95 shadow-xs w-full sm:w-auto',
                 isCompletedToday
-                  ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                  ? 'border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 dark:text-emerald-400 bg-background'
                   : 'bg-primary text-primary-foreground'
               )}
             >
