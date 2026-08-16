@@ -32,10 +32,11 @@ export const DEFAULT_HABIT_CATEGORIES: HabitCategory[] = [
 ]
 
 export const PRESET_COLORS = [
-  '#3b82f6',
+  '#0A7A64',
   '#10b981',
-  '#f97316',
+  '#3b82f6',
   '#8b5cf6',
+  '#f97316',
   '#ec4899',
   '#eab308',
   '#06b6d4',

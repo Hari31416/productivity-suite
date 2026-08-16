@@ -13,7 +13,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const Comp = asChild ? Slot : 'button'
     
     const variantStyles: Record<NonNullable<ButtonProps['variant']>, string> = {
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow',
+      default: 'bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active shadow',
       destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm',
       outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
       secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
