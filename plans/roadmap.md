@@ -166,3 +166,31 @@ Turn productivity and consistency into an engaging progression system with exper
   - Unlock achievements for logging 10, 50, and 200 hours of active timer sessions.
 - **Knowledge Scribe Badges**:
   - Unlock achievements for authoring 25, 100, and 500 structured markdown notes.
+
+## 12. Google Drive Cloud Sync and Automated Backup
+
+Provide seamless, user-owned cloud synchronization and automated snapshot backups using Google Drive, keeping local-first Dexie IndexedDB state in sync across mobile and desktop devices with zero custom server infrastructure.
+
+### Google Drive Integration Architecture
+
+- **AppData Folder Isolation**:
+  - Restrict cloud storage to the hidden `drive.appdata` scope (`https://www.googleapis.com/auth/drive.appdata`) so sync files remain isolated, secure, and hidden from regular Drive document lists.
+- **Cross-Platform Authentication**:
+  - Public Client OAuth 2.0 PKCE flow on Web via Google Identity Services.
+  - Native Google Auth integration on Android via Capacitor plugin without exposing client secrets.
+- **Manifest-Driven Synchronization**:
+  - Maintain a lightweight remote `sync_manifest.json` tracking last modified timestamps, device IDs, format version, and SHA-256 data checksums.
+  - Automated sync triggers on application start, network reconnect, and debounced database changes.
+
+### Security and Data Integrity Safeguards
+
+- **Client-Side End-to-End Encryption (E2EE)**:
+  - Optional user-defined master passphrase deriving an AES-GCM-256 key via PBKDF2 or Argon2 using the native Web Crypto API prior to uploading snapshots to Google Drive.
+- **Strict Schema Validation and Sanitization**:
+  - Full Zod schema validation of all inbound payloads before applying updates to Dexie tables to prevent schema poisoning.
+  - HTML and markdown sanitization via DOMPurify to prevent stored XSS attacks from synchronized note content.
+- **Secure Token Storage**:
+  - In-memory token management on Web and hardware-backed keystore storage on Android.
+- **Conflict Resolution and Safety Backups**:
+  - Automatic pre-sync local snapshot creation before applying remote updates.
+  - Monotonic timestamp Last-Write-Wins (LWW) resolution for individual entities with merge conflict prompts when concurrent edits are detected.
