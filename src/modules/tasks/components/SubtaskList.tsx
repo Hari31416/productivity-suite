@@ -1,14 +1,16 @@
 import { useState } from 'react'
-import { Plus, Trash2, CheckSquare, Square } from 'lucide-react'
+import { Plus, Trash2, CheckSquare, Square, ArrowUp, ArrowDown, ListChecks } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
+import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import {
   useSubtasks,
   useCreateSubtask,
   useToggleSubtask,
-  useDeleteSubtask
+  useDeleteSubtask,
+  useBatchUpdateSubtasks
 } from '../hooks/useSubtasks'
 
 interface SubtaskItem {
@@ -42,6 +44,7 @@ export function SubtaskList({
   const createMutation = useCreateSubtask()
   const toggleMutation = useToggleSubtask()
   const deleteMutation = useDeleteSubtask()
+  const batchUpdateMutation = useBatchUpdateSubtasks()
 
   const subtasks: SubtaskItem[] = isLive ? liveSubtasks : externalSubtasks || []
 
@@ -92,15 +95,47 @@ export function SubtaskList({
     }
   }
 
+  const handleMove = (index: number, direction: 'up' | 'down') => {
+    if (readOnly) return
+    const targetIndex = direction === 'up' ? index - 1 : index + 1
+    if (targetIndex < 0 || targetIndex >= subtasks.length) return
+
+    const newSubtasks = [...subtasks]
+    const [moved] = newSubtasks.splice(index, 1)
+    newSubtasks.splice(targetIndex, 0, moved)
+
+    const reordered = newSubtasks.map((item, i) => ({
+      ...item,
+      order: i
+    }))
+
+    if (isLive && taskId) {
+      batchUpdateMutation.mutate({
+        taskId,
+        subtasks: reordered.map((item, i) => ({
+          id: item.id,
+          title: item.title,
+          completed: item.completed,
+          order: i
+        }))
+      })
+    } else if (onChange) {
+      onChange(reordered)
+    }
+  }
+
   return (
     <div className={cn('space-y-3', className)}>
       {showProgress && totalCount > 0 && (
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 rounded-xl border bg-card/60 p-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>Subtasks progress</span>
-            <span className="font-medium text-foreground">
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              <ListChecks className="h-3.5 w-3.5 text-primary" />
+              <span>Subtasks Checklist</span>
+            </div>
+            <Badge variant="secondary" className="text-[11px] font-medium h-5">
               {completedCount} of {totalCount} completed ({progress}%)
-            </span>
+            </Badge>
           </div>
           <Progress value={progress} className="h-1.5" />
         </div>
@@ -111,13 +146,13 @@ export function SubtaskList({
           {subtasks.map((subtask, index) => (
             <div
               key={subtask.id || index}
-              className="flex items-center justify-between gap-2 p-1.5 rounded-md border bg-card/60 hover:bg-muted/40 transition-colors text-sm group"
+              className="flex items-center justify-between gap-2 p-1.5 sm:p-2 rounded-lg border bg-card/70 hover:bg-muted/40 transition-colors text-sm group"
             >
               <button
                 type="button"
                 disabled={readOnly}
                 onClick={() => handleToggle(index, subtask)}
-                className="flex items-center gap-2.5 flex-1 min-w-0 min-h-[40px] sm:min-h-[32px] text-left cursor-pointer disabled:cursor-default"
+                className="flex items-center gap-2.5 flex-1 min-w-0 min-h-[36px] sm:min-h-[28px] text-left cursor-pointer disabled:cursor-default"
               >
                 {subtask.completed ? (
                   <CheckSquare className="h-4 w-4 text-primary shrink-0" />
@@ -126,7 +161,7 @@ export function SubtaskList({
                 )}
                 <span
                   className={cn(
-                    'truncate text-xs sm:text-sm',
+                    'text-xs sm:text-sm text-foreground break-words leading-tight',
                     subtask.completed && 'line-through text-muted-foreground'
                   )}
                 >
@@ -135,16 +170,43 @@ export function SubtaskList({
               </button>
 
               {!readOnly && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDelete(index, subtask)}
-                  className="h-10 w-10 sm:h-6 sm:w-6 min-h-[40px] min-w-[40px] sm:min-h-0 sm:min-w-0 p-0 opacity-70 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 shrink-0"
-                  aria-label="Delete subtask"
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center gap-0.5 opacity-80 group-hover:opacity-100 shrink-0">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={index === 0}
+                    onClick={() => handleMove(index, 'up')}
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    title="Move up"
+                    aria-label="Move subtask up"
+                  >
+                    <ArrowUp className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={index === subtasks.length - 1}
+                    onClick={() => handleMove(index, 'down')}
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground disabled:opacity-30"
+                    title="Move down"
+                    aria-label="Move subtask down"
+                  >
+                    <ArrowDown className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(index, subtask)}
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                    title="Delete subtask"
+                    aria-label="Delete subtask"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               )}
             </div>
           ))}
@@ -163,7 +225,7 @@ export function SubtaskList({
               }
             }}
             placeholder="Add a subtask..."
-            className="h-8 text-xs sm:text-sm"
+            className="h-8 sm:h-9 text-xs sm:text-sm"
           />
           <Button
             type="button"
@@ -171,7 +233,7 @@ export function SubtaskList({
             variant="secondary"
             onClick={handleAdd}
             disabled={!newTitle.trim()}
-            className="h-8 px-2.5 text-xs shrink-0"
+            className="h-8 sm:h-9 px-3 text-xs shrink-0 font-medium"
           >
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add

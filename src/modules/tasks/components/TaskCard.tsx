@@ -336,10 +336,23 @@ export function TaskCard({
                 </button>
               )}
 
-              {task.estimatedMinutes && task.estimatedMinutes > 0 && (
+              {((task.estimatedMinutes && task.estimatedMinutes > 0) ||
+                (task.actualMinutes && task.actualMinutes > 0)) && (
                 <div className="flex items-center gap-1 text-[11px] whitespace-nowrap shrink-0">
                   <Clock className="h-3 w-3 shrink-0" />
-                  <span>{formatEstimatedMinutes(task.estimatedMinutes)}</span>
+                  {task.actualMinutes &&
+                  task.actualMinutes > 0 &&
+                  task.estimatedMinutes &&
+                  task.estimatedMinutes > 0 ? (
+                    <span>
+                      {formatEstimatedMinutes(task.actualMinutes)} /{' '}
+                      {formatEstimatedMinutes(task.estimatedMinutes)}
+                    </span>
+                  ) : task.actualMinutes && task.actualMinutes > 0 ? (
+                    <span>{formatEstimatedMinutes(task.actualMinutes)} spent</span>
+                  ) : (
+                    <span>{formatEstimatedMinutes(task.estimatedMinutes)}</span>
+                  )}
                 </div>
               )}
 
@@ -376,7 +389,7 @@ export function TaskCard({
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => onEdit?.(task)}>
                 <Edit2 className="h-3.5 w-3.5 mr-2" />
-                Edit Task
+                View & Edit Task
               </DropdownMenuItem>
 
               <DropdownMenuSub>
