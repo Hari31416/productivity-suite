@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { taskRepository } from '../repository/taskRepository'
-import type { Task, TaskFilter, TaskStatus } from '../types'
+import type { TaskFilter, TaskStatus, CreateTaskInput, UpdateTaskInput } from '../types'
 import { projectQueryKeys } from './useProjects'
 
 export const taskQueryKeys = {
@@ -40,7 +40,7 @@ export function useCreateTask() {
       taskData,
       initialSubtasks
     }: {
-      taskData: Omit<Task, 'id' | 'createdAt' | 'updatedAt' | 'subtaskIds'>
+      taskData: CreateTaskInput
       initialSubtasks?: Array<{ title: string; completed?: boolean }>
     }) => taskRepository.createTask(taskData, initialSubtasks),
     onSuccess: () => {
@@ -54,7 +54,7 @@ export function useUpdateTask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, updates }: { id: string; updates: Partial<Task> }) =>
+    mutationFn: ({ id, updates }: { id: string; updates: UpdateTaskInput }) =>
       taskRepository.updateTask(id, updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all })
@@ -99,7 +99,14 @@ export function useDeleteTask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => taskRepository.deleteTask(id),
+    mutationFn: (param: string | { id: string; deleteAllOccurrences?: boolean }) => {
+      if (typeof param === 'string') {
+        return taskRepository.deleteTask(param)
+      }
+      return taskRepository.deleteTask(param.id, {
+        deleteAllOccurrences: param.deleteAllOccurrences
+      })
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all })
       queryClient.invalidateQueries({ queryKey: projectQueryKeys.all })

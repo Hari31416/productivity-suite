@@ -23,7 +23,9 @@ import {
   ArchiveRestore,
   ListChecks,
   AlertTriangle,
-  GripVertical
+  GripVertical,
+  RotateCw,
+  Bell
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -46,6 +48,7 @@ import {
 } from '../hooks/useTasks'
 import { SubtaskList } from './SubtaskList'
 import { useSubtasks } from '../hooks/useSubtasks'
+import { formatRecurrenceRule } from '../utils/recurrence'
 
 interface TaskCardProps {
   task: Task
@@ -155,6 +158,7 @@ export function TaskCard({
 }: TaskCardProps) {
   const [expanded, setExpanded] = useState(false)
   const isDone = task.status === 'done'
+  const isPartOfRecurringSeries = Boolean(task.isRecurring || task.recurringParentId)
 
   const updateStatusMutation = useUpdateTaskStatus()
   const archiveMutation = useArchiveTask()
@@ -166,6 +170,18 @@ export function TaskCard({
 
   const dateInfo = useMemo(() => formatDueDate(task.dueDate), [task.dueDate])
   const priorityInfo = PRIORITY_CONFIG[task.priority] || PRIORITY_CONFIG.medium
+
+  const recurrenceLabel = useMemo(() => {
+    if (task.recurrence) {
+      return formatRecurrenceRule(task.recurrence)
+    }
+    if (task.recurringParentId) {
+      return 'Recurring instance'
+    }
+    return ''
+  }, [task.recurrence, task.recurringParentId])
+
+  const reminderCount = task.reminders ? task.reminders.length : 0
 
   const handleToggleCompletion = () => {
     const nextStatus: TaskStatus = isDone ? 'todo' : 'done'
@@ -242,6 +258,26 @@ export function TaskCard({
                 {priorityInfo.label}
               </Badge>
 
+              {isPartOfRecurringSeries && (
+                <span
+                  title={recurrenceLabel}
+                  className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-medium"
+                >
+                  <RotateCw className="h-3 w-3" />
+                  <span>{task.recurrence ? recurrenceLabel : 'Repeats'}</span>
+                </span>
+              )}
+
+              {reminderCount > 0 && (
+                <span
+                  title={`${reminderCount} active reminder(s)`}
+                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium"
+                >
+                  <Bell className="h-3 w-3" />
+                  <span>{reminderCount}</span>
+                </span>
+              )}
+
               {project && (
                 <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
                   <span
@@ -275,6 +311,7 @@ export function TaskCard({
                     <Calendar className="h-3.5 w-3.5 shrink-0" />
                   )}
                   <span>{dateInfo.label}</span>
+                  {task.dueTime && <span className="text-[11px] opacity-80">@{task.dueTime}</span>}
                 </div>
               )}
 
@@ -333,7 +370,7 @@ export function TaskCard({
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={() => onEdit?.(task)}>
                 <Edit2 className="h-3.5 w-3.5 mr-2" />
                 Edit Task
@@ -380,8 +417,23 @@ export function TaskCard({
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 className="h-3.5 w-3.5 mr-2" />
-                Delete Task
+                {isPartOfRecurringSeries ? 'Delete This Task' : 'Delete Task'}
               </DropdownMenuItem>
+
+              {isPartOfRecurringSeries && (
+                <DropdownMenuItem
+                  onClick={() =>
+                    deleteMutation.mutate({
+                      id: task.id,
+                      deleteAllOccurrences: true
+                    })
+                  }
+                  className="text-destructive focus:text-destructive font-medium"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                  Delete Entire Series
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
