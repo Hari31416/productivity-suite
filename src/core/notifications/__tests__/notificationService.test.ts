@@ -240,7 +240,8 @@ describe('notificationService', () => {
             id: 42,
             title: 'Meditation',
             body: 'Time for mindful minutes',
-            extra: undefined
+            extra: undefined,
+            channelId: 'productivity-reminders'
           }
         ]
       })

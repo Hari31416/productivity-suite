@@ -32,6 +32,8 @@ export interface TaskReminderOptions {
   reminder: TaskReminder
 }
 
+export const NOTIFICATION_CHANNEL_ID = 'productivity-reminders'
+
 interface CapacitorLocalNotificationsPlugin {
   requestPermissions?: () => Promise<{ display: string }>
   checkPermissions?: () => Promise<{ display: string }>
@@ -42,9 +44,22 @@ interface CapacitorLocalNotificationsPlugin {
       id: number
       schedule?: { at?: Date }
       extra?: Record<string, unknown>
+      channelId?: string
+      sound?: string
     }>
   }) => Promise<unknown>
   cancel?: (options: { notifications: Array<{ id: number }> }) => Promise<unknown>
+  createChannel?: (channel: {
+    id: string
+    name: string
+    description?: string
+    importance?: number
+    visibility?: number
+    sound?: string
+    vibration?: boolean
+    lights?: boolean
+    lightColor?: string
+  }) => Promise<void>
 }
 
 interface WindowWithCapacitor {
@@ -58,6 +73,30 @@ interface WindowWithCapacitor {
 
 // In-memory active timer IDs for web scheduled notifications
 const scheduledTimers = new Map<number | string, ReturnType<typeof setTimeout>>()
+let channelCreated = false
+
+export async function ensureNotificationChannel(): Promise<void> {
+  if (channelCreated) return
+  const capPlugin = getCapacitorBridge()
+  if (capPlugin && capPlugin.createChannel) {
+    try {
+      await capPlugin.createChannel({
+        id: NOTIFICATION_CHANNEL_ID,
+        name: 'Productivity Reminders',
+        description: 'Alerts for tasks, habit intervals, and alarms with sound and vibration',
+        importance: 5,
+        visibility: 1,
+        sound: 'beep.wav',
+        vibration: true,
+        lights: true,
+        lightColor: '#0A7A64'
+      })
+      channelCreated = true
+    } catch {
+      // Channel creation failed or not supported
+    }
+  }
+}
 
 function getCapacitorBridge(): CapacitorLocalNotificationsPlugin | null {
   if (typeof window === 'undefined') return null
@@ -95,6 +134,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   const capPlugin = getCapacitorBridge()
   if (capPlugin && capPlugin.requestPermissions) {
     try {
+      await ensureNotificationChannel()
       const result = await capPlugin.requestPermissions()
       if (result.display === 'granted') return 'granted'
       if (result.display === 'denied') return 'denied'
@@ -124,6 +164,7 @@ export async function sendLocalNotification(
   const capPlugin = getCapacitorBridge()
   if (capPlugin && capPlugin.schedule) {
     try {
+      await ensureNotificationChannel()
       const numericId =
         typeof payload.id === 'number'
           ? payload.id
@@ -134,7 +175,8 @@ export async function sendLocalNotification(
             id: numericId,
             title: payload.title,
             body: payload.body,
-            extra: payload.data
+            extra: payload.data,
+            channelId: NOTIFICATION_CHANNEL_ID
           }
         ]
       })
@@ -183,6 +225,7 @@ export async function scheduleHabitReminder(
   const capPlugin = getCapacitorBridge()
   if (capPlugin && capPlugin.schedule) {
     try {
+      await ensureNotificationChannel()
       await capPlugin.schedule({
         notifications: [
           {
@@ -190,6 +233,7 @@ export async function scheduleHabitReminder(
             title,
             body,
             schedule: options.at ? { at: options.at } : undefined,
+            channelId: NOTIFICATION_CHANNEL_ID,
             extra: {
               habitId: options.habitId,
               intervalIndex: options.intervalIndex
@@ -279,6 +323,7 @@ export async function scheduleTaskReminder(
   const capPlugin = getCapacitorBridge()
   if (capPlugin && capPlugin.schedule) {
     try {
+      await ensureNotificationChannel()
       await capPlugin.schedule({
         notifications: [
           {
@@ -286,6 +331,7 @@ export async function scheduleTaskReminder(
             title,
             body,
             schedule: targetDate ? { at: targetDate } : undefined,
+            channelId: NOTIFICATION_CHANNEL_ID,
             extra: {
               taskId: options.taskId,
               reminderId: options.reminder.id
