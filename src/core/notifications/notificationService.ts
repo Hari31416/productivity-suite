@@ -1,3 +1,5 @@
+import type { Task, TaskReminder } from '@/modules/tasks/types'
+
 export type NotificationPermissionStatus =
   | 'granted'
   | 'denied'
@@ -20,6 +22,14 @@ export interface HabitReminderOptions {
   intervalIndex?: number
   body?: string
   at?: Date
+}
+
+export interface TaskReminderOptions {
+  taskId: string
+  taskTitle: string
+  dueDate?: string
+  dueTime?: string
+  reminder: TaskReminder
 }
 
 interface CapacitorLocalNotificationsPlugin {
@@ -69,7 +79,6 @@ export function getNotificationPermission(): NotificationPermissionStatus {
 
   const capPlugin = getCapacitorBridge()
   if (capPlugin) {
-    // Capacitor permission state defaults to granted if plugin is active
     return 'granted'
   }
 
@@ -226,6 +235,97 @@ export async function scheduleHabitReminder(
   return sent ? reminderId : null
 }
 
+export function computeTaskReminderDate(
+  reminder: TaskReminder,
+  dueDate?: string,
+  dueTime?: string
+): Date | null {
+  if (reminder.type === 'exact' && reminder.exactDateTime) {
+    const d = new Date(reminder.exactDateTime)
+    return isNaN(d.getTime()) ? null : d
+  }
+
+  if (reminder.type === 'offset' && dueDate) {
+    const timeStr = dueTime ? `${dueTime}:00` : '09:00:00'
+    const fullIso = `${dueDate}T${timeStr}`
+    const baseDate = new Date(fullIso)
+    if (isNaN(baseDate.getTime())) return null
+
+    const offsetMs = (reminder.offsetMinutes ?? 0) * 60 * 1000
+    return new Date(baseDate.getTime() - offsetMs)
+  }
+
+  return null
+}
+
+export async function scheduleTaskReminder(
+  options: TaskReminderOptions
+): Promise<number | null> {
+  const targetDate = computeTaskReminderDate(
+    options.reminder,
+    options.dueDate,
+    options.dueTime
+  )
+
+  const reminderId =
+    options.reminder.notificationId ||
+    Math.floor(Date.now() % 1000000) + Math.floor(Math.random() * 1000)
+
+  const title = `Task Reminder: ${options.taskTitle}`
+  const body = options.dueTime
+    ? `Scheduled for ${options.dueDate} at ${options.dueTime}`
+    : `Due on ${options.dueDate || 'today'}`
+
+  const capPlugin = getCapacitorBridge()
+  if (capPlugin && capPlugin.schedule) {
+    try {
+      await capPlugin.schedule({
+        notifications: [
+          {
+            id: reminderId,
+            title,
+            body,
+            schedule: targetDate ? { at: targetDate } : undefined,
+            extra: {
+              taskId: options.taskId,
+              reminderId: options.reminder.id
+            }
+          }
+        ]
+      })
+      return reminderId
+    } catch {
+      return null
+    }
+  }
+
+  if (!isNotificationSupported()) {
+    return null
+  }
+
+  if (targetDate) {
+    const delayMs = targetDate.getTime() - Date.now()
+    if (delayMs <= 0) {
+      return null // Already in past
+    }
+
+    const timer = setTimeout(() => {
+      sendLocalNotification({
+        id: reminderId,
+        title,
+        body,
+        data: { taskId: options.taskId, reminderId: options.reminder.id }
+      })
+      scheduledTimers.delete(reminderId)
+    }, delayMs)
+
+    scheduledTimers.set(reminderId, timer)
+    return reminderId
+  }
+
+  return null
+}
+
 export async function cancelHabitReminder(
   notificationId: number | string
 ): Promise<boolean> {
@@ -247,6 +347,36 @@ export async function cancelHabitReminder(
   }
 
   return true
+}
+
+export async function cancelTaskReminder(
+  notificationId: number | string
+): Promise<boolean> {
+  return cancelHabitReminder(notificationId)
+}
+
+export async function rescheduleAllTaskReminders(tasks: Task[]): Promise<void> {
+  clearAllScheduledReminders()
+  const now = Date.now()
+
+  for (const task of tasks) {
+    if (task.status === 'done' || task.archived || !task.reminders) {
+      continue
+    }
+
+    for (const reminder of task.reminders) {
+      const targetDate = computeTaskReminderDate(reminder, task.dueDate, task.dueTime)
+      if (targetDate && targetDate.getTime() > now) {
+        await scheduleTaskReminder({
+          taskId: task.id,
+          taskTitle: task.title,
+          dueDate: task.dueDate,
+          dueTime: task.dueTime,
+          reminder
+        })
+      }
+    }
+  }
 }
 
 export function clearAllScheduledReminders(): void {

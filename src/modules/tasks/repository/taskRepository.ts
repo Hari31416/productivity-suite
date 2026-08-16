@@ -1,6 +1,19 @@
 import { db } from '@/core/db'
-import { format } from 'date-fns'
-import type { Task, Subtask, TaskFilter, TaskStatus, CreateTaskInput, UpdateTaskInput } from '../types'
+import { format, addDays } from 'date-fns'
+import type {
+  Task,
+  Subtask,
+  TaskFilter,
+  TaskStatus,
+  CreateTaskInput,
+  UpdateTaskInput,
+  TaskReminder
+} from '../types'
+import { generateOccurrenceSlots } from '../utils/recurrence'
+import {
+  scheduleTaskReminder,
+  cancelTaskReminder
+} from '@/core/notifications/notificationService'
 
 export const taskRepository = {
   async getAllTasks(filter?: TaskFilter): Promise<Task[]> {
@@ -29,6 +42,10 @@ export const taskRepository = {
 
       if (filter.tag) {
         tasks = tasks.filter((t) => t.tags && t.tags.includes(filter.tag!))
+      }
+
+      if (filter.isRecurring !== undefined) {
+        tasks = tasks.filter((t) => Boolean(t.isRecurring || t.recurringParentId) === filter.isRecurring)
       }
 
       if (filter.searchQuery && filter.searchQuery.trim()) {
@@ -85,6 +102,11 @@ export const taskRepository = {
         if (a.dueDate !== b.dueDate) {
           return a.dueDate.localeCompare(b.dueDate)
         }
+        if (a.dueTime && b.dueTime) {
+          return a.dueTime.localeCompare(b.dueTime)
+        }
+        if (a.dueTime) return -1
+        if (b.dueTime) return 1
       } else if (a.dueDate) {
         return -1
       } else if (b.dueDate) {
@@ -119,6 +141,11 @@ export const taskRepository = {
     const now = new Date().toISOString()
     const subtaskIds: string[] = []
 
+    const reminders: TaskReminder[] = (taskData.reminders || []).map((r) => ({
+      ...r,
+      id: r.id || crypto.randomUUID()
+    }))
+
     await db.transaction('rw', db.tasks, db.subtasks, async () => {
       if (initialSubtasks && initialSubtasks.length > 0) {
         for (let i = 0; i < initialSubtasks.length; i++) {
@@ -146,6 +173,7 @@ export const taskRepository = {
         archived: taskData.archived ?? false,
         tags: taskData.tags || [],
         subtaskIds,
+        reminders,
         completedAt: taskData.status === 'done' ? now : undefined,
         createdAt: now,
         updatedAt: now
@@ -158,6 +186,17 @@ export const taskRepository = {
     if (!created) {
       throw new Error('Failed to create task')
     }
+
+    if (created.reminders && created.reminders.length > 0 && created.status !== 'done' && !created.archived) {
+      await this.scheduleRemindersForTask(created)
+    }
+
+    if (created.isRecurring && created.recurrence && !created.recurringParentId) {
+      const isSubday = created.recurrence.frequency === 'hourly' || (created.recurrence.timesOfDay && created.recurrence.timesOfDay.length > 0)
+      const forwardDays = isSubday ? 7 : 30
+      await this.materializeRecurringInstances(created, forwardDays)
+    }
+
     return created
   },
 
@@ -178,14 +217,58 @@ export const taskRepository = {
       }
     }
 
+    let reminders = updates.reminders !== undefined ? updates.reminders : existing.reminders
+    if (reminders) {
+      reminders = reminders.map((r) => ({
+        ...r,
+        id: r.id || crypto.randomUUID()
+      }))
+    }
+
     const updated: Task = {
       ...existing,
       ...updates,
+      reminders,
       completedAt,
       updatedAt: now
     }
 
     await db.tasks.put(updated)
+
+    if (existing.reminders) {
+      for (const r of existing.reminders) {
+        if (r.notificationId) {
+          await cancelTaskReminder(r.notificationId)
+        }
+      }
+    }
+
+    if (updated.reminders && updated.reminders.length > 0 && updated.status !== 'done' && !updated.archived) {
+      await this.scheduleRemindersForTask(updated)
+    }
+
+    if (
+      (updates.isRecurring !== undefined || updates.recurrence !== undefined || updates.dueDate !== undefined) &&
+      !existing.recurringParentId
+    ) {
+      const todayStr = format(new Date(), 'yyyy-MM-dd')
+      const futureChildren = await db.tasks
+        .where('recurringParentId')
+        .equals(id)
+        .filter((t) => t.status !== 'done' && (t.dueDate ? t.dueDate >= todayStr : true))
+        .toArray()
+
+      for (const child of futureChildren) {
+        await this.deleteTask(child.id)
+      }
+
+      if (updated.isRecurring && updated.recurrence) {
+        const isSubday = updated.recurrence.frequency === 'hourly' || (updated.recurrence.timesOfDay && updated.recurrence.timesOfDay.length > 0)
+        const forwardDays = isSubday ? 7 : 30
+        await this.materializeRecurringInstances(updated, forwardDays)
+      }
+    }
+
     return updated
   },
 
@@ -197,11 +280,159 @@ export const taskRepository = {
     return this.updateTask(id, { archived })
   },
 
-  async deleteTask(id: string): Promise<void> {
+  async deleteTask(id: string, options?: { deleteAllOccurrences?: boolean }): Promise<void> {
+    const task = await db.tasks.get(id)
+    if (!task) return
+
+    if (task.reminders) {
+      for (const r of task.reminders) {
+        if (r.notificationId) {
+          await cancelTaskReminder(r.notificationId)
+        }
+      }
+    }
+
+    if (options?.deleteAllOccurrences) {
+      const parentId = task.recurringParentId || task.id
+      const relatedTasks = await db.tasks
+        .filter((t) => t.id === parentId || t.recurringParentId === parentId)
+        .toArray()
+
+      for (const t of relatedTasks) {
+        if (t.reminders) {
+          for (const r of t.reminders) {
+            if (r.notificationId) {
+              await cancelTaskReminder(r.notificationId)
+            }
+          }
+        }
+        await db.transaction('rw', db.tasks, db.subtasks, async () => {
+          await db.subtasks.where('taskId').equals(t.id).delete()
+          await db.tasks.delete(t.id)
+        })
+      }
+      return
+    }
+
     await db.transaction('rw', db.tasks, db.subtasks, async () => {
       await db.subtasks.where('taskId').equals(id).delete()
       await db.tasks.delete(id)
     })
+  },
+
+  async scheduleRemindersForTask(task: Task): Promise<void> {
+    if (!task.reminders || task.reminders.length === 0) return
+
+    const updatedReminders: TaskReminder[] = []
+    let modified = false
+
+    for (const reminder of task.reminders) {
+      const notificationId = await scheduleTaskReminder({
+        taskId: task.id,
+        taskTitle: task.title,
+        dueDate: task.dueDate,
+        dueTime: task.dueTime,
+        reminder
+      })
+
+      if (notificationId) {
+        updatedReminders.push({ ...reminder, notificationId })
+        modified = true
+      } else {
+        updatedReminders.push(reminder)
+      }
+    }
+
+    if (modified) {
+      await db.tasks.update(task.id, { reminders: updatedReminders })
+    }
+  },
+
+  async materializeRecurringInstances(parentTask: Task, windowDays: number = 30): Promise<Task[]> {
+    if (!parentTask.isRecurring || !parentTask.recurrence || !parentTask.dueDate) {
+      return []
+    }
+
+    const today = new Date()
+    const todayStr = format(today, 'yyyy-MM-dd')
+    const upToStr = format(addDays(today, windowDays), 'yyyy-MM-dd')
+
+    const existingInstances = await db.tasks
+      .where('recurringParentId')
+      .equals(parentTask.id)
+      .toArray()
+
+    const existingKeys = [
+      `${parentTask.dueDate}@default`,
+      `${parentTask.dueDate}@${parentTask.dueTime || 'default'}`,
+      ...existingInstances.map((t) => `${t.dueDate}@default`),
+      ...existingInstances.map((t) => `${t.dueDate}@${t.dueTime || 'default'}`)
+    ]
+
+    const startDate = parentTask.dueDate < todayStr ? todayStr : parentTask.dueDate
+    const existingCount = 1 + existingInstances.length
+    const missingSlots = generateOccurrenceSlots(
+      parentTask.recurrence,
+      startDate,
+      upToStr,
+      existingKeys,
+      existingCount
+    )
+
+    if (missingSlots.length === 0) {
+      return []
+    }
+
+    const parentSubtasks = await this.getSubtasksForTask(parentTask.id)
+    const newTasks: Task[] = []
+
+    for (const slot of missingSlots) {
+      const subtaskDrafts = parentSubtasks.map((s) => ({
+        title: s.title,
+        completed: false
+      }))
+
+      const clonedReminders = (parentTask.reminders || []).map((r) => ({
+        ...r,
+        id: crypto.randomUUID(),
+        notificationId: undefined,
+        triggered: false
+      }))
+
+      const instanceInput: CreateTaskInput = {
+        title: parentTask.title,
+        description: parentTask.description,
+        projectId: parentTask.projectId,
+        priority: parentTask.priority,
+        status: 'todo',
+        dueDate: slot.date,
+        dueTime: slot.time || parentTask.dueTime,
+        estimatedMinutes: parentTask.estimatedMinutes,
+        tags: [...parentTask.tags],
+        recurringParentId: parentTask.id,
+        recurrenceInstanceDate: slot.date,
+        recurrenceInstanceTime: slot.time,
+        reminders: clonedReminders,
+        archived: false
+      }
+
+      const instance = await this.createTask(instanceInput, subtaskDrafts)
+      newTasks.push(instance)
+    }
+
+    return newTasks
+  },
+
+  async syncRecurringInstances(windowDays: number = 30): Promise<void> {
+    const parentRecurringTasks = await db.tasks
+      .filter((t) => Boolean(t.isRecurring && t.recurrence && !t.recurringParentId && !t.archived))
+      .toArray()
+
+    for (const parent of parentRecurringTasks) {
+      const isSubday = parent.recurrence?.frequency === 'hourly' || (parent.recurrence?.timesOfDay && parent.recurrence.timesOfDay.length > 0)
+      const forwardDays = isSubday ? 7 : windowDays
+      await this.materializeRecurringInstances(parent, forwardDays)
+    }
   },
 
   async getSubtasksForTask(taskId: string): Promise<Subtask[]> {
@@ -296,7 +527,6 @@ export const taskRepository = {
     const resultSubtasks: Subtask[] = []
 
     await db.transaction('rw', db.tasks, db.subtasks, async () => {
-      // Remove previous subtasks
       await db.subtasks.where('taskId').equals(taskId).delete()
 
       const newSubtaskIds: string[] = []

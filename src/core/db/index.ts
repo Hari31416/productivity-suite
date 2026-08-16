@@ -23,6 +23,10 @@ export class AppDatabase extends Dexie {
       notes: 'id, projectId, pinned, archived, updatedAt, *tags',
       tags: 'id, name'
     })
+
+    this.version(2).stores({
+      tasks: 'id, projectId, status, priority, dueDate, isRecurring, recurringParentId, archived, createdAt'
+    })
   }
 }
 

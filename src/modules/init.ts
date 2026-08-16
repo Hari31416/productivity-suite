@@ -7,6 +7,8 @@ import { TaskDashboardWidget } from './tasks/components/TaskDashboardWidget'
 import { NotesView } from './notes/NotesView'
 import { NotesDashboardWidget } from './notes/components/NotesDashboardWidget'
 import { SettingsView } from './settings/SettingsView'
+import { taskRepository } from './tasks/repository/taskRepository'
+import { rescheduleAllTaskReminders } from '@/core/notifications/notificationService'
 
 export function initializeModules(): void {
   moduleRegistry.clear()
@@ -93,4 +95,15 @@ export function initializeModules(): void {
       }
     ]
   })
+
+  // Background initialization of recurring tasks and task reminders
+  if (typeof window !== 'undefined') {
+    taskRepository
+      .syncRecurringInstances(30)
+      .then(() => taskRepository.getAllTasks({ includeArchived: false }))
+      .then((tasks) => rescheduleAllTaskReminders(tasks))
+      .catch(() => {
+        // Silently continue if initial background sync encounters an issue
+      })
+  }
 }

@@ -6,6 +6,9 @@ import {
   sendLocalNotification,
   scheduleHabitReminder,
   cancelHabitReminder,
+  computeTaskReminderDate,
+  scheduleTaskReminder,
+  cancelTaskReminder,
   clearAllScheduledReminders
 } from '../notificationService'
 
@@ -18,7 +21,6 @@ describe('notificationService', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     clearAllScheduledReminders()
-    // Setup clean window on globalThis for browser simulation
     ;(globalThis as unknown as { window: MockWindow }).window = {}
   })
 
@@ -289,7 +291,6 @@ describe('notificationService', () => {
       expect(id).toBeDefined()
       expect(mockNotificationConstructor).not.toHaveBeenCalled()
 
-      // Advance clock by 5s
       vi.advanceTimersByTime(5000)
 
       expect(mockNotificationConstructor).toHaveBeenCalledWith(
@@ -322,9 +323,7 @@ describe('notificationService', () => {
         expect(cancelled).toBe(true)
       }
 
-      // Advance clock past the scheduled time
       vi.advanceTimersByTime(6000)
-
       expect(mockNotificationConstructor).not.toHaveBeenCalled()
     })
 
@@ -346,6 +345,79 @@ describe('notificationService', () => {
       expect(mockCancel).toHaveBeenCalledWith({
         notifications: [{ id: 123 }]
       })
+    })
+  })
+
+  describe('Task Reminders', () => {
+    it('computes offset and exact reminder dates correctly', () => {
+      const offsetDate = computeTaskReminderDate(
+        { id: 'r1', type: 'offset', offsetMinutes: 15 },
+        '2026-08-16',
+        '10:00'
+      )
+      expect(offsetDate).toBeDefined()
+      // 10:00 minus 15 min = 09:45
+      expect(offsetDate?.getHours()).toBe(9)
+      expect(offsetDate?.getMinutes()).toBe(45)
+
+      const exactDate = computeTaskReminderDate(
+        { id: 'r2', type: 'exact', exactDateTime: '2026-08-16T14:30:00' }
+      )
+      expect(exactDate).toBeDefined()
+      expect(exactDate?.getHours()).toBe(14)
+      expect(exactDate?.getMinutes()).toBe(30)
+    })
+
+    it('schedules and triggers task reminders on web timer', async () => {
+      const mockNotificationConstructor = vi.fn()
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Notification: Object.assign(mockNotificationConstructor, {
+          permission: 'granted',
+          requestPermission: vi.fn()
+        })
+      }
+
+      const futureTime = new Date(Date.now() + 10000).toISOString()
+      const reminderId = await scheduleTaskReminder({
+        taskId: 't-1',
+        taskTitle: 'Team Sync',
+        reminder: { id: 'r-1', type: 'exact', exactDateTime: futureTime }
+      })
+
+      expect(reminderId).toBeDefined()
+      expect(mockNotificationConstructor).not.toHaveBeenCalled()
+
+      vi.advanceTimersByTime(10000)
+
+      expect(mockNotificationConstructor).toHaveBeenCalledWith(
+        'Task Reminder: Team Sync',
+        expect.anything()
+      )
+    })
+
+    it('cancels scheduled task reminder', async () => {
+      const mockNotificationConstructor = vi.fn()
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Notification: Object.assign(mockNotificationConstructor, {
+          permission: 'granted',
+          requestPermission: vi.fn()
+        })
+      }
+
+      const futureTime = new Date(Date.now() + 10000).toISOString()
+      const reminderId = await scheduleTaskReminder({
+        taskId: 't-2',
+        taskTitle: 'Deploy Build',
+        reminder: { id: 'r-2', type: 'exact', exactDateTime: futureTime }
+      })
+
+      if (reminderId) {
+        const cancelled = await cancelTaskReminder(reminderId)
+        expect(cancelled).toBe(true)
+      }
+
+      vi.advanceTimersByTime(12000)
+      expect(mockNotificationConstructor).not.toHaveBeenCalled()
     })
   })
 })

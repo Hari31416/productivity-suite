@@ -4,6 +4,7 @@ import { db } from '@/core/db'
 import { taskRepository } from '../taskRepository'
 import { projectRepository } from '../projectRepository'
 import type { Task } from '../../types'
+import { format, addDays } from 'date-fns'
 
 describe('taskRepository', () => {
   beforeEach(async () => {
@@ -184,26 +185,21 @@ describe('taskRepository', () => {
       archived: false
     })
 
-    // Filter by project
     const alphaTasks = await taskRepository.getAllTasks({ projectId: projectA.id })
     expect(alphaTasks).toHaveLength(2)
 
-    // Filter by priority
     const urgentTasks = await taskRepository.getAllTasks({ priority: 'urgent' })
     expect(urgentTasks).toHaveLength(1)
     expect(urgentTasks[0].title).toBe('Alpha urgent task')
 
-    // Filter by status
     const blockedTasks = await taskRepository.getAllTasks({ status: 'blocked' })
     expect(blockedTasks).toHaveLength(1)
     expect(blockedTasks[0].title).toBe('Beta medium task')
 
-    // Search query
     const searchResult = await taskRepository.getAllTasks({ searchQuery: 'Critical' })
     expect(searchResult).toHaveLength(1)
     expect(searchResult[0].title).toBe('Alpha urgent task')
 
-    // Tag filter
     const tagResult = await taskRepository.getAllTasks({ tag: 'frontend' })
     expect(tagResult).toHaveLength(1)
   })
@@ -217,7 +213,6 @@ describe('taskRepository', () => {
       archived: false
     })
 
-    // Add subtask
     const sub1 = await taskRepository.createSubtask(task.id, 'First step')
     expect(sub1.title).toBe('First step')
     expect(sub1.completed).toBe(false)
@@ -226,11 +221,9 @@ describe('taskRepository', () => {
     const updatedTask = await taskRepository.getTaskById(task.id)
     expect(updatedTask?.subtaskIds).toContain(sub1.id)
 
-    // Toggle subtask
     const toggled = await taskRepository.toggleSubtask(sub1.id)
     expect(toggled.completed).toBe(true)
 
-    // Batch update
     const batchResult = await taskRepository.batchUpdateSubtasks(task.id, [
       { id: sub1.id, title: 'First step updated', completed: true, order: 0 },
       { title: 'Second step', completed: false, order: 1 }
@@ -239,7 +232,6 @@ describe('taskRepository', () => {
     expect(batchResult[0].title).toBe('First step updated')
     expect(batchResult[1].title).toBe('Second step')
 
-    // Delete subtask
     await taskRepository.deleteSubtask(batchResult[1].id)
     const remainingSubtasks = await taskRepository.getSubtasksForTask(task.id)
     expect(remainingSubtasks).toHaveLength(1)
@@ -265,4 +257,146 @@ describe('taskRepository', () => {
     const tags = await taskRepository.getAllTags()
     expect(tags).toEqual(['react', 'typescript', 'vite'])
   })
+
+  it('materializes recurring task instances ahead of time for rolling window', async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const createdParent = await taskRepository.createTask({
+      title: 'Daily Standup',
+      priority: 'medium',
+      status: 'todo',
+      dueDate: todayStr,
+      dueTime: '09:30',
+      isRecurring: true,
+      recurrence: {
+        frequency: 'daily',
+        interval: 1,
+        endCondition: { type: 'after_count', count: 5 }
+      },
+      tags: ['scrum'],
+      archived: false
+    })
+
+    expect(createdParent.isRecurring).toBe(true)
+
+    // Check all tasks including generated instances
+    const allTasks = await taskRepository.getAllTasks()
+    // 1 parent + 4 future instances = 5 occurrences total
+    expect(allTasks).toHaveLength(5)
+
+    const futureInstances = allTasks.filter((t) => t.recurringParentId === createdParent.id)
+    expect(futureInstances).toHaveLength(4)
+    expect(futureInstances[0].title).toBe('Daily Standup')
+    expect(futureInstances[0].dueDate).toBe(format(addDays(new Date(), 1), 'yyyy-MM-dd'))
+  })
+
+  it('allows completing one recurring occurrence without affecting other instances', async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const parent = await taskRepository.createTask({
+      title: 'Workout',
+      priority: 'high',
+      status: 'todo',
+      dueDate: todayStr,
+      isRecurring: true,
+      recurrence: {
+        frequency: 'daily',
+        interval: 1,
+        endCondition: { type: 'after_count', count: 3 }
+      },
+      tags: ['health'],
+      archived: false
+    })
+
+    // Complete today's task
+    await taskRepository.updateTaskStatus(parent.id, 'done')
+
+    const parentAfter = await taskRepository.getTaskById(parent.id)
+    expect(parentAfter?.status).toBe('done')
+
+    // Future instances remain 'todo'
+    const futureInstances = await db.tasks.where('recurringParentId').equals(parent.id).toArray()
+    expect(futureInstances).toHaveLength(2)
+    expect(futureInstances[0].status).toBe('todo')
+    expect(futureInstances[1].status).toBe('todo')
+  })
+
+  it('deletes entire recurring series when deleteAllOccurrences is selected', async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const parent = await taskRepository.createTask({
+      title: 'Weekly Review',
+      priority: 'medium',
+      status: 'todo',
+      dueDate: todayStr,
+      isRecurring: true,
+      recurrence: {
+        frequency: 'weekly',
+        interval: 1
+      },
+      tags: [],
+      archived: false
+    })
+
+    const allBefore = await taskRepository.getAllTasks()
+    expect(allBefore.length).toBeGreaterThan(1)
+
+    // Delete all occurrences
+    await taskRepository.deleteTask(parent.id, { deleteAllOccurrences: true })
+
+    const allAfter = await taskRepository.getAllTasks()
+    expect(allAfter).toHaveLength(0)
+  })
+
+  it('creates and manages tasks with reminders', async () => {
+    const task = await taskRepository.createTask({
+      title: 'Dentist Appointment',
+      priority: 'urgent',
+      status: 'todo',
+      dueDate: '2026-08-25',
+      dueTime: '15:00',
+      reminders: [
+        { id: 'rem-1', type: 'offset', offsetMinutes: 30 },
+        { id: 'rem-2', type: 'exact', exactDateTime: '2026-08-25T14:00:00' }
+      ],
+      tags: ['health'],
+      archived: false
+    })
+
+    expect(task.reminders).toHaveLength(2)
+    expect(task.reminders?.[0].offsetMinutes).toBe(30)
+
+    // Update reminders
+    const updated = await taskRepository.updateTask(task.id, {
+      reminders: [{ id: 'rem-1', type: 'offset', offsetMinutes: 60 }]
+    })
+    expect(updated.reminders).toHaveLength(1)
+    expect(updated.reminders?.[0].offsetMinutes).toBe(60)
+  })
+
+  it('materializes sub-day recurring tasks with hourly windows and specific times', async () => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const parent = await taskRepository.createTask({
+      title: 'Hydration Check',
+      priority: 'low',
+      status: 'todo',
+      dueDate: todayStr,
+      dueTime: '09:00',
+      isRecurring: true,
+      recurrence: {
+        frequency: 'hourly',
+        interval: 3,
+        startTime: '09:00',
+        endTime: '15:00',
+        endCondition: { type: 'after_count', count: 3 }
+      },
+      tags: ['health'],
+      archived: false
+    })
+
+    expect(parent.id).toBeDefined()
+
+    const allTasks = await taskRepository.getAllTasks()
+    // 1 parent + 2 children = 3 total occurrences
+    expect(allTasks).toHaveLength(3)
+    expect(allTasks.map((t) => t.dueTime)).toEqual(['09:00', '12:00', '15:00'])
+  })
 })
+
