@@ -96,8 +96,7 @@ export function SettingsView() {
   const [timezone, setTimezone] = useState<string>(() => {
     return (
       localStorage.getItem('productivity_timezone') ||
-      Intl.DateTimeFormat().resolvedOptions().timeZone ||
-      'UTC'
+      'Asia/Kolkata'
     )
   })
 

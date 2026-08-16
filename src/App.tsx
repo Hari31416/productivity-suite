@@ -7,6 +7,7 @@ import { QuickAddSheet } from '@/components/layout/QuickAddSheet'
 import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
 import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
+import { StartupModal } from '@/components/onboarding/StartupModal'
 
 export function App() {
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
@@ -145,6 +146,9 @@ export function App() {
         open={quickNoteModalOpen}
         onOpenChange={setQuickNoteModalOpen}
       />
+
+      {/* First-Run Startup Onboarding Modal */}
+      <StartupModal />
     </>
   )
 }

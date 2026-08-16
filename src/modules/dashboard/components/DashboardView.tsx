@@ -40,13 +40,16 @@ import {
   getGreeting,
   getProductivityStatus
 } from '../utils/dashboardScore'
+import { useUserProfile } from '@/core/profile/useUserProfile'
 import { cn } from '@/lib/utils'
 
 export function DashboardView() {
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
   const formattedDate = format(today, 'EEEE, MMM d')
-  const greeting = getGreeting(today)
+  const { userName } = useUserProfile()
+  const baseGreeting = getGreeting(today)
+  const greeting = userName ? `${baseGreeting}, ${userName}` : baseGreeting
 
   // Modal states
   const [habitModalOpen, setHabitModalOpen] = useState(false)
