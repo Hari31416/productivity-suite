@@ -89,15 +89,15 @@ export function DashboardView() {
   const updateTaskStatusMutation = useUpdateTaskStatus()
 
   // Habit metrics
-  const { todayHabits, completedHabitsCount, maxStreak, completedHabitsList } = useMemo(() => {
+  const { todayHabits, completedHabitsCount, maxStreak } = useMemo(() => {
     const scheduled = habits.filter((h) => isHabitScheduledOnDate(h, todayStr))
-    const completedList: typeof habits = []
+    let completedCount = 0
     let bestStreak = 0
 
     for (const habit of scheduled) {
       const logs = todayLogs.filter((l) => l.habitId === habit.id)
       if (logs.some((l) => l.completed)) {
-        completedList.push(habit)
+        completedCount += 1
       }
     }
 
@@ -109,8 +109,7 @@ export function DashboardView() {
 
     return {
       todayHabits: scheduled,
-      completedHabitsCount: completedList.length,
-      completedHabitsList: completedList,
+      completedHabitsCount: completedCount,
       maxStreak: bestStreak
     }
   }, [habits, todayLogs, todayStr])
@@ -549,47 +548,20 @@ export function DashboardView() {
         </Card>
       </div>
 
-      {/* Completed Today Daily Wins Feed */}
-      {(completedHabitsList.length > 0 || completedTasksList.length > 0) && (
+      {/* Completed tasks only — habits already appear in Today's Focus */}
+      {completedTasksList.length > 0 && (
         <div className="rounded-2xl border bg-card/60 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
               <h2 className="text-sm font-semibold tracking-tight text-foreground">
-                Completed Today ({completedHabitsList.length + completedTasksList.length})
+                Completed Today ({completedTasksList.length})
               </h2>
             </div>
             <span className="text-xs text-muted-foreground font-medium">Daily Wins</span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-            {completedHabitsList.map((habit) => (
-              <div
-                key={`completed-habit-${habit.id}`}
-                onClick={() => navigate('/habits', { habitId: habit.id })}
-                className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs cursor-pointer hover:border-primary/40 hover:shadow-xs transition-all group"
-              >
-                <div
-                  className="h-3 w-3 rounded-full shrink-0"
-                  style={{ backgroundColor: habit.color || '#0A7A64' }}
-                />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                      {habit.title}
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="text-[10px] h-4 px-1 py-0 text-primary border-primary/30 shrink-0"
-                    >
-                      Habit
-                    </Badge>
-                  </div>
-                </div>
-                <Check className="h-3.5 w-3.5 text-primary shrink-0" />
-              </div>
-            ))}
-
             {completedTasksList.map((task) => {
               const project = task.projectId
                 ? projects.find((p) => p.id === task.projectId)
@@ -603,7 +575,7 @@ export function DashboardView() {
                   <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
-                      <span className="font-medium text-foreground truncate line-through text-muted-foreground group-hover:text-foreground transition-colors">
+                      <span className="font-medium truncate line-through text-muted-foreground group-hover:text-foreground transition-colors">
                         {task.title}
                       </span>
                       {project && (

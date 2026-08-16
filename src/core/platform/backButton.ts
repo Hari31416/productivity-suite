@@ -51,6 +51,18 @@ class BackButtonManager {
   }
 }
 
+export type FallbackBackAction = 'strip-query' | 'go-home' | 'exit'
+
+export function resolveFallbackBack(pathname: string, hasQueryParams: boolean): FallbackBackAction {
+  if (hasQueryParams) {
+    return 'strip-query'
+  }
+  if (pathname !== '/') {
+    return 'go-home'
+  }
+  return 'exit'
+}
+
 export const backButtonManager = new BackButtonManager()
 
 export function useBackButton(handler: BackHandler, active = true, priority = 0) {

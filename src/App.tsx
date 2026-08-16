@@ -4,7 +4,7 @@ import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { setupNotificationListeners } from '@/core/notifications/notificationService'
-import { setupBackButton } from '@/core/platform/backButton'
+import { resolveFallbackBack, setupBackButton } from '@/core/platform/backButton'
 import { AppShell } from '@/components/layout/AppShell'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { QuickAddSheet } from '@/components/layout/QuickAddSheet'
@@ -20,7 +20,7 @@ import { SplashScreen } from '@capacitor/splash-screen'
 
 export function App() {
   const queryClient = useQueryClient()
-  const { pathname, navigate } = useHashRoute()
+  const { pathname, queryParams, navigate } = useHashRoute()
 
   const { userName } = useUserProfile()
 
@@ -67,7 +67,12 @@ export function App() {
         setQuickNoteModalOpen(false)
         return true
       }
-      if (pathname !== '/') {
+      const fallback = resolveFallbackBack(pathname, Object.keys(queryParams).length > 0)
+      if (fallback === 'strip-query') {
+        navigate(pathname, undefined, true)
+        return true
+      }
+      if (fallback === 'go-home') {
         navigate('/')
         return true
       }
@@ -82,6 +87,7 @@ export function App() {
     quickHabitModalOpen,
     quickNoteModalOpen,
     pathname,
+    queryParams,
     navigate
   ])
 

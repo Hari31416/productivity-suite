@@ -108,7 +108,7 @@ export function HabitDashboardWidget() {
                 <span>Best Streak</span>
               </div>
               <p className="text-sm font-bold text-amber-500">
-                {maxStreak > 0 ? `${maxStreak} days` : 'None yet'}
+                {maxStreak > 0 ? `${maxStreak} ${maxStreak === 1 ? 'day' : 'days'}` : 'None yet'}
               </p>
             </div>
           </div>

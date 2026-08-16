@@ -29,9 +29,7 @@ describe('Automated Testing: Daily Productivity Score Calculations', () => {
   })
 
   it('calculates weighted score accurately when both habits and tasks exist', () => {
-    // 2 habits: 1 completed (50%)
-    // 2 tasks: 2 completed (100%)
-    // Combined: 50% * 0.5 + 100% * 0.5 = 75%
+    // 1 of 2 habits + 2 of 2 tasks = 3 of 4 items = 75%
     const score = calculateDailyProductivityScore({
       habitsCompleted: 1,
       habitsTotal: 2,

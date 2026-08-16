@@ -1,5 +1,22 @@
 import { describe, it, expect, vi } from 'vitest'
-import { backButtonManager } from '../backButton'
+import { backButtonManager, resolveFallbackBack } from '../backButton'
+
+describe('resolveFallbackBack', () => {
+  it('strips query params before leaving a module', () => {
+    expect(resolveFallbackBack('/habits', true)).toBe('strip-query')
+    expect(resolveFallbackBack('/tasks', true)).toBe('strip-query')
+  })
+
+  it('returns to home from a module with no query params', () => {
+    expect(resolveFallbackBack('/habits', false)).toBe('go-home')
+    expect(resolveFallbackBack('/notes', false)).toBe('go-home')
+  })
+
+  it('exits only from the home route', () => {
+    expect(resolveFallbackBack('/', false)).toBe('exit')
+    expect(resolveFallbackBack('/', true)).toBe('strip-query')
+  })
+})
 
 describe('backButtonManager', () => {
   it('registers and invokes handlers in priority order', () => {

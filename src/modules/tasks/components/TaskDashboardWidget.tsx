@@ -83,7 +83,9 @@ export function TaskDashboardWidget() {
                 <Clock className="h-3.5 w-3.5 text-blue-500" />
                 <span>Due Today</span>
               </div>
-              <p className="text-sm font-bold">{todayDueCount} tasks</p>
+              <p className="text-sm font-bold">
+                {todayDueCount} {todayDueCount === 1 ? 'task' : 'tasks'}
+              </p>
             </div>
 
             <div className="p-2.5 rounded-xl border bg-muted/20 space-y-1">
@@ -92,7 +94,7 @@ export function TaskDashboardWidget() {
                 <span>Urgent</span>
               </div>
               <p className="text-sm font-bold text-red-600 dark:text-red-400">
-                {urgentCount} tasks
+                {urgentCount} {urgentCount === 1 ? 'task' : 'tasks'}
               </p>
             </div>
           </div>

@@ -80,7 +80,7 @@ export function HabitsView() {
         return true
       }
       if (deepLinkedHabitId) {
-        navigate('/habits')
+        navigate('/habits', undefined, true)
         return true
       }
       if (viewMode !== 'tracker') {
@@ -89,9 +89,7 @@ export function HabitsView() {
       }
       return false
     },
-    Boolean(
-      habitToDelete || isFormOpen || showQuickAdd || deepLinkedHabitId || viewMode !== 'tracker'
-    ),
+    true,
     20
   )
 
@@ -253,7 +251,7 @@ export function HabitsView() {
           allLogs={allRangeLogs}
           selectedDate={selectedDate}
           onBack={() => {
-            navigate('/habits')
+            navigate('/habits', undefined, true)
           }}
         />
       )

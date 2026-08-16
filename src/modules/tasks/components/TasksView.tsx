@@ -358,9 +358,9 @@ export function TasksView() {
           </button>
         </div>
 
-        {/* Quick Filter Chips (Shown only on List view) */}
+        {/* Quick Filter Chips — desktop only; mobile uses the Filters sheet */}
         {viewMode === 'list' && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="hidden sm:flex items-center gap-1.5 overflow-x-auto pb-0 scrollbar-none">
             <Button
               variant={selectedSmartFilter === 'all' && !selectedProjectId ? 'default' : 'outline'}
               size="sm"
