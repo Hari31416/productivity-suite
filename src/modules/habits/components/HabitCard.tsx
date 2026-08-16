@@ -19,13 +19,17 @@ import {
   Minus,
   Plus,
   RotateCcw,
-  Pencil
+  Pencil,
+  Star,
+  ChevronRight
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
 import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
 import { getHabitSlots } from '../utils/intervalCalculator'
 import { calculateStreak, isHabitCompletedOnDate } from '../utils/streakCalculator'
-import { useToggleHabitLog, useSetHabitLogValue } from '../hooks/useHabits'
+import { getDynamicStepConfig, getDynamicTimerConfig } from '../utils/dynamicStepper'
+import { useToggleHabitLog, useSetHabitLogValue, useUpdateHabit } from '../hooks/useHabits'
+import { useHashRoute } from '@/core/router/hashRouter'
 import { cn } from '@/lib/utils'
 import { fireConfetti } from '@/lib/confetti'
 
@@ -37,6 +41,7 @@ interface HabitCardProps {
   onEdit: (habit: Habit) => void
   onArchive: (habit: Habit) => void
   onDelete: (habit: Habit) => void
+  onOpenDetail?: (habit: Habit) => void
 }
 
 export function HabitCard({
@@ -46,13 +51,16 @@ export function HabitCard({
   selectedDate,
   onEdit,
   onArchive,
-  onDelete
+  onDelete,
+  onOpenDetail
 }: HabitCardProps) {
+  const { navigate } = useHashRoute()
   const [isEditingDirect, setIsEditingDirect] = useState(false)
   const [directValueInput, setDirectValueInput] = useState('')
 
   const toggleMutation = useToggleHabitLog()
   const setValueMutation = useSetHabitLogValue()
+  const updateMutation = useUpdateHabit()
 
   const category = useMemo(() => {
     return DEFAULT_HABIT_CATEGORIES.find((c) => c.id === habit.categoryId)
@@ -71,21 +79,21 @@ export function HabitCard({
     return getHabitSlots(habit)
   }, [habit])
 
+  const targetValue = habit.targetValue || (habit.targetType === 'timer' ? 30 : 1)
+
   const currentNumericValue = useMemo(() => {
     if (habit.targetType !== 'numeric') return 0
-    const target = habit.targetValue || 1
     const val = logs.reduce((sum, log) => {
       if (typeof log.value === 'number') {
         return sum + log.value
       }
-      return sum + (log.completed ? target : 0)
+      return sum + (log.completed ? targetValue : 0)
     }, 0)
-    return Math.min(target, val)
-  }, [habit, logs])
+    return Math.min(targetValue, val)
+  }, [habit, logs, targetValue])
 
   const currentTimerMinutes = useMemo(() => {
     if (habit.targetType !== 'timer') return 0
-    const target = habit.targetValue || 30
     const mins = logs.reduce((sum, log) => {
       if (typeof log.durationSeconds === 'number') {
         return sum + Math.round(log.durationSeconds / 60)
@@ -93,12 +101,43 @@ export function HabitCard({
       if (typeof log.value === 'number') {
         return sum + log.value
       }
-      return sum + (log.completed ? target : 0)
+      return sum + (log.completed ? targetValue : 0)
     }, 0)
-    return Math.min(target, mins)
-  }, [habit, logs])
+    return Math.min(targetValue, mins)
+  }, [habit, logs, targetValue])
 
-  const handleToggleBoolean = () => {
+  // Dynamic Stepper Configuration for proportional +/- and quick-add chips!
+  const stepConfig = useMemo(() => {
+    if (habit.targetType === 'numeric') {
+      return getDynamicStepConfig(targetValue, habit.unit)
+    }
+    if (habit.targetType === 'timer') {
+      return getDynamicTimerConfig(targetValue)
+    }
+    return { primaryStep: 1, quickAddValues: [1] }
+  }, [habit.targetType, targetValue, habit.unit])
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Avoid triggering when user clicks interactive buttons or inputs
+    const target = e.target as HTMLElement
+    if (
+      target.closest('button') ||
+      target.closest('input') ||
+      target.closest('form') ||
+      target.closest('[role="menu"]')
+    ) {
+      return
+    }
+
+    if (onOpenDetail) {
+      onOpenDetail(habit)
+    } else {
+      navigate('/habits', { habitId: habit.id })
+    }
+  }
+
+  const handleToggleBoolean = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     if (!isCompleted) {
       fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#f59e0b'] })
     }
@@ -108,7 +147,8 @@ export function HabitCard({
     })
   }
 
-  const handleToggleSlot = (intervalIndex: number) => {
+  const handleToggleSlot = (intervalIndex: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
     toggleMutation.mutate({
       habitId: habit.id,
       date: selectedDate,
@@ -116,56 +156,56 @@ export function HabitCard({
     })
   }
 
-  const handleNumericChange = (delta: number) => {
-    const target = habit.targetValue || 1
-    const nextVal = Math.min(target, Math.max(0, currentNumericValue + delta))
-    if (nextVal >= target && currentNumericValue < target) {
+  const handleNumericChange = (delta: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const nextVal = Math.min(targetValue, Math.max(0, currentNumericValue + delta))
+    if (nextVal >= targetValue && currentNumericValue < targetValue) {
       fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
     }
     setValueMutation.mutate({
       habitId: habit.id,
       date: selectedDate,
       value: nextVal,
-      completed: nextVal >= target
+      completed: nextVal >= targetValue
     })
   }
 
-  const handleTimerChange = (delta: number) => {
-    const target = habit.targetValue || 30
-    const nextVal = Math.min(target, Math.max(0, currentTimerMinutes + delta))
-    if (nextVal >= target && currentTimerMinutes < target) {
+  const handleTimerChange = (delta: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const nextVal = Math.min(targetValue, Math.max(0, currentTimerMinutes + delta))
+    if (nextVal >= targetValue && currentTimerMinutes < targetValue) {
       fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
     }
     setValueMutation.mutate({
       habitId: habit.id,
       date: selectedDate,
       value: nextVal,
-      completed: nextVal >= target
+      completed: nextVal >= targetValue
     })
   }
 
-  const handleSetExactValue = (val: number) => {
-    const target = habit.targetValue || 1
-    const clampedVal = Math.min(target, Math.max(0, val))
-    if (clampedVal >= target && currentNumericValue < target) {
+  const handleSetExactValue = (val: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    const clampedVal = Math.min(targetValue, Math.max(0, val))
+    if (clampedVal >= targetValue && currentNumericValue < targetValue) {
       fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
     }
     setValueMutation.mutate({
       habitId: habit.id,
       date: selectedDate,
       value: clampedVal,
-      completed: clampedVal >= target
+      completed: clampedVal >= targetValue
     })
   }
 
   const handleDirectSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     const parsed = parseFloat(directValueInput)
     if (!isNaN(parsed) && parsed >= 0) {
       if (habit.targetType === 'timer') {
-        const target = habit.targetValue || 30
-        const clampedVal = Math.min(target, parsed)
-        if (clampedVal >= target && currentTimerMinutes < target) {
+        const clampedVal = Math.min(targetValue, parsed)
+        if (clampedVal >= targetValue && currentTimerMinutes < targetValue) {
           fireConfetti({
             particleCount: 35,
             colors: [habit.color || '#0A7A64', '#10b981', '#ec4899']
@@ -175,7 +215,7 @@ export function HabitCard({
           habitId: habit.id,
           date: selectedDate,
           value: clampedVal,
-          completed: clampedVal >= target
+          completed: clampedVal >= targetValue
         })
       } else {
         handleSetExactValue(parsed)
@@ -184,27 +224,33 @@ export function HabitCard({
     setIsEditingDirect(false)
   }
 
+  const handleTogglePin = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    updateMutation.mutate({
+      id: habit.id,
+      updates: { pinned: !habit.pinned }
+    })
+  }
+
   const HabitIcon = getHabitIconComponent(habit.icon, habit.title, habit.categoryId)
 
   // Progress Dots calculation (Max 10 dots, single row)
   const dotProgress = useMemo(() => {
     if (habit.targetType === 'numeric') {
-      const target = habit.targetValue || 1
-      const totalDots = Math.min(10, Math.max(1, target))
+      const totalDots = Math.min(10, Math.max(1, targetValue))
       const activeDots =
-        target <= 10
+        targetValue <= 10
           ? Math.min(totalDots, Math.max(0, currentNumericValue))
-          : Math.min(10, Math.round((currentNumericValue / target) * 10))
-      return { totalDots, activeDots, isRatio: target > 10, target }
+          : Math.min(10, Math.round((currentNumericValue / targetValue) * 10))
+      return { totalDots, activeDots, isRatio: targetValue > 10, target: targetValue }
     }
     if (habit.targetType === 'timer') {
-      const target = habit.targetValue || 30
       const totalDots = 10
-      const activeDots = Math.min(10, Math.round((currentTimerMinutes / target) * 10))
-      return { totalDots, activeDots, isRatio: true, target }
+      const activeDots = Math.min(10, Math.round((currentTimerMinutes / targetValue) * 10))
+      return { totalDots, activeDots, isRatio: true, target: targetValue }
     }
     return null
-  }, [habit, currentNumericValue, currentTimerMinutes])
+  }, [habit, currentNumericValue, currentTimerMinutes, targetValue])
 
   const habitThemeColor = habit.color || category?.color || '#0A7A64'
 
@@ -212,8 +258,9 @@ export function HabitCard({
     <Card
       id={`habit-card-${habit.id}`}
       data-habit-id={habit.id}
+      onClick={handleCardClick}
       className={cn(
-        'rounded-2xl border bg-card transition-all hover:shadow-xs',
+        'group rounded-2xl border bg-card transition-all hover:shadow-md cursor-pointer relative',
         habit.archived && 'opacity-60 bg-muted/30',
         isCompleted && 'border-primary/30 bg-primary/5'
       )}
@@ -222,7 +269,7 @@ export function HabitCard({
         <div className="flex items-center gap-3 min-w-0">
           {/* Left: Icon in soft rounded square */}
           <div
-            className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl transition-transform"
+            className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl transition-transform group-hover:scale-105"
             style={{
               backgroundColor: `${habitThemeColor}18`,
               color: habitThemeColor
@@ -236,13 +283,20 @@ export function HabitCard({
             <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
               <h3
                 className={cn(
-                  'font-semibold text-sm sm:text-base leading-snug text-foreground',
+                  'font-semibold text-sm sm:text-base leading-snug text-foreground group-hover:text-primary transition-colors',
                   isCompleted && 'text-foreground font-semibold'
                 )}
                 title={habit.title}
               >
                 {habit.title}
               </h3>
+
+              {habit.pinned && (
+                <span className="text-amber-500" title="Pinned habit">
+                  <Star className="h-3 w-3 fill-amber-500" />
+                </span>
+              )}
+
               {category ? (
                 <span
                   className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 border"
@@ -288,7 +342,10 @@ export function HabitCard({
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-[10px]"
-                        onClick={() => setIsEditingDirect(false)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsEditingDirect(false)
+                        }}
                       >
                         ✕
                       </Button>
@@ -296,7 +353,8 @@ export function HabitCard({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setDirectValueInput(`${currentNumericValue}`)
                         setIsEditingDirect(true)
                       }}
@@ -304,37 +362,39 @@ export function HabitCard({
                       title="Click to edit value directly"
                     >
                       <span>
-                        {currentNumericValue} / {habit.targetValue || 1} {habit.unit || 'units'}
+                        {currentNumericValue} / {targetValue} {habit.unit || 'units'}
                       </span>
                       <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
                     </button>
                   )}
 
-                  {/* Stepper & Quick Add buttons */}
+                  {/* Stepper & Proportional Quick Add buttons */}
                   <div className="inline-flex items-center gap-1">
                     <button
                       type="button"
-                      onClick={() => handleNumericChange(-1)}
+                      onClick={(e) => handleNumericChange(-stepConfig.primaryStep, e)}
                       disabled={currentNumericValue <= 0}
                       className="h-5 w-5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center disabled:opacity-40 shrink-0"
                       aria-label="Decrease value"
+                      title={`Subtract ${stepConfig.primaryStep}`}
                     >
                       <Minus className="h-3 w-3" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleNumericChange(1)}
+                      onClick={(e) => handleNumericChange(stepConfig.primaryStep, e)}
                       className="h-5 w-5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
                       aria-label="Increase value"
+                      title={`Add ${stepConfig.primaryStep}`}
                     >
                       <Plus className="h-3 w-3" />
                     </button>
 
-                    {[5, 10].map((val) => (
+                    {stepConfig.quickAddValues.map((val) => (
                       <button
                         key={val}
                         type="button"
-                        onClick={() => handleNumericChange(val)}
+                        onClick={(e) => handleNumericChange(val, e)}
                         className="px-1.5 py-0.5 rounded bg-muted/60 hover:bg-primary/10 hover:text-primary text-[10px] font-medium text-muted-foreground transition-colors shrink-0"
                       >
                         +{val}
@@ -364,7 +424,10 @@ export function HabitCard({
                         variant="ghost"
                         size="sm"
                         className="h-6 px-1.5 text-[10px]"
-                        onClick={() => setIsEditingDirect(false)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setIsEditingDirect(false)
+                        }}
                       >
                         ✕
                       </Button>
@@ -372,7 +435,8 @@ export function HabitCard({
                   ) : (
                     <button
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         setDirectValueInput(`${currentTimerMinutes}`)
                         setIsEditingDirect(true)
                       }}
@@ -380,18 +444,18 @@ export function HabitCard({
                       title="Click to edit timer minutes directly"
                     >
                       <span>
-                        {currentTimerMinutes} / {habit.targetValue || 30} min
+                        {currentTimerMinutes} / {targetValue} min
                       </span>
                       <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
                     </button>
                   )}
 
                   <div className="inline-flex items-center gap-1">
-                    {[5, 10, 15, 30].map((mins) => (
+                    {stepConfig.quickAddValues.map((mins) => (
                       <button
                         key={mins}
                         type="button"
-                        onClick={() => handleTimerChange(mins)}
+                        onClick={(e) => handleTimerChange(mins, e)}
                         className="px-1.5 py-0.5 rounded bg-muted/60 hover:bg-primary/10 hover:text-primary text-[10px] font-medium text-muted-foreground transition-colors shrink-0"
                       >
                         +{mins}m
@@ -415,7 +479,7 @@ export function HabitCard({
               )}
             </div>
 
-            {/* Dot Progress Indicators (Single row, comfortably fit without clipping) */}
+            {/* Dot Progress Indicators */}
             {dotProgress && (
               <div className="flex items-center gap-1 sm:gap-1.5 pt-1.5 flex-nowrap max-w-fit">
                 {Array.from({ length: dotProgress.totalDots }).map((_, idx) => {
@@ -424,16 +488,17 @@ export function HabitCard({
                     <button
                       key={idx}
                       type="button"
-                      onClick={() => {
+                      onClick={(e) => {
+                        e.stopPropagation()
                         if (!dotProgress.isRatio) {
-                          handleSetExactValue(idx + 1)
+                          handleSetExactValue(idx + 1, e)
                         } else {
                           const ratio = (idx + 1) / dotProgress.totalDots
                           if (habit.targetType === 'timer') {
                             const targetMin = Math.round(ratio * dotProgress.target)
-                            handleTimerChange(targetMin - currentTimerMinutes)
+                            handleTimerChange(targetMin - currentTimerMinutes, e)
                           } else {
-                            handleSetExactValue(Math.round(ratio * dotProgress.target))
+                            handleSetExactValue(Math.round(ratio * dotProgress.target), e)
                           }
                         }
                       }}
@@ -454,25 +519,26 @@ export function HabitCard({
             )}
           </div>
 
-          {/* Right: Circular Check Action & Menu (Fixed shrink-0 and explicit gap) */}
+          {/* Right: Circular Check Action & Menu */}
           <div className="flex items-center gap-1 shrink-0 ml-auto pl-1">
             <button
               type="button"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation()
                 if (habit.targetType === 'numeric') {
                   if (isCompleted) {
-                    handleSetExactValue(0)
+                    handleSetExactValue(0, e)
                   } else {
-                    handleSetExactValue(habit.targetValue || 1)
+                    handleSetExactValue(targetValue, e)
                   }
                 } else if (habit.targetType === 'timer') {
                   if (isCompleted) {
-                    handleTimerChange(-currentTimerMinutes)
+                    handleTimerChange(-currentTimerMinutes, e)
                   } else {
-                    handleTimerChange((habit.targetValue || 30) - currentTimerMinutes)
+                    handleTimerChange(targetValue - currentTimerMinutes, e)
                   }
                 } else {
-                  handleToggleBoolean()
+                  handleToggleBoolean(e)
                 }
               }}
               className={cn(
@@ -491,17 +557,41 @@ export function HabitCard({
                 <Button
                   variant="ghost"
                   size="sm"
+                  onClick={(e) => e.stopPropagation()}
                   className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 text-muted-foreground hover:text-foreground rounded-full shrink-0"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="rounded-xl">
-                <DropdownMenuItem onClick={() => onEdit(habit)}>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigate('/habits', { habitId: habit.id })
+                  }}
+                >
+                  <ChevronRight className="h-4 w-4 mr-2" />
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(habit)
+                  }}
+                >
                   <Edit2 className="h-4 w-4 mr-2" />
                   Edit Habit
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onArchive(habit)}>
+                <DropdownMenuItem onClick={handleTogglePin}>
+                  <Star className="h-4 w-4 mr-2" />
+                  {habit.pinned ? 'Unpin Habit' : 'Pin Habit'}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onArchive(habit)
+                  }}
+                >
                   {habit.archived ? (
                     <>
                       <RotateCcw className="h-4 w-4 mr-2" />
@@ -516,7 +606,10 @@ export function HabitCard({
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                  onClick={() => onDelete(habit)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(habit)
+                  }}
                   className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -552,7 +645,7 @@ export function HabitCard({
                     type="button"
                     size="sm"
                     variant={slotCompleted ? 'default' : 'outline'}
-                    onClick={() => handleToggleSlot(slot.index)}
+                    onClick={(e) => handleToggleSlot(slot.index, e)}
                     className={cn(
                       'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
                       slotCompleted && 'bg-primary text-primary-foreground font-semibold'
