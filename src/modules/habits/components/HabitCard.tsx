@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Input } from '@/components/ui/input'
 import {
   DropdownMenu,
@@ -19,7 +17,7 @@ import {
   Archive,
   Trash2,
   Minus,
-  Clock,
+  Plus,
   RotateCcw,
   Pencil
 } from 'lucide-react'
@@ -43,8 +41,6 @@ interface HabitCardProps {
   onArchive: (habit: Habit) => void
   onDelete: (habit: Habit) => void
 }
-
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
 export function HabitCard({
   habit,
@@ -80,28 +76,34 @@ export function HabitCard({
 
   const currentNumericValue = useMemo(() => {
     if (habit.targetType !== 'numeric') return 0
-    return logs.reduce((sum, log) => {
+    const target = habit.targetValue || 1
+    const val = logs.reduce((sum, log) => {
       if (typeof log.value === 'number') {
         return sum + log.value
       }
-      return sum + (log.completed ? (habit.targetValue || 1) : 0)
+      return sum + (log.completed ? target : 0)
     }, 0)
+    return Math.min(target, val)
   }, [habit, logs])
 
   const currentTimerMinutes = useMemo(() => {
     if (habit.targetType !== 'timer') return 0
-    const totalSeconds = logs.reduce((sum, log) => {
+    const target = habit.targetValue || 30
+    const mins = logs.reduce((sum, log) => {
       if (typeof log.durationSeconds === 'number') {
-        return sum + log.durationSeconds
+        return sum + Math.round(log.durationSeconds / 60)
       }
-      return sum + (log.completed ? (habit.targetValue || 0) * 60 : 0)
+      if (typeof log.value === 'number') {
+        return sum + log.value
+      }
+      return sum + (log.completed ? target : 0)
     }, 0)
-    return Math.round(totalSeconds / 60)
+    return Math.min(target, mins)
   }, [habit, logs])
 
   const handleToggleBoolean = () => {
     if (!isCompleted) {
-      fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#f59e0b'] })
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#f59e0b'] })
     }
     toggleMutation.mutate({
       habitId: habit.id,
@@ -119,9 +121,9 @@ export function HabitCard({
 
   const handleNumericChange = (delta: number) => {
     const target = habit.targetValue || 1
-    const nextVal = Math.max(0, currentNumericValue + delta)
+    const nextVal = Math.min(target, Math.max(0, currentNumericValue + delta))
     if (nextVal >= target && currentNumericValue < target) {
-      fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
     }
     setValueMutation.mutate({
       habitId: habit.id,
@@ -131,188 +133,362 @@ export function HabitCard({
     })
   }
 
+  const handleTimerChange = (delta: number) => {
+    const target = habit.targetValue || 30
+    const nextVal = Math.min(target, Math.max(0, currentTimerMinutes + delta))
+    if (nextVal >= target && currentTimerMinutes < target) {
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
+    }
+    setValueMutation.mutate({
+      habitId: habit.id,
+      date: selectedDate,
+      value: nextVal,
+      completed: nextVal >= target
+    })
+  }
+
+  const handleSetExactValue = (val: number) => {
+    const target = habit.targetValue || 1
+    const clampedVal = Math.min(target, Math.max(0, val))
+    if (clampedVal >= target && currentNumericValue < target) {
+      fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
+    }
+    setValueMutation.mutate({
+      habitId: habit.id,
+      date: selectedDate,
+      value: clampedVal,
+      completed: clampedVal >= target
+    })
+  }
+
   const handleDirectSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     const parsed = parseFloat(directValueInput)
     if (!isNaN(parsed) && parsed >= 0) {
-      const target = habit.targetValue || 1
-      if (parsed >= target && currentNumericValue < target) {
-        fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
+      if (habit.targetType === 'timer') {
+        const target = habit.targetValue || 30
+        const clampedVal = Math.min(target, parsed)
+        if (clampedVal >= target && currentTimerMinutes < target) {
+          fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
+        }
+        setValueMutation.mutate({
+          habitId: habit.id,
+          date: selectedDate,
+          value: clampedVal,
+          completed: clampedVal >= target
+        })
+      } else {
+        handleSetExactValue(parsed)
       }
-      setValueMutation.mutate({
-        habitId: habit.id,
-        date: selectedDate,
-        value: parsed,
-        completed: parsed >= target
-      })
     }
     setIsEditingDirect(false)
   }
 
-  const numericPresets = useMemo(() => {
-    const target = habit.targetValue || 1
-    if (target >= 1000) return [250, 500, 1000]
-    if (target >= 100) return [10, 50, 100]
-    if (target >= 20) return [1, 5, 10]
-    return [1, 2, 5]
-  }, [habit.targetValue])
+  const HabitIcon = getHabitIconComponent(
+    habit.icon,
+    habit.title,
+    habit.categoryId
+  )
 
-  const handleTimerAdd = (minutes: number) => {
-    const targetMinutes = habit.targetValue || 30
-    const nextTotalMinutes = Math.max(0, currentTimerMinutes + minutes)
-    setValueMutation.mutate({
-      habitId: habit.id,
-      date: selectedDate,
-      value: nextTotalMinutes,
-      completed: nextTotalMinutes >= targetMinutes
-    })
-  }
-
-  const frequencyLabel = useMemo(() => {
-    switch (habit.frequencyType) {
-      case 'daily':
-        return 'Daily'
-      case 'custom_days': {
-        const days = (habit.targetDaysOfWeek || []).map((d) => DAY_NAMES[d])
-        return days.length > 0 ? days.join(', ') : 'Daily'
-      }
-      case 'weekly':
-        return `${habit.targetCountPerWeek || 1}x / week`
-      case 'subday_interval':
-        return `Every ${habit.intervalHours || 3}h (${habit.timeWindow?.startTime || '08:00'} - ${habit.timeWindow?.endTime || '20:00'})`
-      case 'times_per_day':
-        return `${habit.timesPerDay || 1}x / day`
-      default:
-        return 'Daily'
-    }
-  }, [habit])
-
-  const targetDisplay = useMemo(() => {
+  // Progress Dots calculation (Max 10 dots, single row)
+  const dotProgress = useMemo(() => {
     if (habit.targetType === 'numeric') {
       const target = habit.targetValue || 1
-      const unit = habit.unit || 'units'
-      return `${currentNumericValue} / ${target} ${unit}`
+      const totalDots = Math.min(10, Math.max(1, target))
+      const activeDots = target <= 10
+        ? Math.min(totalDots, Math.max(0, currentNumericValue))
+        : Math.min(10, Math.round((currentNumericValue / target) * 10))
+      return { totalDots, activeDots, isRatio: target > 10, target }
     }
     if (habit.targetType === 'timer') {
       const target = habit.targetValue || 30
-      return `${currentTimerMinutes} / ${target} mins`
+      const totalDots = 10
+      const activeDots = Math.min(10, Math.round((currentTimerMinutes / target) * 10))
+      return { totalDots, activeDots, isRatio: true, target }
     }
     return null
   }, [habit, currentNumericValue, currentTimerMinutes])
 
-  const numericPercent = useMemo(() => {
-    if (habit.targetType === 'numeric') {
-      const target = habit.targetValue || 1
-      return Math.min(100, Math.round((currentNumericValue / target) * 100))
-    }
-    if (habit.targetType === 'timer') {
-      const target = habit.targetValue || 30
-      return Math.min(100, Math.round((currentTimerMinutes / target) * 100))
-    }
-    return isCompleted ? 100 : 0
-  }, [habit, currentNumericValue, currentTimerMinutes, isCompleted])
+  const habitThemeColor = habit.color || category?.color || '#0A7A64'
 
-    const HabitIcon = getHabitIconComponent(
-      habit.icon,
-      habit.title,
-      habit.categoryId
-    )
-
-    return (
+  return (
     <Card
       className={cn(
-        'transition-all hover:shadow-xs',
+        'rounded-2xl border bg-card transition-all hover:shadow-xs',
         habit.archived && 'opacity-60 bg-muted/30',
-        isCompleted && 'border-primary/40 bg-primary/5'
+        isCompleted && 'border-primary/30 bg-primary/5'
       )}
     >
-      <CardContent className="p-3 sm:p-4 space-y-2.5 sm:space-y-3.5">
-        <div className="flex items-start justify-between gap-2.5">
-          <div className="flex items-start gap-2.5 min-w-0">
-            <div
-              className="mt-0.5 flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-lg border shrink-0 shadow-2xs"
-              style={{
-                backgroundColor: `${habit.color || '#3b82f6'}15`,
-                borderColor: `${habit.color || '#3b82f6'}40`,
-                color: habit.color || '#3b82f6'
-              }}
-            >
-              <HabitIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h3
-                  className={cn(
-                    'font-semibold text-sm sm:text-base leading-snug truncate',
-                    isCompleted && 'line-through text-muted-foreground'
-                  )}
-                >
-                  {habit.title}
-                </h3>
-                {category && (
-                  <Badge
-                    variant="outline"
-                    className="text-xs px-2 py-0 h-5 font-normal"
-                    style={{
-                      borderColor: `${category.color}40`,
-                      color: category.color
-                    }}
-                  >
-                    {category.name}
-                  </Badge>
-                )}
-              </div>
-              {habit.description && (
-                <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
-                  {habit.description}
-                </p>
-              )}
-              <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground flex-wrap">
-                <span>{frequencyLabel}</span>
-                {streakInfo.currentStreak > 0 && (
-                  <span className="flex items-center gap-1 font-medium text-amber-500">
-                    <Flame className="h-3.5 w-3.5" />
-                    {streakInfo.currentStreak} {streakInfo.currentStreak === 1 ? 'day' : 'days'} streak
-                  </span>
-                )}
-              </div>
-            </div>
+      <CardContent className="p-3.5 sm:p-4">
+        <div className="flex items-center gap-3 min-w-0">
+          {/* Left: Icon in soft rounded square */}
+          <div
+            className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-2xl transition-transform"
+            style={{
+              backgroundColor: `${habitThemeColor}18`,
+              color: habitThemeColor
+            }}
+          >
+            <HabitIcon className="h-5 w-5 sm:h-6 sm:w-6" />
           </div>
 
-          <div className="flex items-center gap-1 shrink-0">
-            {habit.targetType === 'boolean' &&
-              habit.frequencyType !== 'subday_interval' &&
-              habit.frequencyType !== 'times_per_day' && (
-                <Button
-                  size="sm"
-                  variant={isCompleted ? 'default' : 'outline'}
-                  onClick={handleToggleBoolean}
-                  className={cn(
-                    'h-11 w-11 sm:h-9 sm:w-9 min-h-[44px] min-w-[44px] p-0 rounded-full transition-transform active:scale-95',
-                    isCompleted && 'bg-primary text-primary-foreground'
-                  )}
-                  aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
+          {/* Middle: Title, target/status, and progress dots */}
+          <div className="flex-1 min-w-0 space-y-1">
+            <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+              <h3
+                className={cn(
+                  'font-semibold text-sm sm:text-base leading-snug text-foreground',
+                  isCompleted && 'text-foreground font-semibold'
+                )}
+                title={habit.title}
+              >
+                {habit.title}
+              </h3>
+              {category && (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: `${category.color}15`,
+                    color: category.color
+                  }}
+                  title={category.name}
                 >
-                  <Check
-                    className={cn(
-                      'h-5 w-5 sm:h-4 sm:w-4',
-                      !isCompleted && 'text-muted-foreground'
-                    )}
+                  <span
+                    className="h-1.5 w-1.5 rounded-full shrink-0"
+                    style={{ backgroundColor: category.color }}
                   />
-                </Button>
+                  <span>{category.name}</span>
+                </span>
               )}
+            </div>
+
+            {/* Subtitle / Counter / Status */}
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+              {habit.targetType === 'numeric' && (
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                  {isEditingDirect ? (
+                    <form onSubmit={handleDirectSubmit} className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={directValueInput}
+                        onChange={(e) => setDirectValueInput(e.target.value)}
+                        className="h-6 w-16 text-xs px-1.5"
+                        autoFocus
+                      />
+                      <Button type="submit" size="sm" className="h-6 px-1.5 text-[10px]">
+                        Set
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1.5 text-[10px]"
+                        onClick={() => setIsEditingDirect(false)}
+                      >
+                        ✕
+                      </Button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDirectValueInput(`${currentNumericValue}`)
+                        setIsEditingDirect(true)
+                      }}
+                      className="font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1 group truncate"
+                      title="Click to edit value directly"
+                    >
+                      <span>
+                        {currentNumericValue} / {habit.targetValue || 1} {habit.unit || 'units'}
+                      </span>
+                        <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
+                      </button>
+                  )}
+
+                  {/* Stepper & Quick Add buttons */}
+                  <div className="inline-flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleNumericChange(-1)}
+                      disabled={currentNumericValue <= 0}
+                      className="h-5 w-5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center disabled:opacity-40 shrink-0"
+                      aria-label="Decrease value"
+                    >
+                      <Minus className="h-3 w-3" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleNumericChange(1)}
+                      className="h-5 w-5 rounded bg-muted/60 hover:bg-muted text-muted-foreground hover:text-foreground flex items-center justify-center shrink-0"
+                      aria-label="Increase value"
+                    >
+                      <Plus className="h-3 w-3" />
+                    </button>
+
+                    {[5, 10].map((val) => (
+                      <button
+                        key={val}
+                        type="button"
+                        onClick={() => handleNumericChange(val)}
+                        className="px-1.5 py-0.5 rounded bg-muted/60 hover:bg-primary/10 hover:text-primary text-[10px] font-medium text-muted-foreground transition-colors shrink-0"
+                      >
+                        +{val}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {habit.targetType === 'timer' && (
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                  {isEditingDirect ? (
+                    <form onSubmit={handleDirectSubmit} className="flex items-center gap-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={directValueInput}
+                        onChange={(e) => setDirectValueInput(e.target.value)}
+                        className="h-6 w-16 text-xs px-1.5"
+                        autoFocus
+                      />
+                      <Button type="submit" size="sm" className="h-6 px-1.5 text-[10px]">
+                        Set
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1.5 text-[10px]"
+                        onClick={() => setIsEditingDirect(false)}
+                      >
+                        ✕
+                      </Button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDirectValueInput(`${currentTimerMinutes}`)
+                        setIsEditingDirect(true)
+                      }}
+                      className="font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1 group truncate"
+                      title="Click to edit timer minutes directly"
+                    >
+                      <span>
+                        {currentTimerMinutes} / {habit.targetValue || 30} min
+                      </span>
+                      <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
+                    </button>
+                  )}
+
+                  <div className="inline-flex items-center gap-1">
+                    {[5, 10, 15, 30].map((mins) => (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => handleTimerChange(mins)}
+                        className="px-1.5 py-0.5 rounded bg-muted/60 hover:bg-primary/10 hover:text-primary text-[10px] font-medium text-muted-foreground transition-colors shrink-0"
+                      >
+                        +{mins}m
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {habit.targetType === 'boolean' && (
+                <span className="truncate">{habit.description || (isCompleted ? 'Completed' : 'Daily check-in')}</span>
+              )}
+
+              {streakInfo.currentStreak > 0 && (
+                <span className="flex items-center gap-0.5 font-medium text-amber-500 text-[11px] shrink-0 ml-auto sm:ml-0">
+                  <Flame className="h-3 w-3" />
+                  {streakInfo.currentStreak}d
+                </span>
+              )}
+            </div>
+
+            {/* Dot Progress Indicators (Single row, comfortably fit without clipping) */}
+            {dotProgress && (
+              <div className="flex items-center gap-1 sm:gap-1.5 pt-1.5 flex-nowrap max-w-fit">
+                {Array.from({ length: dotProgress.totalDots }).map((_, idx) => {
+                  const isDotFilled = idx < dotProgress.activeDots
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        if (!dotProgress.isRatio) {
+                          handleSetExactValue(idx + 1)
+                        } else {
+                          const ratio = (idx + 1) / dotProgress.totalDots
+                          if (habit.targetType === 'timer') {
+                            const targetMin = Math.round(ratio * dotProgress.target)
+                            handleTimerChange(targetMin - currentTimerMinutes)
+                          } else {
+                            handleSetExactValue(Math.round(ratio * dotProgress.target))
+                          }
+                        }
+                      }}
+                      className={cn(
+                        'h-2 w-2 sm:h-2.5 sm:w-2.5 rounded-full transition-all shrink-0 hover:scale-125 focus:outline-hidden',
+                        isDotFilled
+                          ? 'bg-primary shadow-2xs'
+                          : 'bg-muted-foreground/25 hover:bg-muted-foreground/35'
+                      )}
+                      style={isDotFilled && habit.color ? { backgroundColor: habit.color } : undefined}
+                      aria-label={`Step ${idx + 1}`}
+                    />
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right: Circular Check Action & Menu (Fixed shrink-0 and explicit gap) */}
+          <div className="flex items-center gap-1 shrink-0 ml-auto pl-1">
+            <button
+              type="button"
+              onClick={() => {
+                if (habit.targetType === 'numeric') {
+                  if (isCompleted) {
+                    handleSetExactValue(0)
+                  } else {
+                    handleSetExactValue(habit.targetValue || 1)
+                  }
+                } else if (habit.targetType === 'timer') {
+                  if (isCompleted) {
+                    handleTimerChange(-currentTimerMinutes)
+                  } else {
+                    handleTimerChange((habit.targetValue || 30) - currentTimerMinutes)
+                  }
+                } else {
+                  handleToggleBoolean()
+                }
+              }}
+              className={cn(
+                'flex h-10 w-10 sm:h-11 sm:w-11 min-h-[40px] min-w-[40px] items-center justify-center rounded-full transition-transform active:scale-95 shadow-xs shrink-0',
+                isCompleted
+                  ? 'bg-primary text-primary-foreground'
+                  : 'border-2 border-muted-foreground/30 bg-background text-transparent hover:border-primary/60'
+              )}
+              aria-label={isCompleted ? 'Mark incomplete' : 'Mark complete'}
+            >
+              <Check className="h-5 w-5 stroke-[2.5]" />
+            </button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] p-0 text-muted-foreground"
+                  className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 text-muted-foreground hover:text-foreground rounded-full shrink-0"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="rounded-xl">
                 <DropdownMenuItem onClick={() => onEdit(habit)}>
                   <Edit2 className="h-4 w-4 mr-2" />
                   Edit Habit
@@ -343,9 +519,10 @@ export function HabitCard({
           </div>
         </div>
 
+        {/* Sub-day Interval Slots if applicable */}
         {(habit.frequencyType === 'subday_interval' ||
           habit.frequencyType === 'times_per_day') && (
-          <div className="space-y-2 pt-1 border-t">
+          <div className="space-y-2 pt-2 mt-2 border-t">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Interval Progress</span>
               <span>
@@ -356,7 +533,7 @@ export function HabitCard({
                 / {slots.length} completed
               </span>
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               {slots.map((slot) => {
                 const log = logs.find((l) => l.intervalIndex === slot.index)
                 const slotCompleted = log ? log.completed : false
@@ -368,173 +545,18 @@ export function HabitCard({
                     variant={slotCompleted ? 'default' : 'outline'}
                     onClick={() => handleToggleSlot(slot.index)}
                     className={cn(
-                      'min-h-[44px] sm:min-h-[32px] px-3.5 sm:px-2.5 text-xs font-medium rounded-lg sm:rounded-md gap-1.5 transition-all',
+                      'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
                       slotCompleted && 'bg-primary text-primary-foreground font-semibold'
                     )}
                   >
-                    {slotCompleted && <Check className="h-3.5 w-3.5" />}
+                    {slotCompleted && <Check className="h-3 w-3" />}
                     <span>{slot.label}</span>
                   </Button>
                 )
               })}
             </div>
           </div>
-        )}
-
-        {habit.targetType === 'numeric' && (
-          <div className="space-y-2.5 pt-2 border-t">
-            <div className="flex items-center justify-between text-xs">
-              {isEditingDirect ? (
-                <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5 flex-1 max-w-xs">
-                  <Input
-                    type="number"
-                    min="0"
-                    step="any"
-                    value={directValueInput}
-                    onChange={(e) => setDirectValueInput(e.target.value)}
-                    placeholder={`${currentNumericValue}`}
-                    autoFocus
-                    className="h-8 text-xs w-24 px-2"
-                  />
-                  <span className="text-muted-foreground">{habit.unit || 'units'}</span>
-                  <Button type="submit" size="sm" className="h-8 px-2 text-xs">
-                    Set
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    onClick={() => setIsEditingDirect(false)}
-                  >
-                    Cancel
-                  </Button>
-                </form>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDirectValueInput(`${currentNumericValue}`)
-                    setIsEditingDirect(true)
-                  }}
-                  className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground font-medium transition-colors group cursor-pointer"
-                  title="Click to enter number directly"
-                >
-                  <span>{targetDisplay}</span>
-                  <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
-                </button>
-              )}
-              <span className="font-semibold text-foreground">{numericPercent}%</span>
-            </div>
-
-            <Progress value={numericPercent} className="h-2" />
-
-            <div className="flex items-center justify-end gap-1.5 pt-1 flex-wrap">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                aria-label="Decrease value"
-                className="h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-2.5 text-xs"
-                onClick={() => handleNumericChange(-numericPresets[0])}
-                disabled={currentNumericValue <= 0}
-              >
-                <Minus className="h-3.5 w-3.5 mr-0.5" />
-                <span>{numericPresets[0]}</span>
-              </Button>
-
-              {numericPresets.map((preset, idx) => (
-                <Button
-                  key={preset}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  aria-label={idx === 0 ? 'Increase value' : `Add ${preset}`}
-                  className="h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-2.5 text-xs font-medium"
-                  onClick={() => handleNumericChange(preset)}
-                >
-                  +{preset}
-                </Button>
-              ))}
-
-              <Button
-                type="button"
-                variant={isCompleted ? 'default' : 'outline'}
-                size="sm"
-                className={cn(
-                  'h-9 sm:h-8 min-h-[36px] sm:min-h-0 px-3 text-xs font-medium',
-                  isCompleted && 'bg-primary text-primary-foreground'
-                )}
-                onClick={() => {
-                  if (isCompleted) {
-                    setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: 0 })
-                  } else {
-                    fireConfetti({ particleCount: 35, colors: [habit.color || '#3b82f6', '#10b981', '#ec4899'] })
-                    setValueMutation.mutate({ habitId: habit.id, date: selectedDate, value: habit.targetValue || 1 })
-                  }
-                }}
-              >
-                <Check className="h-3.5 w-3.5 mr-1" />
-                {isCompleted ? 'Done' : 'Complete'}
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {habit.targetType === 'timer' && (
-          <div className="space-y-2 pt-1 border-t">
-            <div className="flex items-center justify-between text-xs">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                {targetDisplay}
-              </span>
-              <span className="font-medium text-foreground">{numericPercent}%</span>
-            </div>
-            <Progress value={numericPercent} className="h-2" />
-            <div className="flex items-center justify-end gap-2 pt-1 flex-wrap">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 text-xs"
-                onClick={() => handleTimerAdd(5)}
-              >
-                +5m
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 text-xs"
-                onClick={() => handleTimerAdd(15)}
-              >
-                +15m
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 text-xs"
-                onClick={() => handleTimerAdd(30)}
-              >
-                +30m
-              </Button>
-              <Button
-                type="button"
-                variant={isCompleted ? 'default' : 'outline'}
-                size="sm"
-                className={cn(
-                  'h-11 sm:h-8 min-h-[44px] sm:min-h-0 px-3 text-xs',
-                  isCompleted && 'bg-primary'
-                )}
-                onClick={handleToggleBoolean}
-              >
-                <Check className="h-3.5 w-3.5 mr-1" />
-                {isCompleted ? 'Done' : 'Complete'}
-              </Button>
-            </div>
-          </div>
-        )}
+          )}
       </CardContent>
     </Card>
   )

@@ -534,7 +534,7 @@ export function HabitsView() {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {scheduledHabits.map((habit) => {
                 const habitLogs = currentLogs.filter((l) => l.habitId === habit.id)
                 const habitHistoryLogs = allRangeLogs.filter(

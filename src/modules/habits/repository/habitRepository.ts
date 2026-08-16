@@ -142,6 +142,7 @@ export const habitRepository = {
       const updated: HabitLog = {
         ...existing,
         value,
+        durationSeconds: value * 60,
         completed: completed !== undefined ? completed : value > 0,
         updatedAt: now
       }
@@ -156,6 +157,7 @@ export const habitRepository = {
       timestamp: now,
       intervalIndex,
       value,
+      durationSeconds: value * 60,
       completed: completed !== undefined ? completed : value > 0,
       createdAt: now,
       updatedAt: now

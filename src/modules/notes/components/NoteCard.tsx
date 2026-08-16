@@ -23,6 +23,7 @@ import {
 import { cn } from '@/lib/utils'
 import { calculateReadingTime } from '../utils/noteStats'
 import { exportNoteAsMarkdown } from '../utils/noteExporter'
+import { MarkdownRenderer } from '../utils/markdownParser'
 import type { Note } from '../types'
 
 interface NoteCardProps {
@@ -138,9 +139,19 @@ export function NoteCard({
             </Badge>
           )}
 
-          <p className="hidden max-w-md truncate text-xs text-muted-foreground md:block">
-            {snippet || 'Empty note'}
-          </p>
+          {/* Markdown Content Preview / Search Match */}
+          <div className="hidden max-w-md max-h-10 overflow-hidden text-xs text-muted-foreground md:block pointer-events-none prose-sm">
+            {searchQuery ? (
+              <p className="line-clamp-2">{snippet}</p>
+            ) : note.content ? (
+              <MarkdownRenderer
+                content={note.content}
+                className="text-xs space-y-0.5 [&_h1]:text-xs [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-semibold [&_h3]:text-xs [&_p]:text-xs [&_ul]:my-0 [&_li]:text-xs line-clamp-2"
+              />
+            ) : (
+              <span className="italic text-muted-foreground/60">Empty note</span>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -318,10 +329,20 @@ export function NoteCard({
           </div>
         )}
 
-        {/* Body snippet */}
-        <p className="mt-2 line-clamp-4 text-xs leading-relaxed text-muted-foreground">
-          {snippet || 'Empty note'}
-        </p>
+        {/* Markdown Content Preview / Search Match */}
+        <div className="mt-2.5 flex-1 max-h-24 overflow-hidden text-xs text-muted-foreground pointer-events-none prose-sm relative">
+          {searchQuery ? (
+            <p className="line-clamp-4 leading-relaxed">{snippet}</p>
+          ) : note.content ? (
+            <MarkdownRenderer
+              content={note.content}
+              className="text-xs space-y-1 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-semibold [&_h3]:text-xs [&_h3]:font-semibold [&_p]:text-xs [&_p]:leading-relaxed [&_ul]:my-0.5 [&_li]:text-xs [&_code]:text-[11px] [&_blockquote]:text-xs line-clamp-4"
+            />
+          ) : (
+            <span className="italic text-muted-foreground/60">Empty note</span>
+          )}
+          <div className="absolute inset-x-0 bottom-0 h-4 bg-gradient-to-t from-card to-transparent pointer-events-none" />
+        </div>
       </div>
 
       {/* Footer */}
