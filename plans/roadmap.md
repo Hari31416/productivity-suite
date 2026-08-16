@@ -120,3 +120,42 @@ Redesign the habit tracking experience with dedicated detail screens, streamline
 
 - **Password-Protected Backup Exports**:
   - Optional AES-GCM password encryption for JSON backup files to protect personal notes and task archives during off-device export and storage.
+
+## 10. Gamification, XP and Level Progression System
+
+Turn productivity and consistency into an engaging progression system with experience points (XP), dynamic level ranks, streak multipliers, and achievement badges.
+
+### XP Reward Engine
+
+- **Habit Check-Ins**:
+  - Earn base XP on daily habit completions (e.g. +10 XP for standard check-ins, +15 XP for completed timer sessions).
+- **Streak Multipliers and Milestones**:
+  - Consecutive streaks grant escalating XP bonuses (e.g. 7-day streak grants +50 XP bonus, 30-day streak unlocks a 1.25x XP multiplier).
+- **Task Completion and Priority Scaling**:
+  - Complete tasks with XP weighted by priority level (Low: +10 XP, Medium: +20 XP, High: +35 XP, Urgent: +50 XP).
+  - Additional subtask bonuses (+5 XP per completed subtask item).
+- **Knowledge and Note Creation**:
+  - Capturing thoughts and authoring markdown notes grants XP based on length and organization (+15 XP per note created or revised).
+- **Daily Score Mastery**:
+  - Achieving a 100% daily productivity score awards a "Perfect Day" bonus (+100 XP).
+
+### Leveling Progression and Ranks
+
+- **Dynamic Level Curve**:
+  - Tiered XP thresholds to progress from Level 1 ("Novice Planner") to higher ranks ("Focus Apprentice", "Productivity Specialist", "Master of Routine", "Grandmaster").
+- **Level-Up Celebrations**:
+  - Celebratory micro-animations and sound-free particle effects when crossing level thresholds.
+- **Profile and Dashboard Progress Indicators**:
+  - Visual XP bar and level badge on the dashboard header and user profile settings displaying current rank, total accumulated XP, and XP remaining to next level.
+
+### Achievements and Unlockable Badges
+
+- **Habit Consistency Badges**:
+  - Unlock achievements for 7, 30, 100, and 365 unbroken streak milestones.
+- **Task Crusher Badges**:
+  - Unlock achievements for completing 50, 250, and 1000 tasks.
+- **Focus Master Badges**:
+  - Unlock achievements for logging 10, 50, and 200 hours of active timer sessions.
+- **Knowledge Scribe Badges**:
+  - Unlock achievements for authoring 25, 100, and 500 structured markdown notes.
+
