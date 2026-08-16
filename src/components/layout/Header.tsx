@@ -1,12 +1,5 @@
-import { Sun, Moon, Laptop, Plus, Menu, Search, Settings } from 'lucide-react'
-import { useTheme } from '@/core/theme/useTheme'
+import { Plus, Menu, Search, Settings } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 
 export interface HeaderProps {
@@ -28,8 +21,6 @@ export function Header({
   onOpenCommandPalette,
   onToggleSidebar
 }: HeaderProps) {
-  const { theme, setTheme } = useTheme()
-
   return (
     <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background/95 px-3 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
@@ -102,38 +93,6 @@ export function Header({
             <Settings className="h-4 w-4" />
           </Button>
         )}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-9 w-9 min-h-[36px] min-w-[36px] sm:h-8 sm:w-8"
-              aria-label="Select theme"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setTheme('light')}>
-              <Sun className="mr-2 h-4 w-4" />
-              <span>Light</span>
-              {theme === 'light' && <span className="ml-auto text-xs text-primary">Active</span>}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('dark')}>
-              <Moon className="mr-2 h-4 w-4" />
-              <span>Dark</span>
-              {theme === 'dark' && <span className="ml-auto text-xs text-primary">Active</span>}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setTheme('system')}>
-              <Laptop className="mr-2 h-4 w-4" />
-              <span>System</span>
-              {theme === 'system' && <span className="ml-auto text-xs text-primary">Active</span>}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </header>
   )
