@@ -8,6 +8,7 @@ The application maintains synchronized versioning across the web package and nat
 
 - **Web Package**: `package.json` (`version`)
 - **Android App**: `android/app/build.gradle` (`versionCode` and `versionName`)
+- **Changelog**: `CHANGELOG.md` (Release notes following Keep a Changelog)
 - **Git Tags**: Semantic version tags in `vX.Y.Z` format (e.g. `v0.2.0`)
 - **CI / CD Pipeline**: `.github/workflows/android-build.yml` triggers automatically on tag pushes matching `v*` and attaches the compiled APK to a GitHub Release.
 
@@ -31,7 +32,18 @@ Determine whether the release is a **major**, **minor**, or **patch** update acc
      versionName "0.2.0"
      ```
 
-### 2. Run Test Suite
+### 2. Update Changelog
+
+Document new features, fixes, and architectural enhancements in `CHANGELOG.md` under the new version header:
+
+```markdown
+## [0.2.0] - YYYY-MM-DD
+
+### Added
+- Feature details...
+```
+
+### 3. Run Test Suite
 
 Verify all unit, repository, and integration tests pass cleanly:
 
@@ -39,7 +51,7 @@ Verify all unit, repository, and integration tests pass cleanly:
 pnpm test
 ```
 
-### 3. Build Web Bundle and Sync Android Assets
+### 4. Build Web Bundle and Sync Android Assets
 
 Compile TypeScript and build the optimized production assets, then sync into Capacitor's Android native project:
 
@@ -47,16 +59,16 @@ Compile TypeScript and build the optimized production assets, then sync into Cap
 pnpm build && npx cap sync android
 ```
 
-### 4. Stage and Commit Changes
+### 5. Stage and Commit Changes
 
 Create a clean conventional commit for the release:
 
 ```bash
-git add package.json android/app/build.gradle RELEASE_PROCESS.md
+git add package.json android/app/build.gradle CHANGELOG.md RELEASE_PROCESS.md
 git commit -m "chore(release): bump version to 0.2.0"
 ```
 
-### 5. Create Git Tag
+### 6. Create Git Tag
 
 Create an annotated git tag corresponding to the new version:
 
@@ -64,7 +76,7 @@ Create an annotated git tag corresponding to the new version:
 git tag -a v0.2.0 -m "Release v0.2.0"
 ```
 
-### 6. Push Commits and Tags to GitHub
+### 7. Push Commits and Tags to GitHub
 
 Push your commits and the new tag to origin to trigger the automated GitHub Actions workflow:
 
@@ -73,7 +85,7 @@ git push origin main
 git push origin v0.2.0
 ```
 
-### 7. Monitor GitHub Actions Build
+### 8. Monitor GitHub Actions Build
 
 1. Open your repository on GitHub and navigate to the **Actions** tab.
 2. The **Build Android APK** workflow will execute the following automated steps:

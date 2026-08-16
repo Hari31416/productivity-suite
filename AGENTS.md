@@ -1,4 +1,5 @@
 - We use `pnpm` for package management
 - Dev server runs on `3000` not `5173`
 - The UI should look good on both mobile and desktop. Though, mobile is focus.
-- The app will be shared 
+- The app will be shared android app, so the components, features etc should be build keeping in mind that they must work on android app.
+- When ask to do a release, follow instructions in `RELEASE_PROCESS.md`.

@@ -1,0 +1,51 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.2.0] - 2026-08-16
+
+### Added
+
+- **URL Hash Query Parameter Routing**:
+  - Implemented `parseHashRoute`, `buildHashRoute`, and `useHashRoute` hook in `src/core/router/hashRouter.ts`.
+  - Normalized module route matching in `src/core/modules/registry.ts` to support parameterized URL paths such as `#/tasks?taskId=<id>` and `#/habits?habitId=<id>`.
+- **View-Level Focus and Auto-Open**:
+  - Automatically loads and opens the task edit modal in `TasksView.tsx` when `taskId` is provided in the route query parameter.
+  - Automatically loads and opens the habit edit modal in `HabitsView.tsx` when `habitId` is provided.
+  - Added smooth scroll and glowing highlight ring for target cards (`#task-card-<id>` and `#habit-card-<id>`).
+  - Automatically resets hash query parameters on modal dismissal.
+- **Unified Notification Click Actions**:
+  - Wired web browser `Notification.onclick` to focus window and route to target item hash paths.
+  - Added `setupNotificationListeners` listening for Capacitor `@capacitor/local-notifications` `localNotificationActionPerformed` events to handle Android system tray notification clicks.
+- **Diagnostics and Developer Tools**:
+  - Added test notification trigger buttons in Settings for habit and task alerts.
+  - Added automated integration tests in `src/test/integration/deepLinkingWorkflow.test.tsx`.
+- **Documentation & Workflows**:
+  - Created `RELEASE_PROCESS.md` detailing step-by-step version bump and release procedures.
+  - Added Task Detail View and Execution Workspace specifications to `plans/roadmap.md`.
+
+## [0.1.0] - 2026-08-15
+
+### Added
+
+- **Core Application Architecture**:
+  - Offline-first modular architecture with Dexie IndexedDB persistence (`LocalProductivitySuiteDB`).
+  - Responsive layout with desktop sidebar, mobile bottom navigation, and global command palette.
+- **Habit Tracker Module**:
+  - Daily habit check-ins, numeric targets, and timer-based habit models.
+  - Streak calculator, 7-day rolling date strip, and weekly progress overviews.
+- **Task & Project Management**:
+  - Full task lifecycle with priorities (`low`, `medium`, `high`, `urgent`), statuses (`todo`, `in_progress`, `blocked`, `done`), subtasks checklist, and project organization.
+  - Smart natural language task parser (`!priority`, `@date`, `#project`).
+  - List, Calendar, and Kanban task views.
+- **Notes Module**:
+  - Markdown editor with live preview, word statistics, tag categorization, and markdown file export.
+- **Local Notifications**:
+  - Timed reminders for tasks and habit check-in intervals using Web Notifications API and `@capacitor/local-notifications`.
+- **Backup & Diagnostics**:
+  - Full IndexedDB JSON backup export and merge/replace restore engine.
+  - Theme customizer (Light, Dark, System) and storage persistence inspector.
+- **Android Platform Container**:
+  - Native Capacitor Android configuration and automated GitHub Actions APK release pipeline.
