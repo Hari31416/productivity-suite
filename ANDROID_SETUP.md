@@ -84,3 +84,15 @@ When making modifications to the React application, sync the updates to the Andr
 pnpm build
 npx cap sync android
 ```
+
+## Automated CI Build with GitHub Actions
+
+The repository includes a GitHub Actions workflow located at [.github/workflows/android-build.yml](.github/workflows/android-build.yml) that automatically:
+
+- Builds the Vite web assets
+- Syncs Capacitor Android dependencies
+- Runs Gradle to compile the Android debug APK
+- Uploads `app-debug.apk` as a downloadable workflow artifact
+
+The workflow triggers automatically when pushing a release tag (e.g. `v1.0.0`) or manually via the **Run workflow** button in the GitHub Actions tab.
+
