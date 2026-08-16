@@ -27,7 +27,6 @@ import {
   RotateCw,
   Bell
 } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -113,27 +112,27 @@ export function formatEstimatedMinutes(minutes?: number): string {
 
 export const PRIORITY_CONFIG: Record<
   PriorityLevel,
-  { label: string; badgeClass: string; dotClass: string }
+  { label: string; dotClass: string; borderClass: string }
 > = {
   urgent: {
-    label: 'Urgent',
-    badgeClass: 'bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30',
-    dotClass: 'bg-red-500'
+    label: 'Urgent Priority',
+    dotClass: 'bg-red-500 ring-red-500/20',
+    borderClass: 'border-l-red-500'
   },
   high: {
-    label: 'High',
-    badgeClass: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    dotClass: 'bg-amber-500'
+    label: 'High Priority',
+    dotClass: 'bg-amber-500 ring-amber-500/20',
+    borderClass: 'border-l-amber-500'
   },
   medium: {
-    label: 'Medium',
-    badgeClass: 'bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30',
-    dotClass: 'bg-blue-500'
+    label: 'Medium Priority',
+    dotClass: 'bg-blue-500 ring-blue-500/20',
+    borderClass: 'border-l-blue-500'
   },
   low: {
-    label: 'Low',
-    badgeClass: 'bg-zinc-500/15 text-zinc-700 dark:text-zinc-400 border-zinc-500/30',
-    dotClass: 'bg-zinc-400'
+    label: 'Low Priority',
+    dotClass: 'bg-zinc-400 ring-zinc-400/20',
+    borderClass: 'border-l-zinc-400'
   }
 }
 
@@ -181,27 +180,6 @@ export function TaskCard({
     return ''
   }, [task.recurrence, task.recurringParentId])
 
-  const recurrenceShortLabel = useMemo(() => {
-    if (!isPartOfRecurringSeries) return ''
-    if (task.recurrence?.frequency) {
-      switch (task.recurrence.frequency) {
-        case 'hourly':
-          return 'Hourly'
-        case 'daily':
-          return 'Daily'
-        case 'weekly':
-          return 'Weekly'
-        case 'monthly':
-          return 'Monthly'
-        case 'yearly':
-          return 'Yearly'
-        default:
-          return 'Repeats'
-      }
-    }
-    return 'Repeats'
-  }, [isPartOfRecurringSeries, task.recurrence])
-
   const reminderCount = task.reminders ? task.reminders.length : 0
 
   const handleToggleCompletion = () => {
@@ -219,7 +197,7 @@ export function TaskCard({
       onDragStart={(e) => onDragStart?.(e, task)}
       className={cn(
         'group relative rounded-lg border bg-card shadow-xs transition-all hover:shadow-sm hover:border-foreground/20',
-        compact ? 'p-2' : 'p-2.5 sm:p-3',
+        compact ? 'p-2' : 'p-2 sm:p-2.5',
         isDone && 'bg-muted/30 opacity-75',
         isSelected && 'border-primary ring-2 ring-primary/20 bg-primary/5',
         draggable && 'cursor-grab active:cursor-grabbing',
@@ -237,7 +215,7 @@ export function TaskCard({
             <button
               type="button"
               onClick={() => onToggleSelect?.(task.id)}
-              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[36px] min-w-[36px] -m-1.5 p-1.5"
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[32px] min-w-[32px] -m-1 p-1"
               aria-label={isSelected ? 'Deselect task' : 'Select task'}
             >
               {isSelected ? (
@@ -250,7 +228,7 @@ export function TaskCard({
             <button
               type="button"
               onClick={handleToggleCompletion}
-              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[36px] min-w-[36px] -m-1.5 p-1.5"
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[32px] min-w-[32px] -m-1 p-1"
               aria-label={isDone ? 'Mark task incomplete' : 'Mark task complete'}
             >
               {isDone ? (
@@ -261,8 +239,18 @@ export function TaskCard({
             </button>
           )}
 
-          <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex-1 min-w-0 space-y-0.5">
             <div className="flex items-center gap-1.5 flex-wrap">
+              {/* Priority indicator dot */}
+              <span
+                title={priorityInfo.label}
+                aria-label={priorityInfo.label}
+                className={cn(
+                  'h-2 w-2 rounded-full ring-2 shrink-0 cursor-help',
+                  priorityInfo.dotClass
+                )}
+              />
+
               <span
                 onClick={() => onEdit?.(task)}
                 className={cn(
@@ -273,41 +261,38 @@ export function TaskCard({
                 {task.title}
               </span>
 
-              <Badge
-                variant="outline"
-                className={cn('text-[10px] px-1.5 py-0 h-4 font-medium shrink-0 whitespace-nowrap', priorityInfo.badgeClass)}
-              >
-                {priorityInfo.label}
-              </Badge>
-
+              {/* Icon-only Recurrence Indicator */}
               {isPartOfRecurringSeries && (
                 <span
-                  title={recurrenceLabel}
-                  className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-medium shrink-0 whitespace-nowrap"
+                  title={recurrenceLabel || 'Recurring task'}
+                  className="inline-flex items-center text-primary hover:opacity-80 transition-opacity shrink-0 cursor-help"
                 >
-                  <RotateCw className="h-2.5 w-2.5 shrink-0" />
-                  <span>{recurrenceShortLabel}</span>
+                  <RotateCw className="h-3 w-3 shrink-0" />
                 </span>
               )}
 
+              {/* Icon-only Reminder Indicator */}
               {reminderCount > 0 && (
                 <span
                   title={`${reminderCount} active reminder(s)`}
-                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium shrink-0 whitespace-nowrap"
+                  className="inline-flex items-center text-amber-500 hover:opacity-80 transition-opacity shrink-0 cursor-help"
                 >
-                  <Bell className="h-2.5 w-2.5 shrink-0" />
-                  <span>{reminderCount}</span>
+                  <Bell className="h-3 w-3 shrink-0" />
                 </span>
               )}
 
+              {/* Compact Project Tag */}
               {project && (
-                <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
+                <span
+                  title={project.name}
+                  className="inline-flex items-center gap-1 text-[9px] font-medium text-muted-foreground bg-muted/60 px-1 py-0 h-3.5 rounded shrink-0 whitespace-nowrap max-w-[90px] truncate"
+                >
                   <span
                     className="h-1.5 w-1.5 rounded-full shrink-0"
                     style={{ backgroundColor: project.color || '#3b82f6' }}
                   />
-                  <span className="truncate max-w-[100px]">{project.name}</span>
-                </div>
+                  <span className="truncate">{project.name}</span>
+                </span>
               )}
             </div>
 
@@ -318,7 +303,7 @@ export function TaskCard({
             )}
 
             {/* Meta badges: due date, subtasks, tags, estimated minutes */}
-            <div className="flex items-center gap-2.5 pt-0.5 flex-wrap text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 pt-0.5 flex-wrap text-xs text-muted-foreground">
               {task.dueDate && (
                 <div
                   className={cn(
@@ -369,9 +354,9 @@ export function TaskCard({
                   {task.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
+                      className="inline-flex items-center text-[9px] text-muted-foreground bg-muted/60 px-1 py-0 rounded whitespace-nowrap shrink-0"
                     >
-                      <Tag className="h-2.5 w-2.5 mr-0.5" />
+                      <Tag className="h-2 w-2 mr-0.5" />
                       {tag}
                     </span>
                   ))}
@@ -388,7 +373,7 @@ export function TaskCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground shrink-0"
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground shrink-0"
                 aria-label="Task options"
               >
                 <MoreVertical className="h-3.5 w-3.5" />
@@ -465,7 +450,7 @@ export function TaskCard({
 
       {/* Expandable Subtasks Checklist */}
       {expanded && (
-        <div className="mt-2.5 pt-2.5 border-t pl-6">
+        <div className="mt-2 pt-2 border-t pl-5">
           <SubtaskList taskId={task.id} />
         </div>
       )}

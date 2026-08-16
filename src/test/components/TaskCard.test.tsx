@@ -23,7 +23,7 @@ describe('Automated UI Testing: TaskCard Component', () => {
     archived: false
   }
 
-  it('renders task attributes, priority badge, tags, and handles status click', () => {
+  it('renders task attributes, priority indicator, tags, and handles status click', () => {
     const onEdit = vi.fn()
 
     render(
@@ -35,9 +35,9 @@ describe('Automated UI Testing: TaskCard Component', () => {
       </QueryClientProvider>
     )
 
-    // Check title, priority badge, and tags
+    // Check title, priority indicator, and tags
     expect(screen.getByText('Review Unit Test Coverage')).toBeInTheDocument()
-    expect(screen.getByText('High')).toBeInTheDocument()
+    expect(screen.getByTitle('High Priority')).toBeInTheDocument()
     expect(screen.getByText('testing')).toBeInTheDocument()
     expect(screen.getByText('quality')).toBeInTheDocument()
 
