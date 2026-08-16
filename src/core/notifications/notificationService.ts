@@ -46,6 +46,9 @@ interface CapacitorLocalNotificationsPlugin {
       extra?: Record<string, unknown>
       channelId?: string
       sound?: string
+      smallIcon?: string
+      iconColor?: string
+      largeIcon?: string
     }>
   }) => Promise<unknown>
   cancel?: (options: { notifications: Array<{ id: number }> }) => Promise<unknown>
