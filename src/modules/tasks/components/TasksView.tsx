@@ -19,6 +19,13 @@ import {
   SelectValue
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter
+} from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { useBackButton } from '@/core/platform/backButton'
@@ -634,92 +641,110 @@ export function TasksView() {
               </div>
             )}
 
-            {/* Mobile Sidebar Collapsible */}
-            {showMobileSidebar && (
-              <div className="md:hidden border rounded-xl p-3 bg-card shadow-sm space-y-3">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <span className="text-xs font-semibold text-foreground">Filter Properties</span>
-                  {hasActiveFilters && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleResetFilters}
-                      className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-                    >
-                      Reset all
-                    </Button>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <label className="text-[11px] text-muted-foreground block mb-1">Priority</label>
-                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                      <SelectTrigger className="h-8 text-xs w-full">
-                        <SelectValue placeholder="Priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Priorities</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
+            {/* Mobile Filter & Sidebar Sheet */}
+            <Dialog open={showMobileSidebar} onOpenChange={setShowMobileSidebar}>
+              <DialogContent className="sm:max-w-[450px]">
+                <DialogHeader>
+                  <DialogTitle>Filter Tasks & Projects</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2 max-h-[65vh] overflow-y-auto">
+                  <div className="flex items-center justify-between border-b pb-2">
+                    <span className="text-xs font-semibold text-foreground">Filter Properties</span>
+                    {hasActiveFilters && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleResetFilters}
+                        className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                      >
+                        Reset all
+                      </Button>
+                    )}
                   </div>
 
-                  <div>
-                    <label className="text-[11px] text-muted-foreground block mb-1">Status</label>
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="h-8 text-xs w-full">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="todo">To Do</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="blocked">Blocked</SelectItem>
-                        <SelectItem value="done">Done</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {tags.length > 0 && (
-                    <div className="col-span-2">
-                      <label className="text-[11px] text-muted-foreground block mb-1">Tag</label>
-                      <Select value={tagFilter} onValueChange={setTagFilter}>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[11px] text-muted-foreground block mb-1">
+                        Priority
+                      </label>
+                      <Select value={priorityFilter} onValueChange={setPriorityFilter}>
                         <SelectTrigger className="h-8 text-xs w-full">
-                          <SelectValue placeholder="Tag" />
+                          <SelectValue placeholder="Priority" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="all">All Tags</SelectItem>
-                          {tags.map((t) => (
-                            <SelectItem key={t} value={t}>
-                              #{t}
-                            </SelectItem>
-                          ))}
+                          <SelectItem value="all">All Priorities</SelectItem>
+                          <SelectItem value="urgent">Urgent</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  )}
-                </div>
 
-                <div className="border-t pt-2">
-                  <span className="text-xs font-semibold text-foreground block mb-2">
-                    Projects & Lists
-                  </span>
-                  <ProjectSidebar
-                    selectedSmartFilter={selectedSmartFilter}
-                    selectedProjectId={selectedProjectId}
-                    onSelectFilter={handleSelectSmartFilter}
-                    onSelectProject={handleSelectProject}
-                  />
-                </div>
-              </div>
-            )}
+                    <div>
+                      <label className="text-[11px] text-muted-foreground block mb-1">Status</label>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="h-8 text-xs w-full">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="todo">To Do</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="blocked">Blocked</SelectItem>
+                          <SelectItem value="done">Done</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
 
-            {/* Content Header Title */}
-            <div className="flex items-center justify-between px-1">
+                    {tags.length > 0 && (
+                      <div className="col-span-2">
+                        <label className="text-[11px] text-muted-foreground block mb-1">Tag</label>
+                        <Select value={tagFilter} onValueChange={setTagFilter}>
+                          <SelectTrigger className="h-8 text-xs w-full">
+                            <SelectValue placeholder="Tag" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Tags</SelectItem>
+                            {tags.map((t) => (
+                              <SelectItem key={t} value={t}>
+                                #{t}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="border-t pt-2">
+                    <span className="text-xs font-semibold text-foreground block mb-2">
+                      Projects & Lists
+                    </span>
+                    <ProjectSidebar
+                      selectedSmartFilter={selectedSmartFilter}
+                      selectedProjectId={selectedProjectId}
+                      onSelectFilter={(f) => {
+                        handleSelectSmartFilter(f)
+                        setShowMobileSidebar(false)
+                      }}
+                      onSelectProject={(p) => {
+                        handleSelectProject(p)
+                        setShowMobileSidebar(false)
+                      }}
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={() => setShowMobileSidebar(false)} className="w-full">
+                    Done
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+            {/* Content Header Title (Desktop only or single clean line) */}
+            <div className="hidden sm:flex items-center justify-between px-1">
               <div className="flex items-center gap-2">
                 {activeProject && (
                   <span
@@ -734,8 +759,8 @@ export function TasksView() {
               </div>
             </div>
 
-            {/* Quick Add Task Input with Smart Parser */}
-            <div className="space-y-1.5">
+            {/* Quick Add Task Input with Smart Parser (Desktop only to prevent mobile clutter) */}
+            <div className="hidden sm:block space-y-1.5">
               <form onSubmit={handleQuickAddTask} className="flex gap-1.5 sm:gap-2 items-center">
                 <Input
                   placeholder="Add task... (!urgent, @tomorrow, #tag)"

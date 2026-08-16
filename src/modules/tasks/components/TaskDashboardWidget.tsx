@@ -4,57 +4,51 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, AlertTriangle, CheckCircle2, Plus } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 import { useTasks } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
-import { PRIORITY_CONFIG } from './TaskCard'
-import { cn } from '@/lib/utils'
 
 export function TaskDashboardWidget() {
   const todayStr = format(new Date(), 'yyyy-MM-dd')
   const { data: tasks = [], isLoading: tasksLoading } = useTasks({ includeArchived: false })
   const { data: projects = [] } = useProjects(false)
 
-  const projectMap = useMemo(() => {
-    const map = new Map<string, string>()
-    for (const p of projects) {
-      map.set(p.id, p.name)
-    }
-    return map
-  }, [projects])
+  const { openTasksCount, todayDueCount, urgentCount, completionPercentage, projectTaskCounts } =
+    useMemo(() => {
+      const todayTasks = tasks.filter((t) => t.dueDate === todayStr)
+      const completedToday = todayTasks.filter((t) => t.status === 'done').length
+      const openTasks = tasks.filter((t) => t.status !== 'done')
+      const todayDue = openTasks.filter((t) => t.dueDate === todayStr).length
+      const urgent = openTasks.filter((t) => t.priority === 'urgent').length
 
-  // Get tasks that are either due today or marked urgent (and not completed/archived), plus recently completed today
-  const { featuredTasks, todayCompletedCount, todayTotalCount } = useMemo(() => {
-    const todayTasks = tasks.filter((t) => t.dueDate === todayStr)
-    const completedToday = todayTasks.filter((t) => t.status === 'done').length
+      const projCounts = new Map<string, number>()
+      for (const task of tasks) {
+        if (task.projectId) {
+          projCounts.set(task.projectId, (projCounts.get(task.projectId) || 0) + 1)
+        }
+      }
 
-    const urgentOrTodayActive = tasks.filter(
-      (t) => (t.dueDate === todayStr || t.priority === 'urgent') && t.status !== 'done'
-    )
+      const pct = todayTasks.length > 0 ? Math.round((completedToday / todayTasks.length) * 100) : 0
 
-    // Also include up to 2 done tasks for visual feedback
-    const doneToday = todayTasks.filter((t) => t.status === 'done').slice(0, 2)
-    const combined = [...urgentOrTodayActive, ...doneToday].slice(0, 5)
-
-    return {
-      featuredTasks: combined,
-      todayCompletedCount: completedToday,
-      todayTotalCount: todayTasks.length
-    }
-  }, [tasks, todayStr])
-
-  const completionPercentage =
-    todayTotalCount > 0 ? Math.round((todayCompletedCount / todayTotalCount) * 100) : 0
+      return {
+        openTasksCount: openTasks.length,
+        todayCompletedCount: completedToday,
+        todayDueCount: todayDue,
+        urgentCount: urgent,
+        completionPercentage: pct,
+        projectTaskCounts: projCounts
+      }
+    }, [tasks, todayStr])
 
   if (tasksLoading) {
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-medium">Task Planner</CardTitle>
+          <CardTitle className="text-sm font-medium">Task Insights</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="h-24 flex items-center justify-center text-xs text-muted-foreground">
-            Loading tasks...
+            Loading task metrics...
           </div>
         </CardContent>
       </Card>
@@ -67,99 +61,74 @@ export function TaskDashboardWidget() {
         <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-primary" />
-            <CardTitle className="text-sm font-semibold">Tasks Overview</CardTitle>
+            <CardTitle className="text-sm font-semibold">Tasks Insights</CardTitle>
           </div>
-          {todayTotalCount > 0 && (
-            <Badge variant="secondary" className="text-xs font-normal">
-              {todayCompletedCount} / {todayTotalCount} done
-            </Badge>
-          )}
+          <Badge variant="secondary" className="text-xs font-normal">
+            {openTasksCount} open
+          </Badge>
         </CardHeader>
 
         <CardContent className="space-y-4 pt-2">
-          {todayTotalCount > 0 && (
-            <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Today's Completion</span>
-                <span className="font-medium text-foreground">{completionPercentage}%</span>
-              </div>
-              <Progress value={completionPercentage} className="h-2" />
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Today's Task Completion</span>
+              <span className="font-medium text-foreground">{completionPercentage}%</span>
             </div>
-          )}
+            <Progress value={completionPercentage} className="h-2" />
+          </div>
 
-          <div className="space-y-2">
-            {featuredTasks.length === 0 ? (
-              <div className="py-4 text-center space-y-2">
-                <p className="text-xs text-muted-foreground">No urgent tasks or tasks due today.</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    window.location.hash = '#/tasks'
-                  }}
-                  className="h-7 text-xs gap-1.5"
-                >
-                  <Plus className="h-3 w-3" />
-                  <span>Open Tasks</span>
-                </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="p-2.5 rounded-xl border bg-muted/20 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5 text-blue-500" />
+                <span>Due Today</span>
               </div>
-            ) : (
-              featuredTasks.map((task) => {
-                const isDone = task.status === 'done'
-                const isUrgent = task.priority === 'urgent'
-                const priority = PRIORITY_CONFIG[task.priority]
+              <p className="text-sm font-bold">{todayDueCount} tasks</p>
+            </div>
 
-                return (
-                  <div
-                    key={task.id}
-                    onClick={() => {
-                      window.location.hash = `#/tasks?taskId=${task.id}`
-                    }}
-                    className={cn(
-                      'flex items-center justify-between p-2.5 rounded-xl border text-xs transition-all cursor-pointer hover:border-primary/40 hover:bg-muted/30 group',
-                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : 'bg-background',
-                      isUrgent && !isDone && 'border-red-500/30 bg-red-500/5'
-                    )}
-                  >
-                    <div className="flex items-center gap-2 min-w-0 flex-1 mr-2">
+            <div className="p-2.5 rounded-xl border bg-muted/20 space-y-1">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <AlertTriangle className="h-3.5 w-3.5 text-red-500" />
+                <span>Urgent</span>
+              </div>
+              <p className="text-sm font-bold text-red-600 dark:text-red-400">
+                {urgentCount} tasks
+              </p>
+            </div>
+          </div>
+
+          {/* Projects distribution */}
+          <div className="space-y-1.5">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+              Active Projects
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {projects.length === 0 ? (
+                <span className="text-xs text-muted-foreground">No active projects</span>
+              ) : (
+                projects.map((proj) => {
+                  const count = projectTaskCounts.get(proj.id) || 0
+                  return (
+                    <span
+                      key={proj.id}
+                      className="inline-flex items-center gap-1.5 text-[11px] px-2.5 py-0.5 rounded-lg border font-medium whitespace-nowrap"
+                      style={{
+                        backgroundColor: `${proj.color || '#3b82f6'}15`,
+                        borderColor: `${proj.color || '#3b82f6'}35`,
+                        color: proj.color || '#3b82f6'
+                      }}
+                    >
                       <span
-                        className={cn('h-2 w-2 rounded-full shrink-0', priority.dotClass)}
-                        title={`Priority: ${priority.label}`}
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: proj.color || '#3b82f6' }}
                       />
-                      <span
-                        className={cn(
-                          'font-medium truncate group-hover:text-primary transition-colors',
-                          isDone && 'line-through text-muted-foreground'
-                        )}
-                      >
-                        {task.title}
-                      </span>
-
-                      {isUrgent && !isDone && (
-                        <span className="flex items-center gap-0.5 text-[10px] text-red-600 dark:text-red-400 font-semibold shrink-0">
-                          <AlertTriangle className="h-3 w-3" />
-                          Urgent
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {task.projectId && projectMap.has(task.projectId) && (
-                        <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground truncate max-w-[80px]">
-                          {projectMap.get(task.projectId)}
-                        </span>
-                      )}
-                      <Badge
-                        variant={isDone ? 'default' : 'outline'}
-                        className="text-[10px] h-4 px-1.5 py-0 font-normal"
-                      >
-                        {isDone ? 'Done' : 'Open'}
-                      </Badge>
-                    </div>
-                  </div>
-                )
-              })
-            )}
+                      <span>{proj.name}</span>
+                      <span className="opacity-75">({count})</span>
+                    </span>
+                  )
+                })
+              )}
+            </div>
           </div>
         </CardContent>
       </div>
@@ -173,7 +142,7 @@ export function TaskDashboardWidget() {
             window.location.hash = '#/tasks'
           }}
         >
-          <span>View All Tasks</span>
+          <span>Open Task Planner</span>
           <ArrowRight className="h-3.5 w-3.5" />
         </Button>
       </div>

@@ -279,13 +279,13 @@ export function TaskCard({
               {project && (
                 <span
                   title={project.name}
-                  className="inline-flex items-center gap-1 text-[9px] font-medium text-muted-foreground bg-muted/60 px-1 py-0 h-3.5 rounded shrink-0 whitespace-nowrap max-w-[90px] truncate"
+                  className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.2 h-4 rounded shrink-0 whitespace-nowrap"
                 >
                   <span
                     className="h-1.5 w-1.5 rounded-full shrink-0"
                     style={{ backgroundColor: project.color || '#3b82f6' }}
                   />
-                  <span className="truncate">{project.name}</span>
+                  <span>{project.name}</span>
                 </span>
               )}
             </div>

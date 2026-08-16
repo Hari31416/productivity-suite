@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   Heading1,
   Heading2,
@@ -17,23 +17,14 @@ import {
   Eye,
   Edit3,
   Folder,
-  ListTree,
   Maximize2,
   Minimize2,
   Check,
-  Loader2,
-  Palette
+  Loader2
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { MarkdownRenderer, extractHeadings, type MarkdownHeading } from '../utils/markdownParser'
+import { MarkdownRenderer } from '../utils/markdownParser'
 import { getNoteStats } from '../utils/noteStats'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useTags, useFindOrCreateTag } from '../hooks/useTags'
@@ -115,7 +106,6 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const findOrCreateTagMutation = useFindOrCreateTag()
 
   const stats = getNoteStats(content)
-  const headings = useMemo(() => extractHeadings(content), [content])
 
   const handleToggleCheckbox = useCallback(
     (lineIndex: number) => {
@@ -133,13 +123,6 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     },
     [content]
   )
-
-  const handleJumpToHeading = (headingId: string) => {
-    const el = document.getElementById(headingId)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
 
   const performSave = useCallback(async () => {
     const trimmedTitle = title.trim()
@@ -342,15 +325,31 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
           : 'h-full min-h-[600px]'
       )}
     >
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-2 border-b px-3 sm:px-4 py-2 sm:py-3">
-        <div className="flex flex-1 items-center min-w-0 mr-2">
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Note title..."
-            className="h-9 sm:h-10 border-none bg-transparent px-1 sm:px-2 text-base sm:text-xl font-bold tracking-tight shadow-none focus-visible:ring-1 truncate"
-          />
+      {/* Top Action Bar */}
+      <div className="flex items-center justify-between gap-2 border-b px-3 sm:px-4 py-2 sm:py-2.5 bg-muted/20">
+        <div className="flex items-center gap-2">
+          {/* Auto-Save Status Indicator */}
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground select-none"
+            title={`Status: ${saveStatus}`}
+          >
+            {saveStatus === 'saving' ? (
+              <>
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                <span className="text-xs">Saving...</span>
+              </>
+            ) : saveStatus === 'saved' ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-500" />
+                <span className="text-xs text-emerald-600 dark:text-emerald-400">Saved</span>
+              </>
+            ) : (
+              <>
+                <span className="h-2 w-2 rounded-full bg-amber-500" />
+                <span className="text-xs text-muted-foreground">Unsaved</span>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
@@ -373,17 +372,17 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             ))}
           </div>
 
-          {/* Pin Button (Desktop) */}
+          {/* Pin Button */}
           <Button
             type="button"
             variant={pinned ? 'default' : 'ghost'}
             size="sm"
             onClick={() => setPinned(!pinned)}
             title={pinned ? 'Unpin Note' : 'Pin Note'}
-            className="hidden sm:inline-flex h-8 px-2.5 gap-1 text-xs"
+            className="h-8 px-2.5 gap-1 text-xs"
           >
             <Pin className={`h-3.5 w-3.5 ${pinned ? 'fill-current' : ''}`} />
-            <span>{pinned ? 'Pinned' : 'Pin'}</span>
+            <span className="hidden sm:inline">{pinned ? 'Pinned' : 'Pin'}</span>
           </Button>
 
           {/* View Mode Toggle */}
@@ -421,105 +420,17 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
                   ? 'bg-background shadow-xs text-foreground'
                   : 'text-muted-foreground'
               }`}
-              title="Preview Only"
+              title="Preview Markdown"
             >
               <span className="sm:hidden text-xs">Preview</span>
               <Eye className="hidden sm:inline h-3.5 w-3.5" />
             </button>
           </div>
 
-          {/* Table of Contents / Outline (Desktop) */}
-          {headings.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="hidden sm:inline-flex h-8 px-2 text-xs gap-1"
-                  title="Table of Contents"
-                >
-                  <ListTree className="h-3.5 w-3.5" />
-                  <span>Outline ({headings.length})</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64 max-h-72 overflow-y-auto">
-                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground border-b mb-1">
-                  Table of Contents
-                </div>
-                {headings.map((h: MarkdownHeading, idx: number) => (
-                  <DropdownMenuItem
-                    key={`${h.id}-${idx}`}
-                    onClick={() => handleJumpToHeading(h.id)}
-                    className="text-xs py-1.5 cursor-pointer"
-                    style={{ paddingLeft: `${(h.level - 1) * 12 + 8}px` }}
-                  >
-                    <span className="truncate">{h.text}</span>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-
-          {/* Mobile Overflow Menu (Colors, Outline, Zen, Pin) */}
-          <div className="lg:hidden">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 text-muted-foreground"
-                  aria-label="More note actions"
-                >
-                  <Palette className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56 p-2 space-y-2">
-                <div>
-                  <span className="text-[11px] font-semibold text-muted-foreground px-1">
-                    Note Color
-                  </span>
-                  <div className="grid grid-cols-5 gap-1.5 pt-1">
-                    {COLOR_OPTIONS.map((opt) => (
-                      <button
-                        key={opt.name}
-                        type="button"
-                        onClick={() => setColor(opt.value)}
-                        className={`h-7 w-7 rounded-full border transition-transform flex items-center justify-center ${
-                          color === opt.value ? 'ring-2 ring-primary scale-110' : ''
-                        }`}
-                        style={{
-                          backgroundColor: opt.value || 'hsl(var(--muted))',
-                          borderColor: 'hsl(var(--border))'
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="border-t pt-1 space-y-1">
-                  <DropdownMenuItem onClick={() => setPinned(!pinned)}>
-                    <Pin className="h-3.5 w-3.5 mr-2" />
-                    <span>{pinned ? 'Unpin Note' : 'Pin Note'}</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setIsZenMode(!isZenMode)}>
-                    {isZenMode ? (
-                      <Minimize2 className="h-3.5 w-3.5 mr-2" />
-                    ) : (
-                      <Maximize2 className="h-3.5 w-3.5 mr-2" />
-                    )}
-                    <span>{isZenMode ? 'Exit Zen Mode' : 'Zen Focus Mode'}</span>
-                  </DropdownMenuItem>
-                </div>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {/* Zen Focus Mode Button (Desktop) */}
+          {/* Zen Mode Button */}
           <Button
             type="button"
-            variant={isZenMode ? 'default' : 'outline'}
+            variant="ghost"
             size="sm"
             onClick={() => setIsZenMode(!isZenMode)}
             className="hidden sm:inline-flex h-8 px-2 text-xs gap-1"
@@ -532,31 +443,6 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             )}
             <span className="hidden md:inline">{isZenMode ? 'Exit Zen' : 'Zen'}</span>
           </Button>
-
-          {/* Auto-Save Status Indicator */}
-          <div
-            className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground select-none"
-            title={`Status: ${saveStatus}`}
-          >
-            {saveStatus === 'saving' ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-                <span className="hidden sm:inline text-xs">Saving...</span>
-              </>
-            ) : saveStatus === 'saved' ? (
-              <>
-                <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="hidden sm:inline text-xs text-emerald-600 dark:text-emerald-400">
-                  Saved
-                </span>
-              </>
-            ) : (
-              <>
-                <span className="h-2 w-2 rounded-full bg-amber-500" />
-                <span className="hidden sm:inline text-xs text-muted-foreground">Unsaved</span>
-              </>
-            )}
-          </div>
 
           {/* Close Editor */}
           <Button
@@ -572,6 +458,16 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
         </div>
       </div>
 
+      {/* Note Title Input (Full width, responsive, no clipping) */}
+      <div className="border-b px-3 sm:px-4 py-2.5 sm:py-3 bg-background">
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Note title..."
+          className="w-full border-none bg-transparent p-0 text-lg sm:text-2xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0"
+        />
+      </div>
       {/* Meta Controls (Tags, Project) */}
       <div className="flex flex-wrap items-center gap-2 border-b bg-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs">
         {/* Project Selector */}

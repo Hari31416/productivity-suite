@@ -33,6 +33,7 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       targetType: 'numeric',
       targetValue: 2000,
       unit: 'ml',
+      reminderTimes: ['09:00', '14:00', '18:00'],
       createdAt: now,
       updatedAt: now,
       archived: false
@@ -45,6 +46,7 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       categoryId: 'learning',
       frequencyType: 'daily',
       targetType: 'boolean',
+      reminderTimes: ['21:00'],
       createdAt: now,
       updatedAt: now,
       archived: false
