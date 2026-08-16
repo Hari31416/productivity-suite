@@ -84,10 +84,39 @@ describe('HabitDetailView Component', () => {
     expect(screen.getByText('12:00')).toBeInTheDocument()
     expect(screen.getByText('16:00')).toBeInTheDocument()
 
+    // Focus Timer should NOT be rendered for numeric counter habits
+    expect(screen.queryByRole('button', { name: /start focus/i })).not.toBeInTheDocument()
+
     // Back button
     const backBtn = screen.getByRole('button', { name: /back to habits/i })
     fireEvent.click(backBtn)
     expect(onBack).toHaveBeenCalled()
+  })
+
+  it('renders Focus Timer for timer habits', () => {
+    const timerHabit: Habit = {
+      ...mockHabit,
+      id: 'habit-102',
+      title: 'Mindful Meditation',
+      targetType: 'timer',
+      targetValue: 20,
+      unit: 'minutes'
+    }
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <HabitDetailView
+          habit={timerHabit}
+          logs={[]}
+          allLogs={[]}
+          selectedDate="2026-08-16"
+          onBack={vi.fn()}
+        />
+      </QueryClientProvider>
+    )
+
+    expect(screen.getByRole('button', { name: /start focus/i })).toBeInTheDocument()
+    expect(screen.getByText('20:00')).toBeInTheDocument()
   })
 
   it('opens edit modal when edit button is clicked', async () => {

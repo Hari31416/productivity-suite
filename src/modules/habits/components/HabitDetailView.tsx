@@ -803,15 +803,17 @@ export function HabitDetailView({
         </CardContent>
       </Card>
 
-      {/* Focus Timer Section (Interactive for Timer Habits, or expandable for any habit) */}
-      <HabitFocusTimer
-        habit={habit}
-        selectedDate={selectedDate}
-        logs={dateLogs}
-        onSessionComplete={() => {
-          // Trigger queries refresh automatically handled by mutation
-        }}
-      />
+      {/* Focus Timer Section (Only for Duration/Timer Habits) */}
+      {habit.targetType === 'timer' && (
+        <HabitFocusTimer
+          habit={habit}
+          selectedDate={selectedDate}
+          logs={dateLogs}
+          onSessionComplete={() => {
+            // Trigger queries refresh automatically handled by mutation
+          }}
+        />
+      )}
 
       {/* About, Motivation & Reminder Times Timeline */}
       <Card className="rounded-2xl border bg-card shadow-xs">
