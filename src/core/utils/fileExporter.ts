@@ -1,5 +1,5 @@
 import { Capacitor } from '@capacitor/core'
-import { Filesystem, Directory } from '@capacitor/filesystem'
+import { Filesystem, Directory, Encoding } from '@capacitor/filesystem'
 import { Share } from '@capacitor/share'
 
 /**
@@ -32,7 +32,8 @@ export async function saveAndExportTextFile(
       const saved = await Filesystem.writeFile({
         path: filename,
         data: content,
-        directory: Directory.Cache
+        directory: Directory.Cache,
+        encoding: Encoding.UTF8
       })
 
       await Share.share({
