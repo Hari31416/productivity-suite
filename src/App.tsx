@@ -16,6 +16,8 @@ import { useUserProfile } from '@/core/profile/useUserProfile'
 import { getGreeting } from '@/modules/dashboard/utils/dashboardScore'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { SplashScreen } from '@capacitor/splash-screen'
+
 export function App() {
   const queryClient = useQueryClient()
   const { pathname, navigate } = useHashRoute()
@@ -30,6 +32,7 @@ export function App() {
 
   useEffect(() => {
     initializeModules(queryClient)
+    SplashScreen.hide().catch(() => {})
   }, [queryClient])
 
   useEffect(() => {

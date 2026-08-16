@@ -36,7 +36,18 @@
     <meta name="twitter:image" content="/icon.png" />
   </head>
   <body class="min-h-screen bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary">
-    <div id="root"></div>
+    <div id="root">
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;background:#0b1211;color:#f0fdf9;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;gap:1.25rem;">
+        <img src="/icon.png" alt="Productivity Suite" style="width:68px;height:68px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,0.35);" />
+        <div style="font-size:1.125rem;font-weight:600;letter-spacing:-0.02em;">Productivity Suite</div>
+        <div style="width:28px;height:28px;border:3px solid rgba(10,122,100,0.25);border-top-color:#0a7a64;border-radius:50%;animation:app-spin 0.75s linear infinite;"></div>
+      </div>
+      <style>
+        @keyframes app-spin {
+          to { transform: rotate(360deg); }
+        }
+      </style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
