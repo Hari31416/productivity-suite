@@ -229,22 +229,22 @@ export function HabitFocusTimer({
           </svg>
 
           {/* Central Time & State (Click to edit duration) */}
-          <div className="absolute flex flex-col items-center justify-center text-center select-none">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-center select-none pointer-events-none">
             <button
               type="button"
               onClick={() => {
                 setCustomMinutesInput(`${Math.round(totalSeconds / 60)}`)
                 setIsEditDialogOpen(true)
               }}
-              className="group flex items-center justify-center gap-1 hover:scale-105 transition-transform"
+              className="group relative inline-flex items-center justify-center pointer-events-auto hover:scale-105 transition-transform px-2"
               title="Click to edit timer duration"
             >
-              <span className="font-mono text-3xl sm:text-5xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+              <span className="font-mono text-3xl sm:text-5xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors tabular-nums">
                 {`${minutesDisplay}:${secondsDisplay}`}
               </span>
-              <Pencil className="h-3 w-3 sm:h-3.5 sm:w-3.5 opacity-0 group-hover:opacity-100 text-muted-foreground transition-opacity" />
+              <Pencil className="h-3.5 w-3.5 absolute -right-3.5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 text-muted-foreground transition-opacity" />
             </button>
-            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground mt-0.5 capitalize">
+            <span className="text-[11px] sm:text-xs font-medium text-muted-foreground mt-1 capitalize">
               {isRunning ? 'Focusing...' : secondsLeft === 0 ? 'Session Complete' : 'Ready'}
             </span>
           </div>
