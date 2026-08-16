@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-16
+
+### Added
+
+- **Task Detail View & Dedicated Execution Workspace**:
+  - Full-view execution workspace and detail drawer for complex tasks (`TaskDetailView.tsx`).
+  - Direct routing for task notification deep links (`#/tasks?taskId=<id>`) and task card clicks.
+  - Task Hero and Property Header with status selector, priority dropdown, project association, and relative due date formatting.
+  - Expandable full-fidelity markdown preview and toggleable inline markdown editing.
+  - Interactive Subtasks Checklist with completion ratio progress badge, inline creation, and move up / down reordering.
+  - Connected Notes integration discovering markdown notes referencing or tagged with the task, plus 1-click note creation with full in-place markdown editing/preview.
+  - Recurrence schedule description, active notification count, and creation/update/completion timestamps.
+- **Shared Circular Focus Timer Hub**:
+  - Reusable radial countdown timer component (`CircularFocusTimer.tsx`) shared between tasks and habits.
+  - Task-linked timer with 25-minute Pomodoro presets (+5m, +10m, 50m block, custom duration dialog) and automatic `actualMinutes` time tracking.
+  - Time Spent vs Estimate comparison progress bar.
+- **Shadcn UI Textarea Component**:
+  - Reusable accessible textarea primitive for markdown and multi-line text input.
+
+### Changed
+
+- **Refactored Habit Focus Timer**:
+  - Refactored `HabitFocusTimer.tsx` to reuse the shared `CircularFocusTimer` engine.
+- **Deep Linking & Notes Router Support**:
+  - Added `queryParams.noteId` handler in `NotesView.tsx` to auto-open notes in edit/preview mode.
+
+### Fixed
+
+- **Number Input Step Alignment Validation**:
+  - Fixed HTML5 step validation on estimated minutes input in `TaskFormModal.tsx` to allow any positive integer value.
+
 ## [0.4.2] - 2026-08-16
 
 ### Added
