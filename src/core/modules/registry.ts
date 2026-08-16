@@ -16,7 +16,8 @@ class ModuleRegistry {
   }
 
   getByRoute(route: string): AppModuleManifest | undefined {
-    const normalizedRoute = !route || route === '' ? '/' : route
+    const cleanRoute = (route || '/').replace(/^#+/, '').split('?')[0]
+    const normalizedRoute = !cleanRoute || cleanRoute === '' ? '/' : cleanRoute
     return Array.from(this.modules.values()).find(
       (manifest) =>
         manifest.route === normalizedRoute ||

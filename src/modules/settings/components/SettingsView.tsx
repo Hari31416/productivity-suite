@@ -227,16 +227,28 @@ export function SettingsView() {
     }
   }
 
-  const handleTestNotification = async () => {
+  const handleTestNotification = async (type: 'habit' | 'task' = 'habit') => {
     setIsTestingNotification(true)
     setNotificationFeedback(null)
     try {
-      const sent = await sendLocalNotification({
-        title: 'Productivity Suite',
-        body: 'Local notification test successful. Habit & interval reminders are operational.'
-      })
+      const payload =
+        type === 'habit'
+          ? {
+              title: 'Habit Reminder: Hydration',
+              body: 'Time to drink water! Click this notification to open Hydration check-in.',
+              data: { habitId: 'habit_drink_water' }
+            }
+          : {
+              title: 'Task Reminder: Explore App',
+              body: 'Time to review your project tasks. Click to view task details.',
+              data: { taskId: 'task_explore_app' }
+            }
+
+      const sent = await sendLocalNotification(payload)
       if (sent) {
-        setNotificationFeedback('Test notification sent successfully.')
+        setNotificationFeedback(
+          `Test ${type === 'habit' ? 'Habit' : 'Task'} notification sent. Click the desktop banner to test deep linking.`
+        )
       } else {
         setNotificationFeedback(
           'Failed to trigger notification. Please check browser permission settings.'
@@ -477,7 +489,7 @@ export function SettingsView() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
               {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
                 <Button
                   size="sm"
@@ -491,12 +503,22 @@ export function SettingsView() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={handleTestNotification}
+                onClick={() => handleTestNotification('habit')}
                 disabled={isTestingNotification}
                 className="text-xs gap-1.5 min-h-[44px]"
               >
                 <Bell className="h-4 w-4" />
-                <span>{isTestingNotification ? 'Sending...' : 'Send Test Notification'}</span>
+                <span>Test Habit Alert</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestNotification('task')}
+                disabled={isTestingNotification}
+                className="text-xs gap-1.5 min-h-[44px]"
+              >
+                <Bell className="h-4 w-4" />
+                <span>Test Task Alert</span>
               </Button>
             </div>
           </div>

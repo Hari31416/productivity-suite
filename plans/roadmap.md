@@ -2,20 +2,20 @@
 
 This document outlines planned feature enhancements, UI modernizations, notification improvements, and architectural extensions for upcoming development cycles.
 
-## 1. Notification Deep Linking and Action Routing
+## 1. Notification Deep Linking and Action Routing [Completed]
 
 Enable instant navigation to specific items when clicking system notifications.
 
-### Capabilities to Implement
+### Implemented Capabilities
 
 - **URL Hash Query Parameter Parsing**:
-  - Support query parameters in hash routes, such as `#/tasks?taskId=<id>` and `#/habits?habitId=<id>`.
+  - Full query parameter parsing and building support in hash routes (`#/tasks?taskId=<id>` and `#/habits?habitId=<id>`) via [`hashRouter.ts`](../src/core/router/hashRouter.ts) and [`registry.ts`](../src/core/modules/registry.ts).
 - **View-Level Focus and Auto-Open**:
-  - In [`TasksView.tsx`](../src/modules/tasks/components/TasksView.tsx), automatically open the task edit modal or scroll and highlight the target task card when `taskId` is present in the route.
-  - In [`HabitsView.tsx`](../src/modules/habits/components/HabitsView.tsx), automatically open the habit details view or check-in modal when `habitId` is passed.
+  - In [`TasksView.tsx`](../src/modules/tasks/components/TasksView.tsx), automatically fetches and opens the task modal while scrolling and highlighting the target card (`#task-card-<id>`).
+  - In [`HabitsView.tsx`](../src/modules/habits/components/HabitsView.tsx), automatically fetches and opens the habit modal while scrolling and highlighting the target card (`#habit-card-<id>`).
 - **Unified Click Action Listener**:
-  - Listen for native Android notification clicks via `@capacitor/local-notifications` (`localNotificationActionPerformed`).
-  - Wire web browser `Notification.onclick` to trigger hash navigation and bring window to focus.
+  - Native Android notification action listener via `@capacitor/local-notifications` (`localNotificationActionPerformed`).
+  - Web browser `Notification.onclick` wired in [`notificationService.ts`](../src/core/notifications/notificationService.ts) to bring window to focus and navigate to target item hash route.
 
 ## 2. Habit Tracker UI Overhaul
 

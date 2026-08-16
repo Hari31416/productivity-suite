@@ -9,7 +9,10 @@ import { NotesView } from './notes/NotesView'
 import { NotesDashboardWidget } from './notes/components/NotesDashboardWidget'
 import { SettingsView } from './settings/SettingsView'
 import { taskRepository } from './tasks/repository/taskRepository'
-import { rescheduleAllTaskReminders } from '@/core/notifications/notificationService'
+import {
+  rescheduleAllTaskReminders,
+  sendLocalNotification
+} from '@/core/notifications/notificationService'
 import { db } from '@/core/db'
 import { ensureDatabaseSeeded } from '@/core/db/seed'
 
@@ -101,6 +104,8 @@ export function initializeModules(queryClient?: QueryClient): void {
 
   // Background initialization of database seeding, recurring tasks, and task reminders
   if (typeof window !== 'undefined') {
+    ;(window as unknown as { sendLocalNotification?: typeof sendLocalNotification }).sendLocalNotification = sendLocalNotification
+
     ensureDatabaseSeeded(db)
       .then((didSeed) => {
         if (didSeed && queryClient) {

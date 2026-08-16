@@ -83,6 +83,8 @@ describe('ModuleRegistry', () => {
     moduleRegistry.register(manifest)
     expect(moduleRegistry.getByRoute('/notes')).toEqual(manifest)
     expect(moduleRegistry.getByRoute('/notes/detail/123')).toEqual(manifest)
+    expect(moduleRegistry.getByRoute('/notes?noteId=123')).toEqual(manifest)
+    expect(moduleRegistry.getByRoute('#/notes?noteId=123')).toEqual(manifest)
     expect(moduleRegistry.getByRoute('/unknown')).toBeUndefined()
 
     const dashboardManifest: AppModuleManifest = {
@@ -97,6 +99,7 @@ describe('ModuleRegistry', () => {
     moduleRegistry.register(dashboardManifest)
     expect(moduleRegistry.getByRoute('/')).toEqual(dashboardManifest)
     expect(moduleRegistry.getByRoute('')).toEqual(dashboardManifest)
+    expect(moduleRegistry.getByRoute('/?tab=overview')).toEqual(dashboardManifest)
   })
 
   it('unregisters a module correctly', () => {

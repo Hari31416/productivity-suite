@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
+import { useHashRoute } from '@/core/router/hashRouter'
+import { setupNotificationListeners } from '@/core/notifications/notificationService'
 import { AppShell } from '@/components/layout/AppShell'
 import { CommandPalette } from '@/components/command/CommandPalette'
 import { QuickAddSheet } from '@/components/layout/QuickAddSheet'
@@ -15,13 +17,7 @@ import { useQueryClient } from '@tanstack/react-query'
 
 export function App() {
   const queryClient = useQueryClient()
-  const [currentRoute, setCurrentRoute] = useState<string>(() => {
-    if (typeof window !== 'undefined' && window.location.hash) {
-      const hashRoute = window.location.hash.replace('#', '')
-      if (hashRoute) return hashRoute
-    }
-    return '/'
-  })
+  const { pathname, navigate } = useHashRoute()
 
   const { userName } = useUserProfile()
 
@@ -35,20 +31,14 @@ export function App() {
     initializeModules(queryClient)
   }, [queryClient])
 
-
   useEffect(() => {
-    const handleHashChange = () => {
-      const hashRoute = window.location.hash.replace('#', '')
-      if (hashRoute) {
-        setCurrentRoute(hashRoute)
-      } else {
-        setCurrentRoute('/')
-      }
+    const cleanup = setupNotificationListeners((route) => {
+      navigate(route)
+    })
+    return () => {
+      if (typeof cleanup === 'function') cleanup()
     }
-
-    window.addEventListener('hashchange', handleHashChange)
-    return () => window.removeEventListener('hashchange', handleHashChange)
-  }, [])
+  }, [navigate])
 
   // Android / Capacitor Back Button & Escape dismissal for modals
   useEffect(() => {
@@ -97,12 +87,11 @@ export function App() {
   ])
 
   const handleRouteChange = (route: string) => {
-    setCurrentRoute(route)
-    window.location.hash = route
+    navigate(route)
   }
 
   const activeModule =
-    moduleRegistry.getByRoute(currentRoute) ||
+    moduleRegistry.getByRoute(pathname) ||
     moduleRegistry.get('dashboard') ||
     moduleRegistry.get('habits')
 
@@ -114,13 +103,13 @@ export function App() {
   const dashboardTitle = userName ? `${baseGreeting}, ${userName}` : baseGreeting
   const formattedDate = format(today, 'EEEE, MMM d')
 
-  const title = currentRoute === '/' ? dashboardTitle : (activeModule ? activeModule.title : 'Productivity')
-  const subtitle = currentRoute === '/' ? formattedDate : (activeModule ? activeModule.description : undefined)
+  const title = pathname === '/' ? dashboardTitle : (activeModule ? activeModule.title : 'Productivity')
+  const subtitle = pathname === '/' ? formattedDate : (activeModule ? activeModule.description : undefined)
 
   return (
     <>
       <AppShell
-        activeRoute={currentRoute}
+        activeRoute={pathname}
         onRouteChange={handleRouteChange}
         title={title}
         subtitle={subtitle}

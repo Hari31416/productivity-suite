@@ -34,6 +34,17 @@ export interface TaskReminderOptions {
 
 export const NOTIFICATION_CHANNEL_ID = 'productivity-reminders'
 
+interface CapacitorNotificationAction {
+  notification?: {
+    id?: number
+    title?: string
+    body?: string
+    extra?: Record<string, unknown>
+  }
+  actionId?: string
+  inputValue?: string
+}
+
 interface CapacitorLocalNotificationsPlugin {
   requestPermissions?: () => Promise<{ display: string }>
   checkPermissions?: () => Promise<{ display: string }>
@@ -63,6 +74,10 @@ interface CapacitorLocalNotificationsPlugin {
     lights?: boolean
     lightColor?: string
   }) => Promise<void>
+  addListener?: (
+    eventName: 'localNotificationActionPerformed',
+    listenerFunc: (action: CapacitorNotificationAction) => void
+  ) => Promise<{ remove: () => void }> | { remove: () => void }
 }
 
 interface WindowWithCapacitor {
@@ -159,6 +174,74 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
+export function getNotificationTargetRoute(
+  data?: Record<string, unknown>
+): string | null {
+  if (!data) return null
+  if (data.taskId) {
+    return `/tasks?taskId=${data.taskId}`
+  }
+  if (data.habitId) {
+    return `/habits?habitId=${data.habitId}`
+  }
+  if (typeof data.route === 'string' && data.route) {
+    return data.route
+  }
+  return null
+}
+
+let notificationListenersSetup = false
+
+export function setupNotificationListeners(
+  onNavigate?: (route: string) => void
+): (() => void) | void {
+  if (typeof window === 'undefined') return
+  const capPlugin = getCapacitorBridge()
+  if (capPlugin && capPlugin.addListener && !notificationListenersSetup) {
+    notificationListenersSetup = true
+    try {
+      const listenerHandle = capPlugin.addListener(
+        'localNotificationActionPerformed',
+        (action) => {
+          const extra = action?.notification?.extra
+          const targetRoute = getNotificationTargetRoute(extra)
+          if (targetRoute) {
+            if (onNavigate) {
+              onNavigate(targetRoute)
+            } else {
+              window.location.hash = targetRoute
+            }
+          }
+        }
+      )
+      return () => {
+        if (
+          listenerHandle &&
+          typeof (listenerHandle as Promise<{ remove: () => void }>).then ===
+            'function'
+        ) {
+          ;(listenerHandle as Promise<{ remove: () => void }>).then((h) =>
+            h.remove?.()
+          )
+        } else if (
+          listenerHandle &&
+          typeof (listenerHandle as { remove: () => void }).remove ===
+            'function'
+        ) {
+          ;(listenerHandle as { remove: () => void }).remove()
+        }
+        notificationListenersSetup = false
+      }
+    } catch {
+      // Listener registration failure fallback
+    }
+  }
+}
+
+export function resetNotificationListenersSetupForTesting(): void {
+  notificationListenersSetup = false
+}
+
 export async function sendLocalNotification(
   payload: NotificationPayload
 ): Promise<boolean> {
@@ -199,12 +282,30 @@ export async function sendLocalNotification(
   }
 
   try {
-    new window.Notification(payload.title, {
+    const notification = new window.Notification(payload.title, {
       body: payload.body,
       icon: payload.icon || '/vite.svg',
       tag: payload.tag,
       data: payload.data
     })
+
+    notification.onclick = () => {
+      try {
+        window.focus()
+      } catch {
+        // Window focus might not be permitted in all browser contexts
+      }
+      const targetRoute = getNotificationTargetRoute(payload.data)
+      if (targetRoute) {
+        window.location.hash = targetRoute
+      }
+      try {
+        notification.close()
+      } catch {
+        // Ignore close error
+      }
+    }
+
     return true
   } catch {
     return false

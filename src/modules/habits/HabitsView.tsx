@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import {
   format,
   addDays,
@@ -31,6 +31,8 @@ import {
   Trash2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useHashRoute } from '@/core/router/hashRouter'
+import { db } from '@/core/db'
 import type { Habit } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
 import {
@@ -48,6 +50,10 @@ import { HabitAnalytics } from './components/HabitAnalytics'
 import { HabitWeekOverview } from './components/HabitWeekOverview'
 
 export function HabitsView() {
+  const { queryParams, navigate } = useHashRoute()
+  const deepLinkedHabitId = queryParams.habitId
+  const processedDeepLinkRef = useRef<string | null>(null)
+
   const [selectedDate, setSelectedDate] = useState(() =>
     format(new Date(), 'yyyy-MM-dd')
   )
@@ -102,6 +108,97 @@ export function HabitsView() {
       }
     })
   }, [selectedDateObj])
+
+  const highlightHabitCard = (habitId: string) => {
+    let attempts = 0
+    const tryHighlight = () => {
+      const el = document.getElementById(`habit-card-${habitId}`)
+      if (el) {
+        el.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+        el.classList.add(
+          'ring-2',
+          'ring-primary',
+          'ring-offset-2',
+          'ring-offset-background',
+          'shadow-lg',
+          'shadow-primary/25',
+          'transition-all',
+          'duration-300'
+        )
+        setTimeout(() => {
+          el.classList.remove(
+            'ring-2',
+            'ring-primary',
+            'ring-offset-2',
+            'ring-offset-background',
+            'shadow-lg',
+            'shadow-primary/25'
+          )
+        }, 3000)
+      } else if (attempts < 10) {
+        attempts++
+        setTimeout(tryHighlight, 100)
+      }
+    }
+    setTimeout(tryHighlight, 50)
+  }
+
+  // Auto-open and focus target habit when habitId is present in route query params
+  useEffect(() => {
+    if (!deepLinkedHabitId) {
+      processedDeepLinkRef.current = null
+      return
+    }
+
+    if (processedDeepLinkRef.current === deepLinkedHabitId) {
+      return
+    }
+
+    let isMounted = true
+
+    const openDeepLinkedHabit = async () => {
+      // First check loaded habits list
+      const matched = habits.find((h) => h.id === deepLinkedHabitId)
+      if (matched) {
+        processedDeepLinkRef.current = deepLinkedHabitId
+        setHabitToEdit(matched)
+        setIsFormOpen(true)
+        setViewMode('tracker')
+        highlightHabitCard(deepLinkedHabitId)
+        return
+      }
+
+      // If not yet in list, fetch directly from db
+      try {
+        const directHabit = await db.habits.get(deepLinkedHabitId)
+        if (directHabit && isMounted) {
+          processedDeepLinkRef.current = deepLinkedHabitId
+          setHabitToEdit(directHabit)
+          setIsFormOpen(true)
+          setViewMode('tracker')
+          highlightHabitCard(deepLinkedHabitId)
+        }
+      } catch {
+        // Habit not found
+      }
+    }
+
+    openDeepLinkedHabit()
+
+    return () => {
+      isMounted = false
+    }
+  }, [deepLinkedHabitId, habits])
+
+  const handleFormOpenChange = (open: boolean) => {
+    setIsFormOpen(open)
+    if (!open) {
+      setHabitToEdit(null)
+      if (deepLinkedHabitId) {
+        navigate('/habits', undefined, true)
+      }
+    }
+  }
 
   const handlePrevDay = () => {
     setSelectedDate((prev) => format(subDays(parseISO(prev), 1), 'yyyy-MM-dd'))
@@ -590,7 +687,7 @@ export function HabitsView() {
 
       <HabitFormModal
         open={isFormOpen}
-        onOpenChange={setIsFormOpen}
+        onOpenChange={handleFormOpenChange}
         habitToEdit={habitToEdit}
       />
 

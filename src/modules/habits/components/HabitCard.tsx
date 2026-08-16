@@ -213,6 +213,8 @@ export function HabitCard({
 
   return (
     <Card
+      id={`habit-card-${habit.id}`}
+      data-habit-id={habit.id}
       className={cn(
         'rounded-2xl border bg-card transition-all hover:shadow-xs',
         habit.archived && 'opacity-60 bg-muted/30',

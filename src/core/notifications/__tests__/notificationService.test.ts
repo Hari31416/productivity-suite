@@ -9,12 +9,17 @@ import {
   computeTaskReminderDate,
   scheduleTaskReminder,
   cancelTaskReminder,
-  clearAllScheduledReminders
+  clearAllScheduledReminders,
+  getNotificationTargetRoute,
+  setupNotificationListeners,
+  resetNotificationListenersSetupForTesting
 } from '../notificationService'
 
 interface MockWindow {
   Notification?: unknown
   Capacitor?: unknown
+  location?: { hash: string }
+  focus?: () => void
 }
 
 describe('notificationService', () => {
@@ -214,6 +219,45 @@ describe('notificationService', () => {
       expect(mockNotificationConstructor).toHaveBeenCalled()
     })
 
+    it('wires onclick handler to trigger hash navigation for taskId or habitId', async () => {
+      let createdNotificationInstance: { onclick?: () => void; close?: () => void } | null = null
+      const mockClose = vi.fn()
+      const mockFocus = vi.fn()
+
+      const mockNotificationConstructor = vi.fn().mockImplementation(function (
+        this: { onclick?: () => void; close?: () => void }
+      ) {
+        this.close = mockClose
+        createdNotificationInstance = this
+        return this
+      })
+
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        location: { hash: '' },
+        focus: mockFocus,
+        Notification: Object.assign(mockNotificationConstructor, {
+          permission: 'granted',
+          requestPermission: vi.fn()
+        })
+      }
+
+      await sendLocalNotification({
+        title: 'Task Reminder',
+        data: { taskId: 't-123' }
+      })
+
+      expect(createdNotificationInstance).not.toBeNull()
+      if (createdNotificationInstance) {
+        ;(createdNotificationInstance as { onclick?: () => void }).onclick?.()
+        expect(
+          (globalThis as unknown as { window: { location: { hash: string } } })
+            .window.location.hash
+        ).toBe('/tasks?taskId=t-123')
+        expect(mockFocus).toHaveBeenCalled()
+        expect(mockClose).toHaveBeenCalled()
+      }
+    })
+
     it('schedules notification via Capacitor when running native', async () => {
       const mockSchedule = vi.fn().mockResolvedValue({})
       ;(globalThis as unknown as { window: MockWindow }).window = {
@@ -245,6 +289,70 @@ describe('notificationService', () => {
           }
         ]
       })
+    })
+  })
+
+  describe('getNotificationTargetRoute', () => {
+    it('resolves correct route for taskId, habitId, or custom route', () => {
+      expect(getNotificationTargetRoute()).toBeNull()
+      expect(getNotificationTargetRoute({})).toBeNull()
+      expect(getNotificationTargetRoute({ taskId: 'task-10' })).toBe(
+        '/tasks?taskId=task-10'
+      )
+      expect(getNotificationTargetRoute({ habitId: 'habit-20' })).toBe(
+        '/habits?habitId=habit-20'
+      )
+      expect(getNotificationTargetRoute({ route: '/notes?noteId=note-30' })).toBe(
+        '/notes?noteId=note-30'
+      )
+    })
+  })
+
+  describe('setupNotificationListeners', () => {
+    it('registers Capacitor localNotificationActionPerformed listener and navigates', () => {
+      resetNotificationListenersSetupForTesting()
+      let registeredListener: ((action: unknown) => void) | null = null
+      const mockRemove = vi.fn()
+      const mockAddListener = vi.fn().mockImplementation((event, listener) => {
+        if (event === 'localNotificationActionPerformed') {
+          registeredListener = listener
+        }
+        return { remove: mockRemove }
+      })
+
+      const onNavigate = vi.fn()
+
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Capacitor: {
+          isNativePlatform: () => true,
+          Plugins: {
+            LocalNotifications: {
+              addListener: mockAddListener
+            }
+          }
+        }
+      }
+
+      const cleanup = setupNotificationListeners(onNavigate)
+      expect(mockAddListener).toHaveBeenCalledWith(
+        'localNotificationActionPerformed',
+        expect.any(Function)
+      )
+
+      expect(registeredListener).not.toBeNull()
+      if (registeredListener) {
+        ;(registeredListener as (action: unknown) => void)({
+          notification: {
+            extra: { habitId: 'h-99' }
+          }
+        })
+        expect(onNavigate).toHaveBeenCalledWith('/habits?habitId=h-99')
+      }
+
+      if (typeof cleanup === 'function') {
+        cleanup()
+        expect(mockRemove).toHaveBeenCalled()
+      }
     })
   })
 

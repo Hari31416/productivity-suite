@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import {
   List,
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { useHashRoute } from '@/core/router/hashRouter'
 import type {
   Task,
   TaskViewMode,
@@ -30,6 +31,7 @@ import type {
 import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { parseSmartTaskInput } from '../utils/smartTaskParser'
+import { taskRepository } from '../repository/taskRepository'
 import { ProjectSidebar } from './ProjectSidebar'
 import { TaskListView } from './views/TaskListView'
 import { TaskCalendarView } from './views/TaskCalendarView'
@@ -37,6 +39,10 @@ import { TaskKanbanView } from './views/TaskKanbanView'
 import { TaskFormModal } from './TaskFormModal'
 
 export function TasksView() {
+  const { queryParams, navigate } = useHashRoute()
+  const deepLinkedTaskId = queryParams.taskId
+  const processedDeepLinkRef = useRef<string | null>(null)
+
   const [viewMode, setViewMode] = useState<TaskViewMode>('list')
   const [selectedSmartFilter, setSelectedSmartFilter] = useState<string>('all')
   const [selectedProjectId, setSelectedProjectId] = useState<string | undefined>(undefined)
@@ -84,6 +90,95 @@ export function TasksView() {
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(activeFilter)
   const { data: tags = [] } = useTaskTags()
   const createTaskMutation = useCreateTask()
+
+  const highlightTaskCard = (taskId: string) => {
+    let attempts = 0
+    const tryHighlight = () => {
+      const el = document.getElementById(`task-card-${taskId}`)
+      if (el) {
+        el.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+        el.classList.add(
+          'ring-2',
+          'ring-primary',
+          'ring-offset-2',
+          'ring-offset-background',
+          'shadow-lg',
+          'shadow-primary/25',
+          'transition-all',
+          'duration-300'
+        )
+        setTimeout(() => {
+          el.classList.remove(
+            'ring-2',
+            'ring-primary',
+            'ring-offset-2',
+            'ring-offset-background',
+            'shadow-lg',
+            'shadow-primary/25'
+          )
+        }, 3000)
+      } else if (attempts < 10) {
+        attempts++
+        setTimeout(tryHighlight, 100)
+      }
+    }
+    setTimeout(tryHighlight, 50)
+  }
+
+  // Auto-open and focus target task when taskId is present in route query params
+  useEffect(() => {
+    if (!deepLinkedTaskId) {
+      processedDeepLinkRef.current = null
+      return
+    }
+
+    if (processedDeepLinkRef.current === deepLinkedTaskId) {
+      return
+    }
+
+    let isMounted = true
+
+    const openDeepLinkedTask = async () => {
+      // First check in currently loaded tasks list
+      const matched = tasks.find((t) => t.id === deepLinkedTaskId)
+      if (matched) {
+        processedDeepLinkRef.current = deepLinkedTaskId
+        setTaskToEdit(matched)
+        setTaskModalOpen(true)
+        highlightTaskCard(deepLinkedTaskId)
+        return
+      }
+
+      // If not yet in list (or loading / filtered out), fetch directly from repository
+      try {
+        const directTask = await taskRepository.getTaskById(deepLinkedTaskId)
+        if (directTask && isMounted) {
+          processedDeepLinkRef.current = deepLinkedTaskId
+          setTaskToEdit(directTask)
+          setTaskModalOpen(true)
+          highlightTaskCard(deepLinkedTaskId)
+        }
+      } catch {
+        // Task not found
+      }
+    }
+
+    openDeepLinkedTask()
+
+    return () => {
+      isMounted = false
+    }
+  }, [deepLinkedTaskId, tasks])
+
+  const handleModalOpenChange = (open: boolean) => {
+    setTaskModalOpen(open)
+    if (!open) {
+      setTaskToEdit(null)
+      if (deepLinkedTaskId) {
+        navigate('/tasks', undefined, true)
+      }
+    }
+  }
 
   const handleSelectSmartFilter = (filterType: string) => {
     setSelectedSmartFilter(filterType)
@@ -693,7 +788,7 @@ export function TasksView() {
       {/* Task Modal */}
       <TaskFormModal
         open={taskModalOpen}
-        onOpenChange={setTaskModalOpen}
+        onOpenChange={handleModalOpenChange}
         taskToEdit={taskToEdit}
         defaultDueDate={defaultDueDate}
         defaultProjectId={selectedProjectId}

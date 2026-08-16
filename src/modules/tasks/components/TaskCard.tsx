@@ -197,6 +197,8 @@ export function TaskCard({
 
   return (
     <div
+      id={`task-card-${task.id}`}
+      data-task-id={task.id}
       draggable={draggable}
       onDragStart={(e) => onDragStart?.(e, task)}
       className={cn(
