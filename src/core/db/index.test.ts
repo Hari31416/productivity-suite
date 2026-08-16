@@ -127,4 +127,36 @@ describe('AppDatabase Dexie Stores', () => {
     expect(notesWithTag).toHaveLength(1)
     expect(notesWithTag[0].pinned).toBe(true)
   })
+
+  it('populates initial seed data on fresh database creation without duplicating on reopen', async () => {
+    const seedDbName = 'SeedTestDB_' + Date.now()
+    const freshDb = new AppDatabase(seedDbName)
+
+    // First open triggers populate
+    const initialProjects = await freshDb.projects.toArray()
+    const initialHabits = await freshDb.habits.toArray()
+    const initialTasks = await freshDb.tasks.toArray()
+    const initialNotes = await freshDb.notes.toArray()
+
+    expect(initialProjects.length).toBeGreaterThan(0)
+    expect(initialHabits.length).toBeGreaterThan(0)
+    expect(initialTasks.length).toBeGreaterThan(0)
+    expect(initialNotes.length).toBeGreaterThan(0)
+
+    const initialHabitsCount = initialHabits.length
+    const initialTasksCount = initialTasks.length
+
+    // Close and reopen the same database
+    freshDb.close()
+    const reopenedDb = new AppDatabase(seedDbName)
+
+    const reopenedHabitsCount = await reopenedDb.habits.count()
+    const reopenedTasksCount = await reopenedDb.tasks.count()
+
+    expect(reopenedHabitsCount).toBe(initialHabitsCount)
+    expect(reopenedTasksCount).toBe(initialTasksCount)
+
+    await reopenedDb.delete()
+  })
 })
+

@@ -2,6 +2,7 @@ import Dexie, { type Table } from 'dexie'
 import type { Habit, HabitLog } from '@/modules/habits/types'
 import type { Project, Task, Subtask } from '@/modules/tasks/types'
 import type { Note, Tag } from '@/modules/notes/types'
+import { seedInitialData } from './seed'
 
 export class AppDatabase extends Dexie {
   habits!: Table<Habit, string>
@@ -12,8 +13,8 @@ export class AppDatabase extends Dexie {
   notes!: Table<Note, string>
   tags!: Table<Tag, string>
 
-  constructor() {
-    super('LocalProductivitySuiteDB')
+  constructor(dbName = 'LocalProductivitySuiteDB') {
+    super(dbName)
     this.version(1).stores({
       habits: 'id, categoryId, frequencyType, archived, createdAt',
       habitLogs: 'id, habitId, date, timestamp, [habitId+date], completed',
@@ -26,6 +27,10 @@ export class AppDatabase extends Dexie {
 
     this.version(2).stores({
       tasks: 'id, projectId, status, priority, dueDate, isRecurring, recurringParentId, archived, createdAt'
+    })
+
+    this.on('populate', (tx) => {
+      seedInitialData(tx)
     })
   }
 }

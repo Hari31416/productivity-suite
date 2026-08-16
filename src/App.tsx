@@ -11,8 +11,10 @@ import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
 import { StartupModal } from '@/components/onboarding/StartupModal'
 import { useUserProfile } from '@/core/profile/useUserProfile'
 import { getGreeting } from '@/modules/dashboard/utils/dashboardScore'
+import { useQueryClient } from '@tanstack/react-query'
 
 export function App() {
+  const queryClient = useQueryClient()
   const [currentRoute, setCurrentRoute] = useState<string>(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
       const hashRoute = window.location.hash.replace('#', '')
@@ -30,8 +32,9 @@ export function App() {
   const [quickNoteModalOpen, setQuickNoteModalOpen] = useState(false)
 
   useEffect(() => {
-    initializeModules()
-  }, [])
+    initializeModules(queryClient)
+  }, [queryClient])
+
 
   useEffect(() => {
     const handleHashChange = () => {

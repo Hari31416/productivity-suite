@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/select'
 import { useTheme } from '@/core/theme/useTheme'
 import { db } from '@/core/db'
+import { seedInitialData } from '@/core/db/seed'
 import {
   exportBackup,
   validateBackupJson,
@@ -51,8 +52,10 @@ import {
   Globe,
   Bell,
   BellRing,
-  BellOff
+  BellOff,
+  Sparkles
 } from 'lucide-react'
+
 import {
   getNotificationPermission,
   requestNotificationPermission,
@@ -114,11 +117,28 @@ export function SettingsView() {
   const [selectedRestoreMode, setSelectedRestoreMode] = useState<RestoreMode>('replace')
   const [isRestoring, setIsRestoring] = useState(false)
   const [restoreSuccess, setRestoreSuccess] = useState<string | null>(null)
+  const [isSeeding, setIsSeeding] = useState(false)
 
   // Clear data safety modal
   const [clearDataModalOpen, setClearDataModalOpen] = useState(false)
   const [deleteConfirmationInput, setDeleteConfirmationInput] = useState('')
   const [isClearing, setIsClearing] = useState(false)
+
+  const handleSeedSampleData = async () => {
+    setIsSeeding(true)
+    setRestoreSuccess(null)
+    try {
+      await seedInitialData(db)
+      await queryClient.invalidateQueries()
+      await refreshStorageDiagnostics()
+      setRestoreSuccess('Showcase sample data loaded successfully.')
+    } catch {
+      setValidationError('Failed to load sample data.')
+    } finally {
+      setIsSeeding(false)
+    }
+  }
+
 
   // Fetch storage diagnostics & table counts
   const refreshStorageDiagnostics = async () => {
@@ -550,9 +570,28 @@ export function SettingsView() {
                 <span>Select Backup File</span>
               </Button>
             </div>
+
+            <div className="rounded-xl border p-4 flex flex-col justify-between space-y-3 bg-muted/20 sm:col-span-2">
+              <div>
+                <h4 className="text-sm font-semibold mb-1">Load Showcase Sample Data</h4>
+                <p className="text-xs text-muted-foreground">
+                  Populate starter habits (Hydration, Reading), tasks, projects, and guides to explore the app.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                onClick={handleSeedSampleData}
+                disabled={isSeeding}
+                className="gap-2 w-full text-xs font-semibold"
+              >
+                <Sparkles className="h-4 w-4 text-primary" />
+                <span>{isSeeding ? 'Loading Sample Data...' : 'Load Sample Data'}</span>
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
+
 
       {/* Storage Diagnostics & Database Inspector */}
       <Card>

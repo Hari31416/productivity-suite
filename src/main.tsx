@@ -6,9 +6,6 @@ import { initializeModules } from '@/modules/init'
 import App from '@/App'
 import '@/index.css'
 
-// Initialize modular registry before app mounts
-initializeModules()
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -17,6 +14,10 @@ const queryClient = new QueryClient({
     }
   }
 })
+
+// Initialize modular registry before app mounts
+initializeModules(queryClient)
+
 
 const rootElement = document.getElementById('root')
 

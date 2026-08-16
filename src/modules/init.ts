@@ -1,3 +1,4 @@
+import type { QueryClient } from '@tanstack/react-query'
 import { moduleRegistry } from '@/core/modules/registry'
 import { DashboardView } from './dashboard/DashboardView'
 import { HabitsView } from './habits/HabitsView'
@@ -9,8 +10,10 @@ import { NotesDashboardWidget } from './notes/components/NotesDashboardWidget'
 import { SettingsView } from './settings/SettingsView'
 import { taskRepository } from './tasks/repository/taskRepository'
 import { rescheduleAllTaskReminders } from '@/core/notifications/notificationService'
+import { db } from '@/core/db'
+import { ensureDatabaseSeeded } from '@/core/db/seed'
 
-export function initializeModules(): void {
+export function initializeModules(queryClient?: QueryClient): void {
   moduleRegistry.clear()
 
   moduleRegistry.register({
@@ -96,10 +99,15 @@ export function initializeModules(): void {
     ]
   })
 
-  // Background initialization of recurring tasks and task reminders
+  // Background initialization of database seeding, recurring tasks, and task reminders
   if (typeof window !== 'undefined') {
-    taskRepository
-      .syncRecurringInstances(30)
+    ensureDatabaseSeeded(db)
+      .then((didSeed) => {
+        if (didSeed && queryClient) {
+          queryClient.invalidateQueries()
+        }
+      })
+      .then(() => taskRepository.syncRecurringInstances(30))
       .then(() => taskRepository.getAllTasks({ includeArchived: false }))
       .then((tasks) => rescheduleAllTaskReminders(tasks))
       .catch(() => {
@@ -107,3 +115,5 @@ export function initializeModules(): void {
       })
   }
 }
+
+
