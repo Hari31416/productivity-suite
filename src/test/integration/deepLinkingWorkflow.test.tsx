@@ -70,7 +70,7 @@ describe('Deep Linking and Action Routing Integration Workflow', () => {
     })
   })
 
-  it('automatically opens habit edit modal when habitId is in route hash', async () => {
+  it('automatically opens dedicated habit detail view when habitId is in route hash', async () => {
     const habit = await habitRepository.createHabit({
       title: 'Morning Yoga Routine',
       categoryId: 'fitness',
@@ -90,21 +90,18 @@ describe('Deep Linking and Action Routing Integration Workflow', () => {
       </QueryClientProvider>
     )
 
-    // Verify modal is automatically opened with habit details
+    // Verify dedicated Habit Details View is rendered
     await waitFor(() => {
-      expect(screen.getByRole('dialog')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('Morning Yoga Routine')).toBeInTheDocument()
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Morning Yoga Routine' })
+      ).toBeInTheDocument()
+      expect(screen.getByText('Current Streak')).toBeInTheDocument()
+      expect(screen.getByText('Best Streak')).toBeInTheDocument()
     })
 
-    // Verify card DOM element has the deep link id
-    await waitFor(() => {
-      const habitCard = document.getElementById(`habit-card-${habit.id}`)
-      expect(habitCard).toBeInTheDocument()
-    })
-
-    // Close the dialog and verify hash is reset
-    const cancelBtn = screen.getByRole('button', { name: /cancel/i })
-    fireEvent.click(cancelBtn)
+    // Click back button and verify hash returns to #/habits
+    const backBtn = screen.getByRole('button', { name: /back to habits/i })
+    fireEvent.click(backBtn)
 
     await waitFor(() => {
       expect(window.location.hash).toBe('#/habits')

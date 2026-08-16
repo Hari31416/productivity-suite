@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo } from 'react'
 import { format, addDays, subDays, parseISO, isToday as checkIsToday, isSameDay } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,11 +25,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
-import { db } from '@/core/db'
 import type { Habit } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
 import {
   useHabits,
+  useHabit,
   useHabitLogs,
   useHabitRangeLogs,
   useArchiveHabit,
@@ -38,6 +38,7 @@ import {
 } from './hooks/useHabits'
 import { isHabitScheduledOnDate, calculateStreak } from './utils/streakCalculator'
 import { HabitCard } from './components/HabitCard'
+import { HabitDetailView } from './components/HabitDetailView'
 import { HabitFormModal } from './components/HabitFormModal'
 import { HabitAnalytics } from './components/HabitAnalytics'
 import { HabitWeekOverview } from './components/HabitWeekOverview'
@@ -45,7 +46,6 @@ import { HabitWeekOverview } from './components/HabitWeekOverview'
 export function HabitsView() {
   const { queryParams, navigate } = useHashRoute()
   const deepLinkedHabitId = queryParams.habitId
-  const processedDeepLinkRef = useRef<string | null>(null)
 
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), 'yyyy-MM-dd'))
   const [viewMode, setViewMode] = useState<'tracker' | 'week' | 'analytics'>('tracker')
@@ -57,11 +57,13 @@ export function HabitsView() {
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
   const [quickTitle, setQuickTitle] = useState('')
   const [quickCategory, setQuickCategory] = useState(DEFAULT_HABIT_CATEGORIES[0].id)
-  const [sortBy, setSortBy] = useState<'default' | 'streak' | 'name' | 'category'>('default')
-
+  const [sortBy, setSortBy] = useState<'default' | 'streak' | 'name' | 'category' | 'pinned'>(
+    'default'
+  )
   const [showQuickAdd, setShowQuickAdd] = useState(false)
 
   const { data: habits = [], isLoading: habitsLoading } = useHabits(showArchived)
+  const { data: singleHabit, isLoading: singleHabitLoading } = useHabit(deepLinkedHabitId || '')
   const { data: currentLogs = [] } = useHabitLogs(selectedDate)
 
   const rangeStart = useMemo(() => {
@@ -100,96 +102,11 @@ export function HabitsView() {
     })
   }, [selectedDateObj])
 
-  const highlightHabitCard = (habitId: string) => {
-    let attempts = 0
-    const tryHighlight = () => {
-      const el = document.getElementById(`habit-card-${habitId}`)
-      if (el) {
-        el.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
-        el.classList.add(
-          'ring-2',
-          'ring-primary',
-          'ring-offset-2',
-          'ring-offset-background',
-          'shadow-lg',
-          'shadow-primary/25',
-          'transition-all',
-          'duration-300'
-        )
-        setTimeout(() => {
-          el.classList.remove(
-            'ring-2',
-            'ring-primary',
-            'ring-offset-2',
-            'ring-offset-background',
-            'shadow-lg',
-            'shadow-primary/25'
-          )
-        }, 3000)
-      } else if (attempts < 10) {
-        attempts++
-        setTimeout(tryHighlight, 100)
-      }
-    }
-    setTimeout(tryHighlight, 50)
-  }
-
-  // Auto-open and focus target habit when habitId is present in route query params
-  useEffect(() => {
-    if (!deepLinkedHabitId) {
-      processedDeepLinkRef.current = null
-      return
-    }
-
-    if (processedDeepLinkRef.current === deepLinkedHabitId) {
-      return
-    }
-
-    let isMounted = true
-
-    const openDeepLinkedHabit = async () => {
-      // First check loaded habits list
-      const matched = habits.find((h) => h.id === deepLinkedHabitId)
-      if (matched) {
-        processedDeepLinkRef.current = deepLinkedHabitId
-        setHabitToEdit(matched)
-        setIsFormOpen(true)
-        setViewMode('tracker')
-        highlightHabitCard(deepLinkedHabitId)
-        return
-      }
-
-      // If not yet in list, fetch directly from db
-      try {
-        const directHabit = await db.habits.get(deepLinkedHabitId)
-        if (directHabit && isMounted) {
-          processedDeepLinkRef.current = deepLinkedHabitId
-          setHabitToEdit(directHabit)
-          setIsFormOpen(true)
-          setViewMode('tracker')
-          highlightHabitCard(deepLinkedHabitId)
-        }
-      } catch {
-        // Habit not found
-      }
-    }
-
-    openDeepLinkedHabit()
-
-    return () => {
-      isMounted = false
-    }
-  }, [deepLinkedHabitId, habits])
-
-  const handleFormOpenChange = (open: boolean) => {
-    setIsFormOpen(open)
-    if (!open) {
-      setHabitToEdit(null)
-      if (deepLinkedHabitId) {
-        navigate('/habits', undefined, true)
-      }
-    }
-  }
+  // Determine active detail habit if deep-linked or selected
+  const activeDetailHabit = useMemo(() => {
+    if (!deepLinkedHabitId) return null
+    return habits.find((h) => h.id === deepLinkedHabitId) || singleHabit || null
+  }, [deepLinkedHabitId, habits, singleHabit])
 
   const handlePrevDay = () => {
     setSelectedDate((prev) => format(subDays(parseISO(prev), 1), 'yyyy-MM-dd'))
@@ -272,6 +189,9 @@ export function HabitsView() {
       showArchived ? true : isHabitScheduledOnDate(h, selectedDate)
     )
 
+    if (sortBy === 'pinned') {
+      return [...list].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
+    }
     if (sortBy === 'name') {
       return [...list].sort((a, b) => a.title.localeCompare(b.title))
     }
@@ -285,12 +205,50 @@ export function HabitsView() {
     if (sortBy === 'category') {
       return [...list].sort((a, b) => (a.categoryId || '').localeCompare(b.categoryId || ''))
     }
-    return list
+
+    // Default order: Pinned habits first, then by creation
+    return [...list].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
   }, [filteredHabits, selectedDate, showArchived, sortBy, allRangeLogs])
+
+  // Dedicated Habit Details View Target
+  if (deepLinkedHabitId) {
+    if (activeDetailHabit) {
+      return (
+        <HabitDetailView
+          habit={activeDetailHabit}
+          logs={currentLogs}
+          allLogs={allRangeLogs}
+          selectedDate={selectedDate}
+          onBack={() => {
+            navigate('/habits', undefined, true)
+          }}
+        />
+      )
+    }
+
+    if (singleHabitLoading || habitsLoading) {
+      return (
+        <div className="py-20 text-center text-sm text-muted-foreground animate-pulse">
+          Loading habit details...
+        </div>
+      )
+    }
+
+    // If habit wasn't found
+    return (
+      <div className="space-y-4 py-12 text-center">
+        <p className="text-sm text-muted-foreground">Habit not found or may have been deleted.</p>
+        <Button variant="outline" size="sm" onClick={() => navigate('/habits', undefined, true)}>
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          <span>Return to Habits</span>
+        </Button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Top Controls: Segmented Tabs & Actions (No duplicate title banner) */}
+      {/* Top Controls: Segmented Tabs & Actions */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="inline-flex rounded-xl border p-1 bg-muted/50 text-xs w-full sm:w-auto shadow-xs">
           <Button
@@ -354,7 +312,7 @@ export function HabitsView() {
             </div>
           )}
 
-          {/* Quick-Add Bar (Collapsible on mobile) */}
+          {/* Quick-Add Bar */}
           <div className="space-y-1.5">
             {!showQuickAdd && (
               <Button
@@ -479,7 +437,7 @@ export function HabitsView() {
             </div>
           </div>
 
-          {/* Search, Sort & Filter Toolbar (Single Row across all screen sizes) */}
+          {/* Search, Sort & Filter Toolbar */}
           <div className="flex items-center gap-2">
             <div className="relative flex-1 min-w-0">
               <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
@@ -497,7 +455,7 @@ export function HabitsView() {
               className="h-8 rounded-md border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0 max-w-[110px] sm:max-w-none"
               aria-label="Sort habits"
             >
-              <option value="default">Default Order</option>
+              <option value="default">Default (Pinned)</option>
               <option value="streak">Highest Streak</option>
               <option value="name">Name (A-Z)</option>
               <option value="category">Category</option>
@@ -672,11 +630,7 @@ export function HabitsView() {
         <HabitAnalytics habits={habits} logs={allRangeLogs} />
       )}
 
-      <HabitFormModal
-        open={isFormOpen}
-        onOpenChange={handleFormOpenChange}
-        habitToEdit={habitToEdit}
-      />
+      <HabitFormModal open={isFormOpen} onOpenChange={setIsFormOpen} habitToEdit={habitToEdit} />
 
       {/* In-App Habit Delete Confirmation Dialog */}
       <Dialog
