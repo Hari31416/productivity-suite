@@ -386,69 +386,78 @@ export function HabitsView() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-              <Button
-                variant={selectedCategory === 'all' ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 text-xs shrink-0"
-                onClick={() => setSelectedCategory('all')}
-              >
-                All Categories
-              </Button>
-              {DEFAULT_HABIT_CATEGORIES.map((cat) => (
+          {/* Search, Sort & Filter Toolbar (Single Row across all screen sizes) */}
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 min-w-0">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search habits..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 pl-8 text-xs w-full"
+              />
+            </div>
+
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+              className="h-8 rounded-md border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring shrink-0 max-w-[110px] sm:max-w-none"
+              aria-label="Sort habits"
+            >
+              <option value="default">Default Order</option>
+              <option value="streak">Highest Streak</option>
+              <option value="name">Name (A-Z)</option>
+              <option value="category">Category</option>
+            </select>
+
+            <Button
+              variant={showArchived ? 'secondary' : 'outline'}
+              size="sm"
+              className="h-8 text-xs shrink-0 gap-1 px-2.5"
+              onClick={() => setShowArchived(!showArchived)}
+              title="Toggle archived habits"
+            >
+              <Archive className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Archived</span>
+            </Button>
+          </div>
+
+
+          {/* Full-width Scrollable Category Ribbon */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
+            <Button
+              variant={selectedCategory === 'all' ? 'default' : 'outline'}
+              size="sm"
+              className="h-7 text-xs shrink-0 rounded-lg px-2.5 font-medium"
+              onClick={() => setSelectedCategory('all')}
+            >
+              All Categories
+            </Button>
+            {DEFAULT_HABIT_CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id
+              return (
                 <Button
                   key={cat.id}
-                  variant={selectedCategory === cat.id ? 'default' : 'outline'}
+                  variant={isSelected ? 'default' : 'outline'}
                   size="sm"
-                  className="h-8 text-xs shrink-0 gap-1.5"
+                  className="h-7 text-xs shrink-0 gap-1.5 rounded-lg px-2.5 font-medium transition-all"
+                  style={
+                    isSelected
+                      ? { backgroundColor: cat.color, color: '#ffffff', borderColor: cat.color }
+                      : undefined
+                  }
                   onClick={() => setSelectedCategory(cat.id)}
                 >
                   <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: cat.color }}
+                    className="h-2 w-2 rounded-full shrink-0"
+                    style={{ backgroundColor: isSelected ? '#ffffff' : cat.color }}
                   />
                   <span>{cat.name}</span>
                 </Button>
-              ))}
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap">
-              <div className="relative flex-1 sm:w-48">
-                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-                <Input
-                  placeholder="Search habits..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="h-8 pl-8 text-xs"
-                />
-              </div>
-
-              {/* Sort selector */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="h-8 rounded-md border bg-background px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                aria-label="Sort habits"
-              >
-                <option value="default">Default Order</option>
-                <option value="streak">Highest Streak</option>
-                <option value="name">Name (A-Z)</option>
-                <option value="category">Category</option>
-              </select>
-
-              <Button
-                variant={showArchived ? 'secondary' : 'outline'}
-                size="sm"
-                className="h-8 text-xs shrink-0 gap-1"
-                onClick={() => setShowArchived(!showArchived)}
-                title="Toggle archived habits"
-              >
-                <Archive className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">Archived</span>
-              </Button>
-            </div>
+              )
+            })}
           </div>
+
 
           {habitsLoading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">

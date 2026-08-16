@@ -244,11 +244,12 @@ export function HabitCard({
               >
                 {habit.title}
               </h3>
-              {category && (
+              {category ? (
                 <span
-                  className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.2 rounded-full shrink-0"
+                  className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 border"
                   style={{
                     backgroundColor: `${category.color}15`,
+                    borderColor: `${category.color}35`,
                     color: category.color
                   }}
                   title={category.name}
@@ -259,7 +260,13 @@ export function HabitCard({
                   />
                   <span>{category.name}</span>
                 </span>
-              )}
+              ) : habit.categoryId ? (
+                <span
+                  className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md shrink-0 border border-muted bg-muted/40 text-muted-foreground capitalize"
+                >
+                  <span>{habit.categoryId}</span>
+                </span>
+              ) : null}
             </div>
 
             {/* Subtitle / Counter / Status */}
@@ -302,8 +309,8 @@ export function HabitCard({
                       <span>
                         {currentNumericValue} / {habit.targetValue || 1} {habit.unit || 'units'}
                       </span>
-                        <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
-                      </button>
+                      <Pencil className="h-2.5 w-2.5 text-muted-foreground/60 group-hover:text-primary transition-colors shrink-0" />
+                    </button>
                   )}
 
                   {/* Stepper & Quick Add buttons */}
@@ -522,40 +529,40 @@ export function HabitCard({
         {/* Sub-day Interval Slots if applicable */}
         {(habit.frequencyType === 'subday_interval' ||
           habit.frequencyType === 'times_per_day') && (
-          <div className="space-y-2 pt-2 mt-2 border-t">
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>Interval Progress</span>
-              <span>
-                {slots.filter((slot) => {
+            <div className="space-y-2 pt-2 mt-2 border-t">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>Interval Progress</span>
+                <span>
+                  {slots.filter((slot) => {
+                    const log = logs.find((l) => l.intervalIndex === slot.index)
+                    return log ? log.completed : false
+                  }).length}{' '}
+                  / {slots.length} completed
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {slots.map((slot) => {
                   const log = logs.find((l) => l.intervalIndex === slot.index)
-                  return log ? log.completed : false
-                }).length}{' '}
-                / {slots.length} completed
-              </span>
+                  const slotCompleted = log ? log.completed : false
+                  return (
+                    <Button
+                      key={slot.index}
+                      type="button"
+                      size="sm"
+                      variant={slotCompleted ? 'default' : 'outline'}
+                      onClick={() => handleToggleSlot(slot.index)}
+                      className={cn(
+                        'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
+                        slotCompleted && 'bg-primary text-primary-foreground font-semibold'
+                      )}
+                    >
+                      {slotCompleted && <Check className="h-3 w-3" />}
+                      <span>{slot.label}</span>
+                    </Button>
+                  )
+                })}
+              </div>
             </div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {slots.map((slot) => {
-                const log = logs.find((l) => l.intervalIndex === slot.index)
-                const slotCompleted = log ? log.completed : false
-                return (
-                  <Button
-                    key={slot.index}
-                    type="button"
-                    size="sm"
-                    variant={slotCompleted ? 'default' : 'outline'}
-                    onClick={() => handleToggleSlot(slot.index)}
-                    className={cn(
-                      'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
-                      slotCompleted && 'bg-primary text-primary-foreground font-semibold'
-                    )}
-                  >
-                    {slotCompleted && <Check className="h-3 w-3" />}
-                    <span>{slot.label}</span>
-                  </Button>
-                )
-              })}
-            </div>
-          </div>
           )}
       </CardContent>
     </Card>

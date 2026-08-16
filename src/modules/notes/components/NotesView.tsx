@@ -305,13 +305,13 @@ export function NotesView() {
       {/* Tag Chips Filters */}
       {tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5">
-          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground mr-1">
             <TagIcon className="h-3 w-3" />
             Tags:
           </span>
           <Badge
             variant={selectedTag === null ? 'default' : 'outline'}
-            className="cursor-pointer text-xs font-normal"
+            className="cursor-pointer text-xs font-normal px-2.5 py-0.5"
             onClick={() => setSelectedTag(null)}
           >
             All
@@ -321,21 +321,26 @@ export function NotesView() {
             return (
               <Badge
                 key={tag.id}
-                variant={isSelected ? 'default' : 'secondary'}
-                className="cursor-pointer text-xs font-normal transition-colors"
+                variant={isSelected ? 'default' : 'outline'}
+                className="cursor-pointer text-xs font-normal transition-all gap-1.5 px-2.5 py-0.5"
                 style={
                   isSelected
-                    ? { backgroundColor: tag.color, color: '#ffffff' }
-                    : { borderLeftColor: tag.color, borderLeftWidth: '3px' }
+                    ? { backgroundColor: tag.color, color: '#ffffff', borderColor: tag.color }
+                    : undefined
                 }
                 onClick={() => setSelectedTag(isSelected ? null : tag.name)}
               >
-                #{tag.name}
+                <span
+                  className="h-1.5 w-1.5 rounded-full shrink-0"
+                  style={{ backgroundColor: isSelected ? '#ffffff' : tag.color }}
+                />
+                <span>#{tag.name}</span>
               </Badge>
             )
           })}
         </div>
       )}
+
 
       {/* Loading State */}
       {isLoading && (

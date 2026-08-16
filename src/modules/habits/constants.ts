@@ -28,6 +28,9 @@ export const DEFAULT_HABIT_CATEGORIES: HabitCategory[] = [
   { id: 'fitness', name: 'Fitness & Sport', color: '#f97316' },
   { id: 'mindfulness', name: 'Mindfulness', color: '#8b5cf6' },
   { id: 'learning', name: 'Learning & Growth', color: '#ec4899' },
+  { id: 'creativity', name: 'Creativity & Arts', color: '#06b6d4' },
+  { id: 'finance', name: 'Finance & Money', color: '#eab308' },
+  { id: 'lifestyle', name: 'Lifestyle & Social', color: '#14b8a6' },
   { id: 'general', name: 'General Routine', color: '#64748b' }
 ]
 

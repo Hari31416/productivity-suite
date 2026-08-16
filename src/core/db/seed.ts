@@ -29,6 +29,7 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       title: 'Hydration',
       description: 'Track daily water intake',
       color: '#06B6D4',
+      categoryId: 'health',
       frequencyType: 'daily',
       targetType: 'numeric',
       targetValue: 2000,
@@ -42,6 +43,7 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       title: 'Mindful Reading',
       description: 'Read a book or article for 15 minutes',
       color: '#8B5CF6',
+      categoryId: 'learning',
       frequencyType: 'daily',
       targetType: 'boolean',
       createdAt: now,
@@ -49,6 +51,7 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       archived: false
     }
   ]
+
 
   const defaultTasks: Task[] = [
     {
@@ -158,11 +161,6 @@ export async function ensureDatabaseSeeded(database: AppDatabase): Promise<boole
     return false
   }
 
-  const alreadySeeded = localStorage.getItem(SEED_STORAGE_KEY)
-  if (alreadySeeded) {
-    return false
-  }
-
   try {
     const [habitCount, taskCount] = await Promise.all([
       database.habits.count(),
@@ -173,6 +171,18 @@ export async function ensureDatabaseSeeded(database: AppDatabase): Promise<boole
     if (habitCount === 0 && taskCount === 0) {
       await seedInitialData(database)
       didSeed = true
+    } else {
+      // Backfill categoryId on existing seed habits if missing
+      const hydration = await database.habits.get('habit_drink_water')
+      if (hydration && !hydration.categoryId) {
+        await database.habits.update('habit_drink_water', { categoryId: 'health' })
+        didSeed = true
+      }
+      const reading = await database.habits.get('habit_daily_reading')
+      if (reading && !reading.categoryId) {
+        await database.habits.update('habit_daily_reading', { categoryId: 'learning' })
+        didSeed = true
+      }
     }
     localStorage.setItem(SEED_STORAGE_KEY, 'true')
     return didSeed
@@ -180,4 +190,5 @@ export async function ensureDatabaseSeeded(database: AppDatabase): Promise<boole
     return false
   }
 }
+
 

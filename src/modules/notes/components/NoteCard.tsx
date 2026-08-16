@@ -242,7 +242,7 @@ export function NoteCard({
     <div
       onClick={() => onEdit(note)}
       className={cn(
-        'group relative flex h-60 cursor-pointer flex-col justify-between rounded-xl border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md',
+        'group relative flex min-h-[230px] h-full cursor-pointer flex-col justify-between rounded-xl border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-md',
         note.pinned && 'border-primary/40 bg-accent/15'
       )}
       style={
@@ -254,14 +254,14 @@ export function NoteCard({
           : undefined
       }
     >
-      <div>
+      <div className="space-y-2">
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-1.5 overflow-hidden">
+          <div className="flex items-center gap-1.5 min-w-0">
             {note.pinned && (
               <Pin className="h-3.5 w-3.5 shrink-0 fill-primary text-primary" />
             )}
-            <h3 className="truncate font-semibold tracking-tight text-foreground">
+            <h3 className="truncate font-semibold tracking-tight text-foreground text-sm sm:text-base">
               {note.title || 'Untitled Note'}
             </h3>
           </div>
@@ -272,7 +272,7 @@ export function NoteCard({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 w-7 p-0 opacity-70 hover:opacity-100"
+                  className="h-7 w-7 p-0 opacity-70 hover:opacity-100 shrink-0"
                 >
                   <MoreVertical className="h-3.5 w-3.5" />
                 </Button>
@@ -322,21 +322,21 @@ export function NoteCard({
 
         {/* Project badge if available */}
         {projectName && (
-          <div className="mt-1.5">
-            <Badge variant="outline" className="text-[10px]">
+          <div>
+            <Badge variant="outline" className="text-[10px] px-1.5 py-0">
               {projectName}
             </Badge>
           </div>
         )}
 
         {/* Markdown Content Preview / Search Match */}
-        <div className="mt-2.5 flex-1 max-h-24 overflow-hidden text-xs text-muted-foreground pointer-events-none prose-sm relative">
+        <div className="max-h-24 overflow-hidden text-xs text-muted-foreground pointer-events-none prose-sm relative">
           {searchQuery ? (
-            <p className="line-clamp-4 leading-relaxed">{snippet}</p>
+            <p className="line-clamp-3 leading-relaxed">{snippet}</p>
           ) : note.content ? (
             <MarkdownRenderer
               content={note.content}
-              className="text-xs space-y-1 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-semibold [&_h3]:text-xs [&_h3]:font-semibold [&_p]:text-xs [&_p]:leading-relaxed [&_ul]:my-0.5 [&_li]:text-xs [&_code]:text-[11px] [&_blockquote]:text-xs line-clamp-4"
+              className="text-xs space-y-1 [&_h1]:text-sm [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-semibold [&_h3]:text-xs [&_h3]:font-semibold [&_p]:text-xs [&_p]:leading-relaxed [&_ul]:my-0.5 [&_li]:text-xs [&_code]:text-[11px] [&_blockquote]:text-xs line-clamp-3"
             />
           ) : (
             <span className="italic text-muted-foreground/60">Empty note</span>
@@ -346,10 +346,10 @@ export function NoteCard({
       </div>
 
       {/* Footer */}
-      <div className="mt-4 border-t pt-3">
+      <div className="mt-3 border-t pt-2.5 space-y-2">
         {/* Tags */}
         {note.tags && note.tags.length > 0 && (
-          <div className="mb-2 flex flex-wrap items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             {note.tags.slice(0, 3).map((tag) => (
               <Badge
                 key={tag}
@@ -382,3 +382,4 @@ export function NoteCard({
     </div>
   )
 }
+
