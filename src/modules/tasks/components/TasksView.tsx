@@ -183,69 +183,113 @@ export function TasksView() {
     setSelectedSmartFilter('all')
   }
 
+  const smartFilterCounts = useMemo(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd')
+    const activeTasks = tasks.filter((t) => !t.archived)
+    return {
+      all: activeTasks.length,
+      today: activeTasks.filter((t) => t.dueDate === todayStr && t.status !== 'done').length,
+      upcoming: activeTasks.filter((t) => t.dueDate && t.dueDate > todayStr && t.status !== 'done').length,
+      overdue: activeTasks.filter((t) => t.dueDate && t.dueDate < todayStr && t.status !== 'done').length
+    }
+  }, [tasks])
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="hidden sm:block">
-          <h2 className="text-xl font-bold tracking-tight">Tasks & Projects</h2>
-          <p className="text-xs text-muted-foreground">
-            Manage your projects, deadlines, priorities, and subtask checklists.
-          </p>
+      {/* Top Header Bar & View Switcher (No duplicate title banner) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* View Mode Toggle */}
+        <div className="inline-flex rounded-xl border p-1 bg-muted/50 text-xs w-full sm:w-auto shadow-xs">
+          <button
+            type="button"
+            onClick={() => setViewMode('list')}
+            className={cn(
+              'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors flex-1 sm:flex-initial text-xs',
+              viewMode === 'list'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <List className="h-4 w-4" />
+            <span>List</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('calendar')}
+            className={cn(
+              'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors flex-1 sm:flex-initial text-xs',
+              viewMode === 'calendar'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <CalendarIcon className="h-4 w-4" />
+            <span>Calendar</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('kanban')}
+            className={cn(
+              'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-colors flex-1 sm:flex-initial text-xs',
+              viewMode === 'kanban'
+                ? 'bg-background text-foreground shadow-xs'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            <Kanban className="h-4 w-4" />
+            <span>Kanban</span>
+          </button>
         </div>
 
-        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
-          {/* View Mode Toggle */}
-          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs w-full sm:w-auto justify-between sm:justify-start">
-            <button
-              type="button"
-              onClick={() => setViewMode('list')}
-              className={cn(
-                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
-                viewMode === 'list'
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
+        {/* Quick Filter Chips (Mockup style) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <Button
+            variant={selectedSmartFilter === 'all' && !selectedProjectId ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSelectSmartFilter('all')}
+            className="h-8 text-xs rounded-full px-3 gap-1.5 font-medium shrink-0"
+          >
+            <span>All</span>
+            <span className="opacity-70 text-[11px]">{smartFilterCounts.all}</span>
+          </Button>
+          <Button
+            variant={selectedSmartFilter === 'today' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSelectSmartFilter('today')}
+            className="h-8 text-xs rounded-full px-3 gap-1.5 font-medium shrink-0"
+          >
+            <span>Today</span>
+            <span className="opacity-70 text-[11px]">{smartFilterCounts.today}</span>
+          </Button>
+          <Button
+            variant={selectedSmartFilter === 'upcoming' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleSelectSmartFilter('upcoming')}
+            className="h-8 text-xs rounded-full px-3 gap-1.5 font-medium shrink-0"
+          >
+            <span>Upcoming</span>
+            <span className="opacity-70 text-[11px]">{smartFilterCounts.upcoming}</span>
+          </Button>
+          {smartFilterCounts.overdue > 0 && (
+            <Button
+              variant={selectedSmartFilter === 'overdue' ? 'destructive' : 'outline'}
+              size="sm"
+              onClick={() => handleSelectSmartFilter('overdue')}
+              className="h-8 text-xs rounded-full px-3 gap-1.5 font-medium shrink-0"
             >
-              <List className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs">List</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('calendar')}
-              className={cn(
-                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
-                viewMode === 'calendar'
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <CalendarIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs">Calendar</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setViewMode('kanban')}
-              className={cn(
-                'flex items-center justify-center gap-1 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-md font-medium transition-colors flex-1 sm:flex-initial',
-                viewMode === 'kanban'
-                  ? 'bg-background text-foreground shadow-xs'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Kanban className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="text-xs">Kanban</span>
-            </button>
-          </div>
+              <span>Overdue</span>
+              <span className="opacity-80 text-[11px]">{smartFilterCounts.overdue}</span>
+            </Button>
+          )}
 
           <Button
             size="sm"
             onClick={() => handleOpenNewTask()}
-            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
+            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3.5 rounded-xl font-medium ml-auto"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             <span>New Task</span>
           </Button>
         </div>

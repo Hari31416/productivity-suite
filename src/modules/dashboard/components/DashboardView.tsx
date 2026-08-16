@@ -12,7 +12,8 @@ import {
   Calendar,
   Sparkles,
   Info,
-  Check
+  Check,
+  Circle
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -26,8 +27,8 @@ import {
   DialogDescription
 } from '@/components/ui/dialog'
 import { moduleRegistry } from '@/core/modules/registry'
-import { useHabits, useHabitLogs } from '@/modules/habits/hooks/useHabits'
-import { useTasks } from '@/modules/tasks/hooks/useTasks'
+import { useHabits, useHabitLogs, useToggleHabitLog } from '@/modules/habits/hooks/useHabits'
+import { useTasks, useUpdateTaskStatus } from '@/modules/tasks/hooks/useTasks'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useNotes } from '@/modules/notes/hooks/useNotes'
 import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
@@ -39,11 +40,12 @@ import {
   getGreeting,
   getProductivityStatus
 } from '../utils/dashboardScore'
+import { cn } from '@/lib/utils'
 
 export function DashboardView() {
   const today = new Date()
   const todayStr = format(today, 'yyyy-MM-dd')
-  const formattedDate = format(today, 'EEEE, MMMM d, yyyy')
+  const formattedDate = format(today, 'EEEE, MMM d')
   const greeting = getGreeting(today)
 
   // Modal states
@@ -58,6 +60,10 @@ export function DashboardView() {
   const { data: tasks = [] } = useTasks({ includeArchived: false })
   const { data: projects = [] } = useProjects(false)
   const { data: notes = [] } = useNotes({ archived: false })
+
+  // Mutations
+  const toggleHabitMutation = useToggleHabitLog()
+  const updateTaskStatusMutation = useUpdateTaskStatus()
 
   // Habit metrics
   const { todayHabits, completedHabitsCount, maxStreak, completedHabitsList } = useMemo(() => {
@@ -87,16 +93,18 @@ export function DashboardView() {
   }, [habits, todayLogs, todayStr])
 
   // Task metrics
-  const { todayTasks, completedTasksCount, urgentTasksCount, completedTasksList } = useMemo(() => {
+  const { todayTasks, completedTasksCount, urgentTasksCount, completedTasksList, upcomingTasks } = useMemo(() => {
     const dueToday = tasks.filter((t) => t.dueDate === todayStr)
     const completedList = tasks.filter((t) => t.status === 'done' && (t.dueDate === todayStr || t.updatedAt?.startsWith(todayStr)))
     const urgent = tasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length
+    const upcoming = tasks.filter((t) => t.status !== 'done').slice(0, 5)
 
     return {
       todayTasks: dueToday,
       completedTasksCount: dueToday.filter((t) => t.status === 'done').length,
       completedTasksList: completedList,
-      urgentTasksCount: urgent
+      urgentTasksCount: urgent,
+      upcomingTasks: upcoming
     }
   }, [tasks, todayStr])
 
@@ -120,119 +128,311 @@ export function DashboardView() {
     ? Math.round((completedTasksCount / todayTasks.length) * 100)
     : 100
 
+  // Circular Progress calculations
+  const ringRadius = 38
+  const ringCircumference = 2 * Math.PI * ringRadius
+  const ringOffset = ringCircumference - (score / 100) * ringCircumference
+
   // Registered widgets from modules
   const registeredWidgets = useMemo(() => {
     const modules = moduleRegistry.getAll()
     return modules.filter((m) => m.dashboardWidget)
   }, [])
 
+  const handleToggleHabit = (habitId: string) => {
+    toggleHabitMutation.mutate({
+      habitId,
+      date: todayStr
+    })
+  }
+
+  const handleToggleTask = (taskId: string, currentStatus: string) => {
+    updateTaskStatusMutation.mutate({
+      id: taskId,
+      status: currentStatus === 'done' ? 'todo' : 'done'
+    })
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 pb-6">
-      {/* Header Banner & Score */}
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl border bg-gradient-to-br from-card via-card to-primary/5 p-4 sm:p-6 shadow-xs">
-        <div className="flex flex-col gap-4 sm:gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Calendar className="h-3.5 w-3.5" />
-              <span>{formattedDate}</span>
-            </div>
-            <h1 className="text-xl font-bold tracking-tight sm:text-3xl text-foreground">
-              {greeting}
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">
-              Track your habits, prioritize daily tasks, and capture insights all in one place.
-            </p>
+      {/* Top Greeting */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            <span>{greeting}</span>
+            <span className="text-amber-500 text-lg sm:text-xl">👋</span>
+          </h1>
+          <p className="text-xs sm:text-sm text-muted-foreground font-medium flex items-center gap-1.5 mt-0.5">
+            <Calendar className="h-3.5 w-3.5" />
+            <span>{formattedDate}</span>
+          </p>
+        </div>
+      </div>
 
-            {/* Quick action buttons */}
-            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 pt-2 sm:pt-3">
-              <Button
-                size="sm"
-                onClick={() => setTaskModalOpen(true)}
-                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>Add Task</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setHabitModalOpen(true)}
-                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>New Habit</span>
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setNoteModalOpen(true)}
-                className="gap-1 h-7.5 sm:h-8 text-xs font-medium px-2.5 sm:px-3"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>New Note</span>
-              </Button>
+      {/* Daily Progress Score Card (Mockup style) */}
+      <Card
+        onClick={() => setScoreModalOpen(true)}
+        className="p-4 sm:p-5 rounded-2xl border bg-card/90 shadow-xs hover:border-primary/40 transition-all cursor-pointer group"
+      >
+        <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+          {/* Circular Progress Ring */}
+          <div className="relative flex items-center justify-center shrink-0">
+            <svg className="w-24 h-24 transform -rotate-90" viewBox="0 0 96 96">
+              {/* Background ring */}
+              <circle
+                cx="48"
+                cy="48"
+                r={ringRadius}
+                stroke="currentColor"
+                strokeWidth="7"
+                className="text-muted/40"
+                fill="none"
+              />
+              {/* Active progress ring */}
+              <circle
+                cx="48"
+                cy="48"
+                r={ringRadius}
+                stroke="currentColor"
+                strokeWidth="7"
+                strokeDasharray={ringCircumference}
+                strokeDashoffset={ringOffset}
+                strokeLinecap="round"
+                className="text-primary transition-all duration-700 ease-out"
+                fill="none"
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+              <span className="text-xl font-bold tracking-tight text-foreground leading-none">
+                {score}%
+              </span>
             </div>
           </div>
 
-          {/* Daily Productivity Score Card (Clickable for breakdown) */}
-          <div
-            onClick={() => setScoreModalOpen(true)}
-            className="flex w-full flex-col gap-2.5 sm:gap-3 rounded-xl border bg-background/80 p-3 sm:p-4 backdrop-blur sm:w-80 shrink-0 cursor-pointer hover:border-primary/50 hover:shadow-sm transition-all group"
-            title="Click to view full score breakdown"
-          >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Zap className="h-3.5 w-3.5 text-amber-500 group-hover:scale-110 transition-transform" />
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Daily Score
-                </span>
-              </div>
-              <Badge variant="outline" className={`text-xs font-semibold ${productivityStatus.color}`}>
+          {/* Progress Details */}
+          <div className="flex-1 text-center sm:text-left min-w-0 space-y-1">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
+              <span className="text-sm font-semibold text-foreground">Daily Progress</span>
+              <Badge variant="outline" className={cn('text-[11px] font-semibold py-0.5 px-2', productivityStatus.color)}>
                 {productivityStatus.label}
               </Badge>
             </div>
+            <p className="text-xs text-muted-foreground">
+              {completedHabitsCount + completedTasksCount} of {todayHabits.length + todayTasks.length} items completed today
+            </p>
+          </div>
 
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-                {score}%
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {completedHabitsCount + completedTasksCount} of {todayHabits.length + todayTasks.length} done
+          {/* Habits & Tasks Count Badges */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
+            <div className="flex-1 sm:flex-initial flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-xl bg-muted/40 border">
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Habits</span>
+              <span className="text-sm font-bold text-foreground">
+                {completedHabitsCount}/{todayHabits.length}
               </span>
             </div>
-
-            <Progress value={score} className="h-1.5 sm:h-2" />
-
-            <div className="grid grid-cols-2 gap-2 pt-0.5 text-[11px] text-muted-foreground">
-              <div className="flex items-center justify-between border-r pr-2">
-                <span>Habits:</span>
-                <span className="font-medium text-foreground">
-                  {completedHabitsCount}/{todayHabits.length}
-                </span>
-              </div>
-              <div className="flex items-center justify-between pl-1">
-                <span>Tasks:</span>
-                <span className="font-medium text-foreground">
-                  {completedTasksCount}/{todayTasks.length}
-                </span>
-              </div>
+            <div className="flex-1 sm:flex-initial flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-xl bg-muted/40 border">
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Tasks</span>
+              <span className="text-sm font-bold text-foreground">
+                {completedTasksCount}/{todayTasks.length}
+              </span>
             </div>
           </div>
         </div>
+      </Card>
+
+      {/* Main Grid: Today's Focus & Upcoming Tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Today's Focus (Habits) */}
+        <Card className="p-4 rounded-2xl border bg-card shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Today's Focus</h2>
+              <span className="text-xs text-muted-foreground">({todayHabits.length} habits)</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setHabitModalOpen(true)}
+              className="h-7 text-xs text-primary hover:text-primary/90 gap-1 px-2"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add</span>
+            </Button>
+          </div>
+
+          {todayHabits.length === 0 ? (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              No habits scheduled for today.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {todayHabits.slice(0, 5).map((habit) => {
+                const logs = todayLogs.filter((l) => l.habitId === habit.id)
+                const isCompleted = logs.some((l) => l.completed)
+                const streak = calculateStreak(habit, logs, todayStr).currentStreak
+
+                return (
+                  <div
+                    key={habit.id}
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all',
+                      isCompleted
+                        ? 'bg-primary/5 border-primary/20'
+                        : 'bg-background hover:bg-muted/40'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: habit.color || '#0A7A64' }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className={cn('font-semibold text-sm truncate', isCompleted && 'line-through text-muted-foreground')}>
+                          {habit.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                          {habit.targetType === 'numeric' && (
+                            <span>{habit.targetValue || 1} {habit.unit || 'times'}</span>
+                          )}
+                          {habit.targetType === 'timer' && (
+                            <span>{habit.targetValue || 10} min</span>
+                          )}
+                          {streak > 0 && (
+                            <span className="text-amber-500 font-medium flex items-center gap-0.5">
+                              <Flame className="h-3 w-3" />
+                              {streak}d streak
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleHabit(habit.id)}
+                      className={cn(
+                        'flex h-9 w-9 min-h-[36px] min-w-[36px] shrink-0 items-center justify-center rounded-xl transition-transform active:scale-95',
+                        isCompleted
+                          ? 'bg-primary text-primary-foreground shadow-xs'
+                          : 'border bg-background text-muted-foreground hover:text-foreground hover:border-primary/40'
+                      )}
+                      aria-label={`Toggle habit ${habit.title}`}
+                    >
+                      {isCompleted ? (
+                        <Check className="h-4 w-4 stroke-[2.5]" />
+                      ) : (
+                        <Circle className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </Card>
+
+        {/* Upcoming Tasks */}
+        <Card className="p-4 rounded-2xl border bg-card shadow-xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-bold text-foreground">Upcoming Tasks</h2>
+              <span className="text-xs text-muted-foreground">({upcomingTasks.length} tasks)</span>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setTaskModalOpen(true)}
+              className="h-7 text-xs gap-1 px-2.5 rounded-lg border-primary/30 text-primary hover:bg-primary/5 font-medium"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>Add Task</span>
+            </Button>
+          </div>
+
+          {upcomingTasks.length === 0 ? (
+            <div className="py-8 text-center text-xs text-muted-foreground">
+              All tasks cleared! Great job!
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {upcomingTasks.map((task) => {
+                const project = task.projectId ? projects.find((p) => p.id === task.projectId) : undefined
+                const isDone = task.status === 'done'
+
+                return (
+                  <div
+                    key={task.id}
+                    className={cn(
+                      'flex items-center justify-between p-3 rounded-xl border text-xs transition-all',
+                      isDone
+                        ? 'bg-primary/5 border-primary/20'
+                        : 'bg-background hover:bg-muted/40'
+                    )}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTask(task.id, task.status)}
+                        className={cn(
+                          'flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border transition-all active:scale-95',
+                          isDone
+                            ? 'bg-primary border-primary text-primary-foreground'
+                            : 'border-muted-foreground/30 hover:border-primary text-transparent'
+                        )}
+                        aria-label={`Mark task ${task.title} as ${isDone ? 'incomplete' : 'complete'}`}
+                      >
+                        <Check className="h-3.5 w-3.5 stroke-[2.5]" />
+                      </button>
+
+                      <div className="min-w-0 flex-1">
+                        <p className={cn('font-semibold text-sm truncate', isDone && 'line-through text-muted-foreground')}>
+                          {task.title}
+                        </p>
+                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
+                          {task.dueDate && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {task.dueDate === todayStr ? 'Today' : task.dueDate}
+                            </span>
+                          )}
+                          {project && (
+                            <span
+                              className="px-1.5 py-0.2 rounded text-[10px] font-medium"
+                              style={{ backgroundColor: `${project.color}20`, color: project.color }}
+                            >
+                              {project.name}
+                            </span>
+                          )}
+                          {task.priority === 'urgent' && (
+                            <Badge variant="destructive" className="text-[10px] h-4 px-1 py-0 font-medium">
+                              Urgent
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+              </div>
+          )}
+        </Card>
       </div>
 
       {/* Quick Overview Summary Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-4">
-        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Activity className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Active Habits</p>
+            <p className="text-xs text-muted-foreground truncate font-medium">Active Habits</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-base sm:text-lg font-bold">{habits.length}</span>
+              <span className="text-lg font-bold">{habits.length}</span>
               {maxStreak > 0 && (
-                <span className="text-[10px] sm:text-[11px] text-amber-500 font-medium flex items-center">
+                <span className="text-[11px] text-amber-500 font-medium flex items-center">
                   <Flame className="h-3 w-3" />
                   {maxStreak}d
                 </span>
@@ -241,18 +441,18 @@ export function DashboardView() {
           </div>
         </Card>
 
-        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <CheckCircle2 className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Tasks To-Do</p>
+            <p className="text-xs text-muted-foreground truncate font-medium">Tasks To-Do</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-base sm:text-lg font-bold">
+              <span className="text-lg font-bold">
                 {tasks.filter((t) => t.status !== 'done').length}
               </span>
               {urgentTasksCount > 0 && (
-                <span className="text-[10px] sm:text-[11px] text-red-500 font-medium">
+                <span className="text-[11px] text-red-500 font-medium">
                   {urgentTasksCount} urg
                 </span>
               )}
@@ -260,32 +460,32 @@ export function DashboardView() {
           </div>
         </Card>
 
-        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400">
-            <FileText className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <FileText className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Notes & Docs</p>
+            <p className="text-xs text-muted-foreground truncate font-medium">Notes & Docs</p>
             <div className="flex items-baseline gap-1">
-              <span className="text-base sm:text-lg font-bold">{notes.length}</span>
+              <span className="text-lg font-bold">{notes.length}</span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-3 sm:p-4 flex items-center gap-2.5 sm:gap-3">
-          <div className="flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg bg-orange-500/10 text-orange-600 dark:text-orange-400">
-            <FolderKanban className="h-4 w-4 sm:h-5 sm:w-5" />
+        <Card className="p-3.5 sm:p-4 flex items-center gap-3 rounded-2xl border bg-card shadow-xs">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <FolderKanban className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-[11px] sm:text-xs text-muted-foreground truncate">Active Projects</p>
-            <span className="text-base sm:text-lg font-bold">{projects.length}</span>
+            <p className="text-xs text-muted-foreground truncate font-medium">Projects</p>
+            <span className="text-lg font-bold">{projects.length}</span>
           </div>
         </Card>
       </div>
 
       {/* Completed Today Daily Wins Feed */}
       {(completedHabitsList.length > 0 || completedTasksList.length > 0) && (
-        <div className="rounded-xl border bg-card/60 p-4 space-y-3">
+        <div className="rounded-2xl border bg-card/60 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-amber-500" />
@@ -300,21 +500,21 @@ export function DashboardView() {
             {completedHabitsList.map((habit) => (
               <div
                 key={`completed-habit-${habit.id}`}
-                className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-background text-xs shadow-2xs"
+                className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs"
               >
                 <div
                   className="h-3 w-3 rounded-full shrink-0"
-                  style={{ backgroundColor: habit.color || '#3b82f6' }}
+                  style={{ backgroundColor: habit.color || '#0A7A64' }}
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-medium text-foreground truncate">{habit.title}</span>
-                    <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 text-emerald-600 border-emerald-500/30 shrink-0">
+                    <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 text-primary border-primary/30 shrink-0">
                       Habit
                     </Badge>
                   </div>
                 </div>
-                <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                <Check className="h-3.5 w-3.5 text-primary shrink-0" />
               </div>
             ))}
 
@@ -323,9 +523,9 @@ export function DashboardView() {
               return (
                 <div
                   key={`completed-task-${task.id}`}
-                  className="flex items-center gap-2.5 p-2.5 rounded-lg border bg-background text-xs shadow-2xs"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl border bg-background text-xs shadow-2xs"
                 >
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                  <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-1">
                       <span className="font-medium text-foreground truncate line-through text-muted-foreground">
@@ -361,7 +561,7 @@ export function DashboardView() {
             </h2>
           </div>
           <span className="text-xs text-muted-foreground">
-            Live module updates
+            Live updates
           </span>
         </div>
 
@@ -380,7 +580,7 @@ export function DashboardView() {
 
       {/* Score Breakdown Dialog */}
       <Dialog open={scoreModalOpen} onOpenChange={setScoreModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <div className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-amber-500" />
@@ -396,7 +596,7 @@ export function DashboardView() {
             <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
-                  <Activity className="h-4 w-4 text-blue-500" />
+                  <Activity className="h-4 w-4 text-primary" />
                   <span>Scheduled Habits</span>
                 </div>
                 <span className="text-foreground">{habitsPercentage}% ({completedHabitsCount}/{todayHabits.length})</span>
@@ -413,7 +613,7 @@ export function DashboardView() {
             <div className="space-y-2 rounded-xl border p-3.5 bg-muted/20">
               <div className="flex items-center justify-between text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span>Due Tasks</span>
                 </div>
                 <span className="text-foreground">{tasksPercentage}% ({completedTasksCount}/{todayTasks.length})</span>
@@ -427,7 +627,7 @@ export function DashboardView() {
             </div>
 
             {/* Formula explanation */}
-            <div className="flex items-start gap-2 rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
+            <div className="flex items-start gap-2 rounded-xl bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] leading-relaxed">
                 The Daily Productivity Score blends your habit completion rate (50%) and your due task completion rate (50%). Checking in habits and clearing due tasks directly elevates your score!

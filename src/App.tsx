@@ -3,6 +3,7 @@ import { moduleRegistry } from '@/core/modules/registry'
 import { initializeModules } from '@/modules/init'
 import { AppShell } from '@/components/layout/AppShell'
 import { CommandPalette } from '@/components/command/CommandPalette'
+import { QuickAddSheet } from '@/components/layout/QuickAddSheet'
 import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
 import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
@@ -17,6 +18,7 @@ export function App() {
   })
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [quickAddSheetOpen, setQuickAddSheetOpen] = useState(false)
   const [quickTaskModalOpen, setQuickTaskModalOpen] = useState(false)
   const [quickHabitModalOpen, setQuickHabitModalOpen] = useState(false)
   const [quickNoteModalOpen, setQuickNoteModalOpen] = useState(false)
@@ -47,6 +49,11 @@ export function App() {
         setCommandPaletteOpen(false)
         return
       }
+      if (quickAddSheetOpen) {
+        e.preventDefault()
+        setQuickAddSheetOpen(false)
+        return
+      }
       if (quickTaskModalOpen) {
         e.preventDefault()
         setQuickTaskModalOpen(false)
@@ -74,6 +81,7 @@ export function App() {
     }
   }, [
     commandPaletteOpen,
+    quickAddSheetOpen,
     quickTaskModalOpen,
     quickHabitModalOpen,
     quickNoteModalOpen
@@ -99,11 +107,20 @@ export function App() {
         onRouteChange={handleRouteChange}
         title={activeModule ? activeModule.title : 'Productivity'}
         subtitle={activeModule ? activeModule.description : undefined}
-        onQuickAction={() => setCommandPaletteOpen(true)}
+        onQuickAction={() => setQuickAddSheetOpen(true)}
         onOpenCommandPalette={() => setCommandPaletteOpen(true)}
       >
         <ActiveComponent />
       </AppShell>
+
+      {/* Global Quick Add Bottom Sheet */}
+      <QuickAddSheet
+        open={quickAddSheetOpen}
+        onOpenChange={setQuickAddSheetOpen}
+        onAddTask={() => setQuickTaskModalOpen(true)}
+        onAddHabit={() => setQuickHabitModalOpen(true)}
+        onAddNote={() => setQuickNoteModalOpen(true)}
+      />
 
       {/* Global Command Palette */}
       <CommandPalette

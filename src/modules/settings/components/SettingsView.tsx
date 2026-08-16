@@ -338,13 +338,6 @@ export function SettingsView() {
 
   return (
     <div className="space-y-4 sm:space-y-6 pb-8">
-      <div className="hidden sm:block">
-        <h1 className="text-xl font-bold tracking-tight">Settings & Preferences</h1>
-        <p className="text-xs text-muted-foreground">
-          Manage local IndexedDB storage diagnostics, JSON backups, appearance, and system settings.
-        </p>
-      </div>
-
       {/* Appearance Settings */}
       <Card>
         <CardHeader>

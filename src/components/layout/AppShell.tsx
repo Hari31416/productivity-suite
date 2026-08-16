@@ -43,7 +43,11 @@ export function AppShell({
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <BottomNav activeRoute={activeRoute} onRouteChange={onRouteChange} />
+      <BottomNav
+        activeRoute={activeRoute}
+        onRouteChange={onRouteChange}
+        onQuickAdd={onQuickAction}
+      />
     </div>
   )
 }

@@ -64,9 +64,15 @@ export function NotesView() {
     return map
   }, [projects])
 
+  const [filterMode, setFilterMode] = useState<'all' | 'pinned' | 'recent'>('all')
+
   // Filter notes client-side for immediate responsiveness
   const filteredNotes = useMemo(() => {
     let result = notes
+
+    if (filterMode === 'pinned') {
+      result = result.filter((n) => n.pinned)
+    }
 
     if (selectedTag) {
       const targetTag = selectedTag.toLowerCase()
@@ -89,19 +95,25 @@ export function NotesView() {
       )
     }
 
+    if (filterMode === 'recent') {
+      return [...result].sort(
+        (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+      )
+    }
+
     return result
-  }, [notes, selectedTag, selectedProjectId, searchQuery])
+  }, [notes, filterMode, selectedTag, selectedProjectId, searchQuery])
 
   // Split into pinned and other notes
   const { pinnedNotes, regularNotes } = useMemo(() => {
-    if (showArchived) {
+    if (showArchived || filterMode === 'pinned') {
       return { pinnedNotes: [], regularNotes: filteredNotes }
     }
     return {
       pinnedNotes: filteredNotes.filter((n) => n.pinned),
       regularNotes: filteredNotes.filter((n) => !n.pinned)
     }
-  }, [filteredNotes, showArchived])
+  }, [filteredNotes, showArchived, filterMode])
 
   const handleSaveNote = useCallback(
     async (
@@ -154,22 +166,44 @@ export function NotesView() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      {/* Top Header */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="hidden sm:block">
-          <h2 className="text-xl font-bold tracking-tight">Notepad</h2>
-          <p className="text-xs text-muted-foreground">
-            Write markdown notes, organize ideas with tags, and search your thoughts instantly.
-          </p>
+      {/* Top Action Bar & Filter Chips (No duplicate title banner) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Quick Filter Chips (All / Pinned / Recent) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <Button
+            variant={filterMode === 'all' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterMode('all')}
+            className="h-8 text-xs rounded-full px-3.5 font-medium shrink-0"
+          >
+            All
+          </Button>
+          <Button
+            variant={filterMode === 'pinned' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterMode('pinned')}
+            className="h-8 text-xs rounded-full px-3.5 font-medium shrink-0 gap-1"
+          >
+            <Pin className="h-3 w-3" />
+            <span>Pinned</span>
+          </Button>
+          <Button
+            variant={filterMode === 'recent' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setFilterMode('recent')}
+            className="h-8 text-xs rounded-full px-3.5 font-medium shrink-0"
+          >
+            Recent
+          </Button>
         </div>
 
-        <div className="flex items-center justify-end w-auto gap-2">
+        <div className="flex items-center justify-end gap-2 ml-auto">
           <Button
             variant="outline"
             size="sm"
             onClick={handleExportAll}
             disabled={notes.length === 0 || isExporting}
-            className="h-8 gap-1.5 text-xs px-2 sm:px-2.5"
+            className="h-8 gap-1.5 text-xs px-3 rounded-xl"
             title="Export all notes to a zip archive"
           >
             <Download className="h-3.5 w-3.5" />
@@ -179,9 +213,9 @@ export function NotesView() {
           <Button
             size="sm"
             onClick={handleStartCreate}
-            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs text-xs px-3"
+            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs text-xs px-3.5 rounded-xl font-medium"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-4 w-4" />
             <span>New Note</span>
           </Button>
         </div>

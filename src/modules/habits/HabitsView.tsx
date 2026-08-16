@@ -200,55 +200,93 @@ export function HabitsView() {
     return list
   }, [filteredHabits, selectedDate, showArchived, sortBy, allRangeLogs])
 
+  // Quick summary metrics for overview cards
+  const { maxBestStreak, avgConsistency, activeCount } = useMemo(() => {
+    const active = habits.filter((h) => !h.archived)
+    if (active.length === 0) {
+      return { maxBestStreak: 0, avgConsistency: 0, activeCount: 0 }
+    }
+    const streaks = active.map((h) => calculateStreak(h, allRangeLogs, selectedDate))
+    const maxStreak = Math.max(...streaks.map((s) => s.currentStreak || s.bestStreak || 0), 0)
+    const sumConsistency = streaks.reduce((acc, s) => acc + (s.completionRate30Days || 0), 0)
+    const avg = Math.round(sumConsistency / active.length)
+    return {
+      maxBestStreak: maxStreak,
+      avgConsistency: avg,
+      activeCount: active.length
+    }
+  }, [habits, allRangeLogs, selectedDate])
+
   return (
     <div className="space-y-4 sm:space-y-6">
-      <div className="flex items-center justify-between gap-2">
-        <div className="hidden sm:block">
-          <h2 className="text-xl font-bold tracking-tight">Habit Tracker</h2>
-          <p className="text-xs text-muted-foreground">
-            Track daily check-ins, recurring sub-day intervals, and streak analytics.
-          </p>
-        </div>
-        <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto gap-2">
-          <div className="inline-flex rounded-lg border p-0.5 bg-muted/40 text-xs w-full sm:w-auto justify-between sm:justify-start">
-            <Button
-              variant={viewMode === 'tracker' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
-              onClick={() => setViewMode('tracker')}
-            >
-              <Activity className="h-3.5 w-3.5" />
-              <span>Daily</span>
-            </Button>
-            <Button
-              variant={viewMode === 'week' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
-              onClick={() => setViewMode('week')}
-            >
-              <CalendarIcon className="h-3.5 w-3.5" />
-              <span>Week</span>
-            </Button>
-            <Button
-              variant={viewMode === 'analytics' ? 'default' : 'ghost'}
-              size="sm"
-              className="h-7 text-xs px-2 sm:px-3 gap-1 flex-1 sm:flex-initial"
-              onClick={() => setViewMode('analytics')}
-            >
-              <BarChart3 className="h-3.5 w-3.5" />
-              <span>Analytics</span>
-            </Button>
-          </div>
+      {/* Top Controls: Segmented Tabs & Actions (No duplicate title banner) */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl border p-1 bg-muted/50 text-xs w-full sm:w-auto shadow-xs">
           <Button
+            variant={viewMode === 'tracker' ? 'default' : 'ghost'}
             size="sm"
-            onClick={handleCreateNew}
-            className="hidden sm:inline-flex h-8 gap-1.5 shadow-xs shrink-0 text-xs px-3"
+            className="h-8 text-xs px-3 sm:px-4 gap-1.5 flex-1 sm:flex-initial rounded-lg font-medium"
+            onClick={() => setViewMode('tracker')}
           >
-            <Plus className="h-3.5 w-3.5" />
-            <span>New Habit</span>
+            <Activity className="h-3.5 w-3.5" />
+            <span>Daily</span>
+          </Button>
+          <Button
+            variant={viewMode === 'week' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 text-xs px-3 sm:px-4 gap-1.5 flex-1 sm:flex-initial rounded-lg font-medium"
+            onClick={() => setViewMode('week')}
+          >
+            <CalendarIcon className="h-3.5 w-3.5" />
+            <span>Week</span>
+          </Button>
+          <Button
+            variant={viewMode === 'analytics' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 text-xs px-3 sm:px-4 gap-1.5 flex-1 sm:flex-initial rounded-lg font-medium"
+            onClick={() => setViewMode('analytics')}
+          >
+            <BarChart3 className="h-3.5 w-3.5" />
+            <span>Analytics</span>
           </Button>
         </div>
+
+        <Button
+          size="sm"
+          onClick={handleCreateNew}
+          className="hidden sm:inline-flex h-9 gap-1.5 shadow-xs shrink-0 text-xs px-4 rounded-xl font-medium"
+        >
+          <Plus className="h-4 w-4" />
+          <span>New Habit</span>
+        </Button>
       </div>
+
+      {/* Metric Summary Cards (from mockups) */}
+      {viewMode === 'tracker' && (
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
+          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
+            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Best Streak</div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{maxBestStreak}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">days</span>
+            </div>
+          </Card>
+          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
+            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Consistency</div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{avgConsistency}%</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground hidden sm:inline">30-day</span>
+            </div>
+          </Card>
+          <Card className="p-3 sm:p-4 rounded-2xl border bg-card/70 backdrop-blur shadow-xs">
+            <div className="text-[11px] sm:text-xs font-medium text-muted-foreground">Active</div>
+            <div className="mt-1 flex items-baseline gap-1">
+              <span className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{activeCount}</span>
+              <span className="text-[10px] sm:text-xs text-muted-foreground">habits</span>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {viewMode === 'tracker' ? (
         <div className="space-y-3 sm:space-y-5">
