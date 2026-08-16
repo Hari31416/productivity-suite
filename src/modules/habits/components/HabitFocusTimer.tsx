@@ -29,17 +29,6 @@ export function HabitFocusTimer({
   onSessionComplete
 }: HabitFocusTimerProps) {
   const targetMinutes = Math.max(1, habit.targetValue || 25)
-  const [totalSeconds, setTotalSeconds] = useState(targetMinutes * 60)
-  const [secondsLeft, setSecondsLeft] = useState(targetMinutes * 60)
-  const [isRunning, setIsRunning] = useState(false)
-  const [sessionCompletedCount, setSessionCompletedCount] = useState(0)
-
-  // Direct duration edit dialog
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [customMinutesInput, setCustomMinutesInput] = useState(`${Math.round(totalSeconds / 60)}`)
-
-  const setValueMutation = useSetHabitLogValue()
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Calculate accumulated minutes tracked for today from habit logs
   const todayAccumulatedMinutes = useMemo(() => {
@@ -55,18 +44,30 @@ export function HabitFocusTimer({
   }, [logs, targetMinutes])
 
   const remainingMinutes = Math.max(0, targetMinutes - todayAccumulatedMinutes)
+  const defaultMinutes = remainingMinutes > 0 ? remainingMinutes : targetMinutes
 
-  const prevTargetRef = useRef(targetMinutes)
+  const [totalSeconds, setTotalSeconds] = useState(defaultMinutes * 60)
+  const [secondsLeft, setSecondsLeft] = useState(defaultMinutes * 60)
+  const [isRunning, setIsRunning] = useState(false)
+
+  // Direct duration edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [customMinutesInput, setCustomMinutesInput] = useState(`${Math.round(totalSeconds / 60)}`)
+
+  const setValueMutation = useSetHabitLogValue()
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const prevRemainingRef = useRef(defaultMinutes)
   useEffect(() => {
-    if (prevTargetRef.current !== targetMinutes) {
-      prevTargetRef.current = targetMinutes
+    if (prevRemainingRef.current !== defaultMinutes) {
+      prevRemainingRef.current = defaultMinutes
       if (!isRunning) {
-        const s = targetMinutes * 60
+        const s = defaultMinutes * 60
         setTotalSeconds(s)
         setSecondsLeft(s)
       }
     }
-  }, [targetMinutes, isRunning])
+  }, [defaultMinutes, isRunning])
 
   // Timer interval engine
   useEffect(() => {
@@ -133,7 +134,6 @@ export function HabitFocusTimer({
         completed: nextTotal >= targetMinutes
       })
 
-      setSessionCompletedCount((c) => c + 1)
       fireConfetti({
         particleCount: 50,
         colors: [habit.color || '#0A7A64', '#10b981', '#f59e0b', '#3b82f6']
@@ -247,12 +247,6 @@ export function HabitFocusTimer({
             <span className="text-[11px] sm:text-xs font-medium text-muted-foreground mt-0.5 capitalize">
               {isRunning ? 'Focusing...' : secondsLeft === 0 ? 'Session Complete' : 'Ready'}
             </span>
-            {sessionCompletedCount > 0 && (
-              <span className="text-[10px] sm:text-[11px] font-semibold text-primary mt-0.5">
-                {sessionCompletedCount} {sessionCompletedCount === 1 ? 'session' : 'sessions'}{' '}
-                completed
-              </span>
-            )}
           </div>
         </div>
 
