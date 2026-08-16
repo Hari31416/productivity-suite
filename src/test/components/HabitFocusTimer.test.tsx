@@ -39,7 +39,7 @@ describe('HabitFocusTimer Component', () => {
     )
 
     expect(screen.getByText('Focus Timer')).toBeInTheDocument()
-    expect(screen.getByText('Target: 20 min session')).toBeInTheDocument()
+    expect(screen.getByText(/20m target/i)).toBeInTheDocument()
     expect(screen.getByText('20:00')).toBeInTheDocument()
 
     const playBtn = screen.getByRole('button', { name: /start focus/i })

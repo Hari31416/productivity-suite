@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { Play, Pause, RotateCcw, Check, Plus, Minus, Timer, Sparkles, Pencil } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import {
   Dialog,
@@ -160,41 +160,37 @@ export function HabitFocusTimer({
 
   return (
     <Card className="rounded-2xl border bg-card/80 backdrop-blur-xs overflow-hidden shadow-xs">
-      <CardHeader className="pb-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-lg"
-              style={{ backgroundColor: `${themeColor}20`, color: themeColor }}
-            >
-              <Timer className="h-4 w-4" />
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">Focus Timer</CardTitle>
-              <CardDescription className="text-xs">
-                Target: {targetMinutes} min session
-              </CardDescription>
-            </div>
+      <div className="flex items-center justify-between gap-2 px-3.5 py-2.5 sm:px-4 sm:py-3 border-b bg-muted/10">
+        <div className="flex items-center gap-2 min-w-0">
+          <div
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg"
+            style={{ backgroundColor: `${themeColor}20`, color: themeColor }}
+          >
+            <Timer className="h-3.5 w-3.5" />
           </div>
-          <div className="flex items-center gap-2">
-            {remainingMinutes > 0 ? (
-              <span className="text-xs text-muted-foreground bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium px-2.5 py-1 rounded-full border border-amber-500/20">
-                {remainingMinutes}m remaining
-              </span>
-            ) : (
-              <span className="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium px-2.5 py-1 rounded-full border border-emerald-500/20">
-                Target Reached
-              </span>
-            )}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-2.5 py-1 rounded-full border">
-              <span>Today:</span>
-              <strong className="text-foreground font-semibold">
-                {todayAccumulatedMinutes} min
-              </strong>
-            </div>
+          <div className="flex items-baseline gap-1.5 min-w-0">
+            <span className="text-sm font-semibold text-foreground truncate">Focus Timer</span>
+            <span className="text-xs text-muted-foreground hidden xs:inline">
+              · {targetMinutes}m target
+            </span>
           </div>
         </div>
-      </CardHeader>
+
+        <div className="flex items-center gap-1.5 shrink-0 text-xs">
+          {remainingMinutes > 0 ? (
+            <span className="text-[11px] font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/20 whitespace-nowrap">
+              {remainingMinutes}m left
+            </span>
+          ) : (
+            <span className="text-[11px] font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap">
+              Target Reached
+            </span>
+          )}
+          <span className="text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-full border whitespace-nowrap">
+            Today: <strong className="text-foreground">{todayAccumulatedMinutes}m</strong>
+          </span>
+        </div>
+      </div>
 
       <CardContent className="flex flex-col items-center pt-1 pb-4 sm:pb-6 space-y-3 sm:space-y-4">
         {/* Radial SVG Circular Countdown */}

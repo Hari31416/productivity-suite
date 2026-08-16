@@ -753,69 +753,67 @@ export function HabitDetailView({
       )}
 
       {/* About, Motivation & Reminder Times Timeline */}
-      <Card className="rounded-2xl border bg-card shadow-xs">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold flex items-center gap-2">
-            <Info className="h-4 w-4 text-primary" />
+      <div className="rounded-2xl border bg-card/60 p-3.5 sm:p-4 space-y-3 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Info className="h-3.5 w-3.5 text-primary" />
             <span>About & Schedule Context</span>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {/* Motivation Notes */}
-          {(habit.motivationNotes || habit.description) && (
-            <div className="rounded-xl border bg-muted/25 p-3.5 space-y-1">
-              <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span>Motivation & Notes</span>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {habit.motivationNotes || habit.description}
-              </p>
-            </div>
-          )}
+          </div>
+          <span className="text-[11px] font-medium text-muted-foreground">
+            {habit.archived ? 'Archived' : 'Active Routine'}
+          </span>
+        </div>
 
-          {/* Scheduled Reminder Times Timeline */}
-          {habit.reminderTimes && habit.reminderTimes.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <Bell className="h-3.5 w-3.5 text-primary" />
-                <span>Scheduled Daily Reminders</span>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                {habit.reminderTimes.map((timeStr) => (
-                  <span
-                    key={timeStr}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-xl bg-primary/10 text-primary border border-primary/20"
-                  >
-                    <Clock className="h-3 w-3" />
-                    <span>{timeStr}</span>
-                  </span>
-                ))}
-              </div>
+        {/* Motivation Notes */}
+        {(habit.motivationNotes || habit.description) && (
+          <div className="rounded-xl border bg-muted/20 p-2.5 sm:p-3 space-y-1">
+            <div className="text-[11px] font-semibold text-foreground flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3 text-primary" />
+              <span>Motivation</span>
             </div>
-          )}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {habit.motivationNotes || habit.description}
+            </p>
+          </div>
+        )}
 
-          {/* Frequency Breakdown */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1 text-xs">
-            <div className="rounded-xl border p-2.5 bg-background">
-              <span className="text-[11px] text-muted-foreground block">Schedule</span>
-              <span className="font-semibold text-foreground mt-0.5 block">{frequencyLabel}</span>
+        {/* Scheduled Reminder Times Timeline */}
+        {habit.reminderTimes && habit.reminderTimes.length > 0 && (
+          <div className="space-y-1.5">
+            <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+              <Bell className="h-3 w-3 text-primary" />
+              <span>Reminders:</span>
             </div>
-            <div className="rounded-xl border p-2.5 bg-background">
-              <span className="text-[11px] text-muted-foreground block">Target Type</span>
-              <span className="font-semibold text-foreground mt-0.5 block capitalize">
-                {habit.targetType}
-              </span>
-            </div>
-            <div className="rounded-xl border p-2.5 bg-background col-span-2 sm:col-span-1">
-              <span className="text-[11px] text-muted-foreground block">Status</span>
-              <span className="font-semibold text-foreground mt-0.5 block">
-                {habit.archived ? 'Archived' : 'Active Routine'}
-              </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {habit.reminderTimes.map((timeStr) => (
+                <span
+                  key={timeStr}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20"
+                >
+                  <Clock className="h-2.5 w-2.5" />
+                  <span>{timeStr}</span>
+                </span>
+              ))}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        )}
+
+        {/* Compact Metadata Row */}
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground pt-1 border-t border-border/50 flex-wrap">
+          <span>
+            Schedule: <strong className="text-foreground font-medium">{frequencyLabel}</strong>
+          </span>
+          <span className="capitalize">
+            Target: <strong className="text-foreground font-medium">{habit.targetType}</strong>
+          </span>
+          <span>
+            Status:{' '}
+            <strong className="text-foreground font-medium">
+              {habit.archived ? 'Archived' : 'Active Routine'}
+            </strong>
+          </span>
+        </div>
+      </div>
 
       {/* Monthly History & Visual Calendar Component */}
       <HabitMonthlyCalendar
