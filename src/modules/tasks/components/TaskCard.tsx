@@ -181,6 +181,27 @@ export function TaskCard({
     return ''
   }, [task.recurrence, task.recurringParentId])
 
+  const recurrenceShortLabel = useMemo(() => {
+    if (!isPartOfRecurringSeries) return ''
+    if (task.recurrence?.frequency) {
+      switch (task.recurrence.frequency) {
+        case 'hourly':
+          return 'Hourly'
+        case 'daily':
+          return 'Daily'
+        case 'weekly':
+          return 'Weekly'
+        case 'monthly':
+          return 'Monthly'
+        case 'yearly':
+          return 'Yearly'
+        default:
+          return 'Repeats'
+      }
+    }
+    return 'Repeats'
+  }, [isPartOfRecurringSeries, task.recurrence])
+
   const reminderCount = task.reminders ? task.reminders.length : 0
 
   const handleToggleCompletion = () => {
@@ -197,38 +218,39 @@ export function TaskCard({
       draggable={draggable}
       onDragStart={(e) => onDragStart?.(e, task)}
       className={cn(
-        'group relative rounded-lg border bg-card p-2.5 sm:p-3 shadow-xs transition-all hover:shadow-sm hover:border-foreground/20',
+        'group relative rounded-lg border bg-card shadow-xs transition-all hover:shadow-sm hover:border-foreground/20',
+        compact ? 'p-2' : 'p-2.5 sm:p-3',
         isDone && 'bg-muted/30 opacity-75',
         isSelected && 'border-primary ring-2 ring-primary/20 bg-primary/5',
         draggable && 'cursor-grab active:cursor-grabbing',
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-start gap-2 flex-1 min-w-0">
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="flex items-start gap-1.5 flex-1 min-w-0">
           {draggable && (
             <div className="hidden sm:block text-muted-foreground/40 group-hover:text-muted-foreground transition-colors shrink-0 pt-0.5">
-              <GripVertical className="h-4 w-4" />
+              <GripVertical className="h-3.5 w-3.5" />
             </div>
           )}
           {selectable ? (
             <button
               type="button"
               onClick={() => onToggleSelect?.(task.id)}
-              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[36px] min-w-[36px] -m-1.5 p-1.5"
               aria-label={isSelected ? 'Deselect task' : 'Select task'}
             >
               {isSelected ? (
-                <CheckSquare className="h-5 w-5 text-primary" />
+                <CheckSquare className="h-4 w-4 text-primary" />
               ) : (
-                <Square className="h-5 w-5 text-muted-foreground/60" />
+                <Square className="h-4 w-4 text-muted-foreground/60" />
               )}
             </button>
           ) : (
             <button
               type="button"
               onClick={handleToggleCompletion}
-              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[44px] min-w-[44px] -m-2 p-2"
+              className="shrink-0 text-muted-foreground hover:text-primary transition-colors focus:outline-none flex items-center justify-center min-h-[36px] min-w-[36px] -m-1.5 p-1.5"
               aria-label={isDone ? 'Mark task incomplete' : 'Mark task complete'}
             >
               {isDone ? (
@@ -240,11 +262,11 @@ export function TaskCard({
           )}
 
           <div className="flex-1 min-w-0 space-y-1">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 flex-wrap">
               <span
                 onClick={() => onEdit?.(task)}
                 className={cn(
-                  'font-medium text-sm text-foreground hover:underline cursor-pointer break-words',
+                  'font-medium text-xs sm:text-sm text-foreground hover:underline cursor-pointer break-words leading-tight',
                   isDone && 'line-through text-muted-foreground'
                 )}
               >
@@ -253,7 +275,7 @@ export function TaskCard({
 
               <Badge
                 variant="outline"
-                className={cn('text-[10px] px-1.5 py-0 h-4 font-medium', priorityInfo.badgeClass)}
+                className={cn('text-[10px] px-1.5 py-0 h-4 font-medium shrink-0 whitespace-nowrap', priorityInfo.badgeClass)}
               >
                 {priorityInfo.label}
               </Badge>
@@ -261,30 +283,30 @@ export function TaskCard({
               {isPartOfRecurringSeries && (
                 <span
                   title={recurrenceLabel}
-                  className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-medium"
+                  className="inline-flex items-center gap-1 text-[10px] text-primary bg-primary/10 px-1.5 py-0.5 rounded font-medium shrink-0 whitespace-nowrap"
                 >
-                  <RotateCw className="h-3 w-3" />
-                  <span>{task.recurrence ? recurrenceLabel : 'Repeats'}</span>
+                  <RotateCw className="h-2.5 w-2.5 shrink-0" />
+                  <span>{recurrenceShortLabel}</span>
                 </span>
               )}
 
               {reminderCount > 0 && (
                 <span
                   title={`${reminderCount} active reminder(s)`}
-                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium"
+                  className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded font-medium shrink-0 whitespace-nowrap"
                 >
-                  <Bell className="h-3 w-3" />
+                  <Bell className="h-2.5 w-2.5 shrink-0" />
                   <span>{reminderCount}</span>
                 </span>
               )}
 
               {project && (
-                <div className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                <div className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded shrink-0 whitespace-nowrap">
                   <span
-                    className="h-2 w-2 rounded-full shrink-0"
+                    className="h-1.5 w-1.5 rounded-full shrink-0"
                     style={{ backgroundColor: project.color || '#3b82f6' }}
                   />
-                  <span className="truncate max-w-[120px]">{project.name}</span>
+                  <span className="truncate max-w-[100px]">{project.name}</span>
                 </div>
               )}
             </div>
@@ -296,22 +318,24 @@ export function TaskCard({
             )}
 
             {/* Meta badges: due date, subtasks, tags, estimated minutes */}
-            <div className="flex items-center gap-3 pt-1 flex-wrap text-xs text-muted-foreground">
+            <div className="flex items-center gap-2.5 pt-0.5 flex-wrap text-xs text-muted-foreground">
               {task.dueDate && (
                 <div
                   className={cn(
-                    'flex items-center gap-1 font-medium',
+                    'flex items-center gap-1 font-medium whitespace-nowrap shrink-0 text-[11px]',
                     dateInfo.isOverdue && 'text-red-600 dark:text-red-400 font-semibold',
                     dateInfo.isToday && 'text-blue-600 dark:text-blue-400 font-semibold'
                   )}
                 >
                   {dateInfo.isOverdue ? (
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <AlertTriangle className="h-3 w-3 shrink-0" />
                   ) : (
-                    <Calendar className="h-3.5 w-3.5 shrink-0" />
+                    <Calendar className="h-3 w-3 shrink-0" />
                   )}
-                  <span>{dateInfo.label}</span>
-                  {task.dueTime && <span className="text-[11px] opacity-80">@{task.dueTime}</span>}
+                  <span>
+                    {dateInfo.label}
+                    {task.dueTime ? ` @ ${task.dueTime}` : ''}
+                  </span>
                 </div>
               )}
 
@@ -319,23 +343,23 @@ export function TaskCard({
                 <button
                   type="button"
                   onClick={() => setExpanded(!expanded)}
-                  className="flex items-center gap-1 hover:text-foreground transition-colors font-medium"
+                  className="flex items-center gap-1 hover:text-foreground transition-colors font-medium text-[11px] whitespace-nowrap shrink-0"
                 >
-                  <ListChecks className="h-3.5 w-3.5 shrink-0" />
+                  <ListChecks className="h-3 w-3 shrink-0" />
                   <span>
                     {completedSubtasks}/{totalSubtasks}
                   </span>
                   {expanded ? (
-                    <ChevronDown className="h-3 w-3 shrink-0" />
+                    <ChevronDown className="h-2.5 w-2.5 shrink-0" />
                   ) : (
-                    <ChevronRight className="h-3 w-3 shrink-0" />
+                    <ChevronRight className="h-2.5 w-2.5 shrink-0" />
                   )}
                 </button>
               )}
 
               {task.estimatedMinutes && task.estimatedMinutes > 0 && (
-                <div className="flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                <div className="flex items-center gap-1 text-[11px] whitespace-nowrap shrink-0">
+                  <Clock className="h-3 w-3 shrink-0" />
                   <span>{formatEstimatedMinutes(task.estimatedMinutes)}</span>
                 </div>
               )}
@@ -345,7 +369,7 @@ export function TaskCard({
                   {task.tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded"
+                      className="inline-flex items-center text-[10px] text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded whitespace-nowrap shrink-0"
                     >
                       <Tag className="h-2.5 w-2.5 mr-0.5" />
                       {tag}
@@ -364,10 +388,10 @@ export function TaskCard({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-11 w-11 sm:h-8 sm:w-8 min-h-[44px] min-w-[44px] p-0 text-muted-foreground hover:text-foreground"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground shrink-0"
                 aria-label="Task options"
               >
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical className="h-3.5 w-3.5" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
@@ -441,7 +465,7 @@ export function TaskCard({
 
       {/* Expandable Subtasks Checklist */}
       {expanded && (
-        <div className="mt-3 pt-3 border-t pl-7">
+        <div className="mt-2.5 pt-2.5 border-t pl-6">
           <SubtaskList taskId={task.id} />
         </div>
       )}
