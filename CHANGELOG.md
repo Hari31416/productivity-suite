@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-16
+
+### Added
+
+- **Hierarchical Android Hardware & Gesture Back Button Handling**:
+  - Integrated `@capacitor/app` with a centralized back button priority manager in `src/core/platform/backButton.ts`.
+  - Prioritizes dismissal of active dialogs, bottom sheets, full-screen editors, and sub-views before navigating back or exiting.
+- **7-Day Rolling Habit Notification Scheduling**:
+  - Implemented automatic local notification scheduling for daily and sub-day interval habits in `src/core/notifications/notificationService.ts`.
+  - Added deterministic notification ID generator with 7-day rolling window and startup synchronization.
+  - Populated default reminder times on seed habits for immediate out-of-the-box alerts.
+- **Capacitor Splash Screen & Cold-Start Optimization**:
+  - Configured `@capacitor/splash-screen` and pre-hydration CSS placeholder skeleton in `index.html` to eliminate cold-start blank screens.
+- **Mobile Bottom Sheet Dialogs & Touch Target Enhancements**:
+  - Responsive `DialogContent` adapting to bottom sheet presentation on mobile with safe-area insets.
+  - Sticky action footers for Save/Cancel buttons on modal forms.
+  - Expanded interactive touch targets to 44dp minimum and increased main bottom padding for navigation bar clearance.
+
+### Changed
+
+- **Dashboard Deduplication & Insights**:
+  - Transformed lower habit and task widgets into high-level summary cards (daily adherence, streaks, categories, due today, urgent pipeline) without repeating checkable rows.
+  - Fixed daily productivity score calculation to strictly match completed over scheduled ratio.
+- **Tasks View Mobile Chrome Optimization**:
+  - Converted filter sidebar into a responsive bottom sheet modal dialog on mobile.
+  - Streamlined stacked toolbars, search bar, and smart quick-add for clean mobile view.
+- **Notes Editor Layout**:
+  - Moved note title into a dedicated full-width input container to prevent title truncation on mobile screens.
+- **Settings Diagnostics Reorganization**:
+  - Grouped raw IndexedDB database inspectors and diagnostics into a collapsible developer section.
+
+### Fixed
+
+- **Habit Detail Back Navigation**:
+  - Fixed back button navigation from habit detail view to return directly to the Habits list.
+- **Tag Label Truncation**:
+  - Removed rigid width caps on project and category tags across task cards and dashboard widgets.
+
 ## [0.3.0] - 2026-08-16
 
 ### Added
