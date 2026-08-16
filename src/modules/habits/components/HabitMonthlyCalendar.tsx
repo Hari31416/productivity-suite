@@ -11,16 +11,9 @@ import {
   addMonths,
   subMonths
 } from 'date-fns'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Flame,
-  CheckCircle2,
-  Calendar as CalendarIcon,
-  TrendingUp
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Flame, Calendar as CalendarIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import type { Habit, HabitLog } from '../types'
 import { isHabitScheduledOnDate } from '../utils/streakCalculator'
 import { useToggleHabitLog } from '../hooks/useHabits'
@@ -169,124 +162,117 @@ export function HabitMonthlyCalendar({ habit, logs, onSelectDate }: HabitMonthly
   const themeColor = habit.color || '#0A7A64'
 
   return (
-    <Card className="rounded-2xl border bg-card shadow-xs">
-      <CardHeader className="pb-3">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <CalendarIcon className="h-4 w-4 text-primary" />
-              <span>Monthly History & Visual Calendar</span>
-            </CardTitle>
-            <CardDescription className="text-xs">
-              Review your consistency, check-in records, and completion trends.
-            </CardDescription>
-          </div>
-
-          <div className="flex items-center gap-1.5 self-start sm:self-auto">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handlePrevMonth}
-              aria-label="Previous month"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs font-semibold px-3"
-              onClick={handleCurrentMonth}
-            >
-              {format(currentMonth, 'MMMM yyyy')}
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={handleNextMonth}
-              aria-label="Next month"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+    <Card className="rounded-2xl border bg-card shadow-xs overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-3.5 sm:p-4 border-b bg-muted/10">
+        <div className="flex items-center gap-2 min-w-0">
+          <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
+          <span className="text-sm sm:text-base font-semibold text-foreground truncate">
+            Monthly History & Visual Calendar
+          </span>
         </div>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        {/* Monthly Summary Metrics Banner */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-          <div className="rounded-xl border bg-muted/30 p-3 flex flex-col justify-between">
-            <span className="text-[11px] font-medium text-muted-foreground">
+        <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handlePrevMonth}
+            aria-label="Previous month"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs font-semibold px-2.5"
+            onClick={handleCurrentMonth}
+          >
+            {format(currentMonth, 'MMMM yyyy')}
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-7 w-7"
+            onClick={handleNextMonth}
+            aria-label="Next month"
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      <CardContent className="p-3.5 sm:p-4 space-y-3">
+        {/* Monthly Summary Metrics Strip (Compact single row) */}
+        <div className="grid grid-cols-3 sm:grid-cols-4 divide-x divide-border/60 rounded-xl bg-muted/20 border py-2 px-1 text-center">
+          <div className="px-1">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
               Monthly Completion
             </span>
-            <div className="flex items-baseline gap-1.5 mt-1">
-              <span className="text-xl sm:text-2xl font-bold text-foreground">
+            <div className="flex items-baseline justify-center gap-1 mt-0.5">
+              <span className="text-sm sm:text-base font-bold text-foreground">
                 {monthlyMetrics.completionRate}%
               </span>
-              <span className="text-[11px] text-muted-foreground">
+              <span className="text-[10px] text-muted-foreground">
                 ({monthlyMetrics.completedDaysCount}/{monthlyMetrics.scheduledDaysCount}d)
               </span>
             </div>
           </div>
 
-          <div className="rounded-xl border bg-muted/30 p-3 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-              <span>Best Month Streak</span>
-              <Flame className="h-3.5 w-3.5 text-amber-500" />
-            </div>
-            <div className="flex items-baseline gap-1 mt-1">
-              <span className="text-xl sm:text-2xl font-bold text-amber-500">
+          <div className="px-1">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Best Month Streak
+            </span>
+            <div className="flex items-center justify-center gap-1 mt-0.5">
+              <Flame className="h-3 w-3 text-amber-500" />
+              <span className="text-sm sm:text-base font-bold text-amber-500">
                 {monthlyMetrics.bestMonthlyStreak}
               </span>
-              <span className="text-xs text-muted-foreground">days</span>
+              <span className="text-[10px] text-muted-foreground">days</span>
             </div>
           </div>
 
-          <div className="rounded-xl border bg-muted/30 p-3 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-              <span>Total Logged</span>
-              <TrendingUp className="h-3.5 w-3.5 text-primary" />
-            </div>
-            <div className="flex items-baseline gap-1 mt-1">
+          <div className="px-1">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Total Logged
+            </span>
+            <div className="flex items-baseline justify-center gap-1 mt-0.5">
               {habit.targetType === 'timer' ? (
                 <>
-                  <span className="text-xl sm:text-2xl font-bold text-foreground">
+                  <span className="text-sm sm:text-base font-bold text-foreground">
                     {monthlyMetrics.totalTimerMinutesSum}
                   </span>
-                  <span className="text-xs text-muted-foreground">mins</span>
+                  <span className="text-[10px] text-muted-foreground">mins</span>
                 </>
               ) : habit.targetType === 'numeric' ? (
                 <>
-                  <span className="text-xl sm:text-2xl font-bold text-foreground">
+                  <span className="text-sm sm:text-base font-bold text-foreground">
                     {monthlyMetrics.totalCounterSum}
                   </span>
-                  <span className="text-xs text-muted-foreground">{habit.unit || 'units'}</span>
+                  <span className="text-[10px] text-muted-foreground truncate max-w-[40px]">
+                    {habit.unit || 'units'}
+                  </span>
                 </>
               ) : (
                 <>
-                  <span className="text-xl sm:text-2xl font-bold text-foreground">
+                  <span className="text-sm sm:text-base font-bold text-foreground">
                     {monthlyMetrics.completedDaysCount}
                   </span>
-                  <span className="text-xs text-muted-foreground">check-ins</span>
+                  <span className="text-[10px] text-muted-foreground">check-ins</span>
                 </>
               )}
             </div>
           </div>
 
-          <div className="rounded-xl border bg-muted/30 p-3 flex flex-col justify-between">
-            <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
-              <span>Status</span>
-              <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-            </div>
-            <div className="mt-1">
-              <span className="text-xs font-semibold text-foreground">
-                {monthlyMetrics.completionRate >= 80
-                  ? 'Consistent Pace'
-                  : monthlyMetrics.completionRate >= 50
-                    ? 'Making Progress'
-                    : 'Building Momentum'}
-              </span>
+          <div className="hidden sm:block px-1">
+            <span className="text-[10px] sm:text-[11px] font-medium text-muted-foreground block truncate">
+              Status
+            </span>
+            <div className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-1 truncate">
+              {monthlyMetrics.completionRate >= 80
+                ? 'Consistent Pace'
+                : monthlyMetrics.completionRate >= 50
+                  ? 'Making Progress'
+                  : 'Building Momentum'}
             </div>
           </div>
         </div>
