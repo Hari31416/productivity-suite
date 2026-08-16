@@ -118,7 +118,15 @@ describe('Automated Testing: Backup, Validation & Recovery Workflow', () => {
         formatVersion: 1,
         exportTimestamp: new Date().toISOString(),
         appVersion: '1.0.0',
-        tableCounts: { habits: 1, habitLogs: 0, projects: 0, tasks: 0, subtasks: 0, notes: 0, tags: 0 }
+        tableCounts: {
+          habits: 1,
+          habitLogs: 0,
+          projects: 0,
+          tasks: 0,
+          subtasks: 0,
+          notes: 0,
+          tags: 0
+        }
       },
       habits: [
         {

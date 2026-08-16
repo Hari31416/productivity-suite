@@ -56,7 +56,10 @@ describe('smartTaskParser', () => {
 
   it('combines multiple tokens in a single string', () => {
     const tomorrowStr = format(addDays(new Date(), 1), 'yyyy-MM-dd')
-    const res = parseSmartTaskInput('Design dashboard mockups !high @tomorrow #work #ui', mockProjects)
+    const res = parseSmartTaskInput(
+      'Design dashboard mockups !high @tomorrow #work #ui',
+      mockProjects
+    )
     expect(res.title).toBe('Design dashboard mockups')
     expect(res.priority).toBe('high')
     expect(res.dueDate).toBe(tomorrowStr)

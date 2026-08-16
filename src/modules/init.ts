@@ -104,7 +104,9 @@ export function initializeModules(queryClient?: QueryClient): void {
 
   // Background initialization of database seeding, recurring tasks, and task reminders
   if (typeof window !== 'undefined') {
-    ;(window as unknown as { sendLocalNotification?: typeof sendLocalNotification }).sendLocalNotification = sendLocalNotification
+    ;(
+      window as unknown as { sendLocalNotification?: typeof sendLocalNotification }
+    ).sendLocalNotification = sendLocalNotification
 
     ensureDatabaseSeeded(db)
       .then((didSeed) => {
@@ -120,5 +122,3 @@ export function initializeModules(queryClient?: QueryClient): void {
       })
   }
 }
-
-

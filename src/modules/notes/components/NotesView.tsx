@@ -76,9 +76,7 @@ export function NotesView() {
 
     if (selectedTag) {
       const targetTag = selectedTag.toLowerCase()
-      result = result.filter((n) =>
-        n.tags?.some((t) => t.toLowerCase() === targetTag)
-      )
+      result = result.filter((n) => n.tags?.some((t) => t.toLowerCase() === targetTag))
     }
 
     if (selectedProjectId) {
@@ -208,7 +206,9 @@ export function NotesView() {
             title="Export all notes to a zip archive"
           >
             <Download className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{isExporting ? 'Exporting...' : 'Export (.zip)'}</span>
+            <span className="hidden sm:inline">
+              {isExporting ? 'Exporting...' : 'Export (.zip)'}
+            </span>
           </Button>
 
           <Button
@@ -341,12 +341,9 @@ export function NotesView() {
         </div>
       )}
 
-
       {/* Loading State */}
       {isLoading && (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          Loading notes...
-        </div>
+        <div className="py-12 text-center text-sm text-muted-foreground">Loading notes...</div>
       )}
 
       {/* Empty State */}
@@ -360,15 +357,15 @@ export function NotesView() {
               {searchQuery || selectedTag || selectedProjectId
                 ? 'No matching notes found'
                 : showArchived
-                ? 'No archived notes'
-                : 'No notes yet'}
+                  ? 'No archived notes'
+                  : 'No notes yet'}
             </h3>
             <p className="mx-auto max-w-sm text-xs text-muted-foreground">
               {searchQuery || selectedTag || selectedProjectId
                 ? 'Try clearing your search query or filters.'
                 : 'Create markdown notes with live syntax preview, tags, and local-first storage.'}
             </p>
-            {(!searchQuery && !selectedTag && !selectedProjectId && !showArchived) && (
+            {!searchQuery && !selectedTag && !selectedProjectId && !showArchived && (
               <Button onClick={handleStartCreate} className="mt-2 gap-1.5 text-xs">
                 <Plus className="h-4 w-4" />
                 <span>Create Your First Note</span>

@@ -76,7 +76,8 @@ describe('MarkdownRenderer component', () => {
   })
 
   it('handles partial headers and standalone special characters without crashing or looping', () => {
-    const markdown = '#\n##\n### \n[\n*\n_\n~\n|\n>\n`\n# Partial Header\n[incomplete link\n**unclosed bold'
+    const markdown =
+      '#\n##\n### \n[\n*\n_\n~\n|\n>\n`\n# Partial Header\n[incomplete link\n**unclosed bold'
     const html = renderToStaticMarkup(<MarkdownRenderer content={markdown} />)
 
     expect(html).toContain('<h1')
@@ -92,7 +93,11 @@ describe('MarkdownRenderer component', () => {
     const headings = extractHeadings(markdown)
     expect(headings).toHaveLength(3)
     expect(headings[0]).toEqual({ level: 1, text: 'Introduction', id: 'heading-introduction' })
-    expect(headings[1]).toEqual({ level: 2, text: 'Getting Started', id: 'heading-getting-started' })
+    expect(headings[1]).toEqual({
+      level: 2,
+      text: 'Getting Started',
+      id: 'heading-getting-started'
+    })
     expect(headings[2]).toEqual({ level: 3, text: 'Installation', id: 'heading-installation' })
   })
 })

@@ -1,17 +1,6 @@
 import { useState } from 'react'
-import {
-  Activity,
-  CheckSquare,
-  FileText,
-  ShieldCheck,
-  ArrowRight
-} from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogDescription
-} from '@/components/ui/dialog'
+import { Activity, CheckSquare, FileText, ShieldCheck, ArrowRight } from 'lucide-react'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useUserProfile } from '@/core/profile/useUserProfile'

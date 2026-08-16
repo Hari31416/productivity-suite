@@ -35,11 +35,8 @@ export function useUpdateSubtask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (variables: {
-      id: string
-      taskId: string
-      updates: Partial<Subtask>
-    }) => taskRepository.updateSubtask(variables.id, variables.updates),
+    mutationFn: (variables: { id: string; taskId: string; updates: Partial<Subtask> }) =>
+      taskRepository.updateSubtask(variables.id, variables.updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: subtaskQueryKeys.byTask(variables.taskId)
@@ -53,10 +50,8 @@ export function useToggleSubtask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (variables: {
-      id: string
-      taskId: string
-    }) => taskRepository.toggleSubtask(variables.id),
+    mutationFn: (variables: { id: string; taskId: string }) =>
+      taskRepository.toggleSubtask(variables.id),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: subtaskQueryKeys.byTask(variables.taskId)
@@ -70,10 +65,8 @@ export function useDeleteSubtask() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (variables: {
-      id: string
-      taskId: string
-    }) => taskRepository.deleteSubtask(variables.id),
+    mutationFn: (variables: { id: string; taskId: string }) =>
+      taskRepository.deleteSubtask(variables.id),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: subtaskQueryKeys.byTask(variables.taskId)

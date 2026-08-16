@@ -35,10 +35,7 @@ import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
 import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
 import { isHabitScheduledOnDate, calculateStreak } from '@/modules/habits/utils/streakCalculator'
-import {
-  calculateDailyProductivityScore,
-  getProductivityStatus
-} from '../utils/dashboardScore'
+import { calculateDailyProductivityScore, getProductivityStatus } from '../utils/dashboardScore'
 import { cn } from '@/lib/utils'
 
 export function DashboardView() {
@@ -91,20 +88,23 @@ export function DashboardView() {
   }, [habits, todayLogs, todayStr])
 
   // Task metrics
-  const { todayTasks, completedTasksCount, urgentTasksCount, completedTasksList, upcomingTasks } = useMemo(() => {
-    const dueToday = tasks.filter((t) => t.dueDate === todayStr)
-    const completedList = tasks.filter((t) => t.status === 'done' && (t.dueDate === todayStr || t.updatedAt?.startsWith(todayStr)))
-    const urgent = tasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length
-    const upcoming = tasks.filter((t) => t.status !== 'done').slice(0, 5)
+  const { todayTasks, completedTasksCount, urgentTasksCount, completedTasksList, upcomingTasks } =
+    useMemo(() => {
+      const dueToday = tasks.filter((t) => t.dueDate === todayStr)
+      const completedList = tasks.filter(
+        (t) => t.status === 'done' && (t.dueDate === todayStr || t.updatedAt?.startsWith(todayStr))
+      )
+      const urgent = tasks.filter((t) => t.priority === 'urgent' && t.status !== 'done').length
+      const upcoming = tasks.filter((t) => t.status !== 'done').slice(0, 5)
 
-    return {
-      todayTasks: dueToday,
-      completedTasksCount: dueToday.filter((t) => t.status === 'done').length,
-      completedTasksList: completedList,
-      urgentTasksCount: urgent,
-      upcomingTasks: upcoming
-    }
-  }, [tasks, todayStr])
+      return {
+        todayTasks: dueToday,
+        completedTasksCount: dueToday.filter((t) => t.status === 'done').length,
+        completedTasksList: completedList,
+        urgentTasksCount: urgent,
+        upcomingTasks: upcoming
+      }
+    }, [tasks, todayStr])
 
   // Overall Daily Productivity Score
   const score = useMemo(() => {
@@ -118,13 +118,11 @@ export function DashboardView() {
 
   const productivityStatus = getProductivityStatus(score)
 
-  const habitsPercentage = todayHabits.length > 0
-    ? Math.round((completedHabitsCount / todayHabits.length) * 100)
-    : 100
+  const habitsPercentage =
+    todayHabits.length > 0 ? Math.round((completedHabitsCount / todayHabits.length) * 100) : 100
 
-  const tasksPercentage = todayTasks.length > 0
-    ? Math.round((completedTasksCount / todayTasks.length) * 100)
-    : 100
+  const tasksPercentage =
+    todayTasks.length > 0 ? Math.round((completedTasksCount / todayTasks.length) * 100) : 100
 
   // Circular Progress calculations
   const ringRadius = 38
@@ -197,25 +195,33 @@ export function DashboardView() {
           <div className="flex-1 text-center sm:text-left min-w-0 space-y-1">
             <div className="flex items-center justify-center sm:justify-start gap-2">
               <span className="text-sm font-semibold text-foreground">Daily Progress</span>
-              <Badge variant="outline" className={cn('text-[11px] font-semibold py-0.5 px-2', productivityStatus.color)}>
+              <Badge
+                variant="outline"
+                className={cn('text-[11px] font-semibold py-0.5 px-2', productivityStatus.color)}
+              >
                 {productivityStatus.label}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {completedHabitsCount + completedTasksCount} of {todayHabits.length + todayTasks.length} items completed today
+              {completedHabitsCount + completedTasksCount} of{' '}
+              {todayHabits.length + todayTasks.length} items completed today
             </p>
           </div>
 
           {/* Habits & Tasks Count Badges */}
           <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-end">
             <div className="flex-1 sm:flex-initial flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-xl bg-muted/40 border">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Habits</span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                Habits
+              </span>
               <span className="text-sm font-bold text-foreground">
                 {completedHabitsCount}/{todayHabits.length}
               </span>
             </div>
             <div className="flex-1 sm:flex-initial flex flex-col items-center justify-center px-3 sm:px-4 py-2 rounded-xl bg-muted/40 border">
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Tasks</span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+                Tasks
+              </span>
               <span className="text-sm font-bold text-foreground">
                 {completedTasksCount}/{todayTasks.length}
               </span>
@@ -272,12 +278,19 @@ export function DashboardView() {
                         style={{ backgroundColor: habit.color || '#0A7A64' }}
                       />
                       <div className="min-w-0 flex-1">
-                        <p className={cn('font-semibold text-sm truncate', isCompleted && 'line-through text-muted-foreground')}>
+                        <p
+                          className={cn(
+                            'font-semibold text-sm truncate',
+                            isCompleted && 'line-through text-muted-foreground'
+                          )}
+                        >
                           {habit.title}
                         </p>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
                           {habit.targetType === 'numeric' && (
-                            <span>{habit.targetValue || 1} {habit.unit || 'times'}</span>
+                            <span>
+                              {habit.targetValue || 1} {habit.unit || 'times'}
+                            </span>
                           )}
                           {habit.targetType === 'timer' && (
                             <span>{habit.targetValue || 10} min</span>
@@ -342,7 +355,9 @@ export function DashboardView() {
           ) : (
             <div className="space-y-2">
               {upcomingTasks.map((task) => {
-                const project = task.projectId ? projects.find((p) => p.id === task.projectId) : undefined
+                const project = task.projectId
+                  ? projects.find((p) => p.id === task.projectId)
+                  : undefined
                 const isDone = task.status === 'done'
 
                 return (
@@ -350,9 +365,7 @@ export function DashboardView() {
                     key={task.id}
                     className={cn(
                       'flex items-center justify-between p-3 rounded-xl border text-xs transition-all',
-                      isDone
-                        ? 'bg-primary/5 border-primary/20'
-                        : 'bg-background hover:bg-muted/40'
+                      isDone ? 'bg-primary/5 border-primary/20' : 'bg-background hover:bg-muted/40'
                     )}
                   >
                     <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -371,7 +384,12 @@ export function DashboardView() {
                       </button>
 
                       <div className="min-w-0 flex-1">
-                        <p className={cn('font-semibold text-sm truncate', isDone && 'line-through text-muted-foreground')}>
+                        <p
+                          className={cn(
+                            'font-semibold text-sm truncate',
+                            isDone && 'line-through text-muted-foreground'
+                          )}
+                        >
                           {task.title}
                         </p>
                         <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5 flex-wrap">
@@ -384,13 +402,19 @@ export function DashboardView() {
                           {project && (
                             <span
                               className="px-1.5 py-0.2 rounded text-[10px] font-medium"
-                              style={{ backgroundColor: `${project.color}20`, color: project.color }}
+                              style={{
+                                backgroundColor: `${project.color}20`,
+                                color: project.color
+                              }}
                             >
                               {project.name}
                             </span>
                           )}
                           {task.priority === 'urgent' && (
-                            <Badge variant="destructive" className="text-[10px] h-4 px-1 py-0 font-medium">
+                            <Badge
+                              variant="destructive"
+                              className="text-[10px] h-4 px-1 py-0 font-medium"
+                            >
                               Urgent
                             </Badge>
                           )}
@@ -400,7 +424,7 @@ export function DashboardView() {
                   </div>
                 )
               })}
-              </div>
+            </div>
           )}
         </Card>
       </div>
@@ -436,9 +460,7 @@ export function DashboardView() {
                 {tasks.filter((t) => t.status !== 'done').length}
               </span>
               {urgentTasksCount > 0 && (
-                <span className="text-[11px] text-red-500 font-medium">
-                  {urgentTasksCount} urg
-                </span>
+                <span className="text-[11px] text-red-500 font-medium">{urgentTasksCount} urg</span>
               )}
             </div>
           </div>
@@ -493,7 +515,10 @@ export function DashboardView() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
                     <span className="font-medium text-foreground truncate">{habit.title}</span>
-                    <Badge variant="outline" className="text-[10px] h-4 px-1 py-0 text-primary border-primary/30 shrink-0">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 px-1 py-0 text-primary border-primary/30 shrink-0"
+                    >
                       Habit
                     </Badge>
                   </div>
@@ -503,7 +528,9 @@ export function DashboardView() {
             ))}
 
             {completedTasksList.map((task) => {
-              const project = task.projectId ? projects.find((p) => p.id === task.projectId) : undefined
+              const project = task.projectId
+                ? projects.find((p) => p.id === task.projectId)
+                : undefined
               return (
                 <div
                   key={`completed-task-${task.id}`}
@@ -544,9 +571,7 @@ export function DashboardView() {
               Module Focus & Action Items
             </h2>
           </div>
-          <span className="text-xs text-muted-foreground">
-            Live updates
-          </span>
+          <span className="text-xs text-muted-foreground">Live updates</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -583,7 +608,9 @@ export function DashboardView() {
                   <Activity className="h-4 w-4 text-primary" />
                   <span>Scheduled Habits</span>
                 </div>
-                <span className="text-foreground">{habitsPercentage}% ({completedHabitsCount}/{todayHabits.length})</span>
+                <span className="text-foreground">
+                  {habitsPercentage}% ({completedHabitsCount}/{todayHabits.length})
+                </span>
               </div>
               <Progress value={habitsPercentage} className="h-2" />
               <p className="text-[11px] text-muted-foreground">
@@ -600,7 +627,9 @@ export function DashboardView() {
                   <CheckCircle2 className="h-4 w-4 text-primary" />
                   <span>Due Tasks</span>
                 </div>
-                <span className="text-foreground">{tasksPercentage}% ({completedTasksCount}/{todayTasks.length})</span>
+                <span className="text-foreground">
+                  {tasksPercentage}% ({completedTasksCount}/{todayTasks.length})
+                </span>
               </div>
               <Progress value={tasksPercentage} className="h-2" />
               <p className="text-[11px] text-muted-foreground">
@@ -614,7 +643,9 @@ export function DashboardView() {
             <div className="flex items-start gap-2 rounded-xl bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
               <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] leading-relaxed">
-                The Daily Productivity Score blends your habit completion rate (50%) and your due task completion rate (50%). Checking in habits and clearing due tasks directly elevates your score!
+                The Daily Productivity Score blends your habit completion rate (50%) and your due
+                task completion rate (50%). Checking in habits and clearing due tasks directly
+                elevates your score!
               </p>
             </div>
           </div>
@@ -622,19 +653,13 @@ export function DashboardView() {
       </Dialog>
 
       {/* Modals for Quick Creation */}
-      <HabitFormModal
-        open={habitModalOpen}
-        onOpenChange={setHabitModalOpen}
-      />
+      <HabitFormModal open={habitModalOpen} onOpenChange={setHabitModalOpen} />
       <TaskFormModal
         open={taskModalOpen}
         onOpenChange={setTaskModalOpen}
         defaultDueDate={todayStr}
       />
-      <NoteFormModal
-        open={noteModalOpen}
-        onOpenChange={setNoteModalOpen}
-      />
+      <NoteFormModal open={noteModalOpen} onOpenChange={setNoteModalOpen} />
     </div>
   )
 }

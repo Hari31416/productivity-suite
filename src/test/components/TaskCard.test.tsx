@@ -28,10 +28,7 @@ describe('Automated UI Testing: TaskCard Component', () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <TaskCard
-          task={mockTask}
-          onEdit={onEdit}
-        />
+        <TaskCard task={mockTask} onEdit={onEdit} />
       </QueryClientProvider>
     )
 

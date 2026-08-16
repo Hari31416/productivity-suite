@@ -13,9 +13,7 @@ export const habitRepository = {
     return db.habits.get(id)
   },
 
-  async createHabit(
-    habitData: CreateHabitInput
-  ): Promise<Habit> {
+  async createHabit(habitData: CreateHabitInput): Promise<Habit> {
     const now = new Date().toISOString()
     const habit: Habit = {
       ...habitData,
@@ -63,31 +61,15 @@ export const habitRepository = {
     return db.habitLogs.where('date').equals(date).toArray()
   },
 
-  async getLogsForDateRange(
-    startDate: string,
-    endDate: string
-  ): Promise<HabitLog[]> {
-    return db.habitLogs
-      .where('date')
-      .between(startDate, endDate, true, true)
-      .toArray()
+  async getLogsForDateRange(startDate: string, endDate: string): Promise<HabitLog[]> {
+    return db.habitLogs.where('date').between(startDate, endDate, true, true).toArray()
   },
 
-  async getLogsForHabitAndDate(
-    habitId: string,
-    date: string
-  ): Promise<HabitLog[]> {
-    return db.habitLogs
-      .where('[habitId+date]')
-      .equals([habitId, date])
-      .toArray()
+  async getLogsForHabitAndDate(habitId: string, date: string): Promise<HabitLog[]> {
+    return db.habitLogs.where('[habitId+date]').equals([habitId, date]).toArray()
   },
 
-  async toggleHabitLog(
-    habitId: string,
-    date: string,
-    intervalIndex?: number
-  ): Promise<HabitLog> {
+  async toggleHabitLog(habitId: string, date: string, intervalIndex?: number): Promise<HabitLog> {
     const logs = await this.getLogsForHabitAndDate(habitId, date)
     const existing = logs.find((l) =>
       intervalIndex !== undefined

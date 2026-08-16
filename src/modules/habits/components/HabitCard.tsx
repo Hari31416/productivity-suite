@@ -25,10 +25,7 @@ import type { Habit, HabitLog } from '../types'
 import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
 import { getHabitSlots } from '../utils/intervalCalculator'
 import { calculateStreak, isHabitCompletedOnDate } from '../utils/streakCalculator'
-import {
-  useToggleHabitLog,
-  useSetHabitLogValue
-} from '../hooks/useHabits'
+import { useToggleHabitLog, useSetHabitLogValue } from '../hooks/useHabits'
 import { cn } from '@/lib/utils'
 import { fireConfetti } from '@/lib/confetti'
 
@@ -169,7 +166,10 @@ export function HabitCard({
         const target = habit.targetValue || 30
         const clampedVal = Math.min(target, parsed)
         if (clampedVal >= target && currentTimerMinutes < target) {
-          fireConfetti({ particleCount: 35, colors: [habit.color || '#0A7A64', '#10b981', '#ec4899'] })
+          fireConfetti({
+            particleCount: 35,
+            colors: [habit.color || '#0A7A64', '#10b981', '#ec4899']
+          })
         }
         setValueMutation.mutate({
           habitId: habit.id,
@@ -184,20 +184,17 @@ export function HabitCard({
     setIsEditingDirect(false)
   }
 
-  const HabitIcon = getHabitIconComponent(
-    habit.icon,
-    habit.title,
-    habit.categoryId
-  )
+  const HabitIcon = getHabitIconComponent(habit.icon, habit.title, habit.categoryId)
 
   // Progress Dots calculation (Max 10 dots, single row)
   const dotProgress = useMemo(() => {
     if (habit.targetType === 'numeric') {
       const target = habit.targetValue || 1
       const totalDots = Math.min(10, Math.max(1, target))
-      const activeDots = target <= 10
-        ? Math.min(totalDots, Math.max(0, currentNumericValue))
-        : Math.min(10, Math.round((currentNumericValue / target) * 10))
+      const activeDots =
+        target <= 10
+          ? Math.min(totalDots, Math.max(0, currentNumericValue))
+          : Math.min(10, Math.round((currentNumericValue / target) * 10))
       return { totalDots, activeDots, isRatio: target > 10, target }
     }
     if (habit.targetType === 'timer') {
@@ -263,9 +260,7 @@ export function HabitCard({
                   <span>{category.name}</span>
                 </span>
               ) : habit.categoryId ? (
-                <span
-                  className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md shrink-0 border border-muted bg-muted/40 text-muted-foreground capitalize"
-                >
+                <span className="inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md shrink-0 border border-muted bg-muted/40 text-muted-foreground capitalize">
                   <span>{habit.categoryId}</span>
                 </span>
               ) : null}
@@ -407,7 +402,9 @@ export function HabitCard({
               )}
 
               {habit.targetType === 'boolean' && (
-                <span className="truncate">{habit.description || (isCompleted ? 'Completed' : 'Daily check-in')}</span>
+                <span className="truncate">
+                  {habit.description || (isCompleted ? 'Completed' : 'Daily check-in')}
+                </span>
               )}
 
               {streakInfo.currentStreak > 0 && (
@@ -446,7 +443,9 @@ export function HabitCard({
                           ? 'bg-primary shadow-2xs'
                           : 'bg-muted-foreground/25 hover:bg-muted-foreground/35'
                       )}
-                      style={isDotFilled && habit.color ? { backgroundColor: habit.color } : undefined}
+                      style={
+                        isDotFilled && habit.color ? { backgroundColor: habit.color } : undefined
+                      }
                       aria-label={`Step ${idx + 1}`}
                     />
                   )
@@ -529,43 +528,44 @@ export function HabitCard({
         </div>
 
         {/* Sub-day Interval Slots if applicable */}
-        {(habit.frequencyType === 'subday_interval' ||
-          habit.frequencyType === 'times_per_day') && (
-            <div className="space-y-2 pt-2 mt-2 border-t">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Interval Progress</span>
-                <span>
-                  {slots.filter((slot) => {
+        {(habit.frequencyType === 'subday_interval' || habit.frequencyType === 'times_per_day') && (
+          <div className="space-y-2 pt-2 mt-2 border-t">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>Interval Progress</span>
+              <span>
+                {
+                  slots.filter((slot) => {
                     const log = logs.find((l) => l.intervalIndex === slot.index)
                     return log ? log.completed : false
-                  }).length}{' '}
-                  / {slots.length} completed
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 flex-wrap">
-                {slots.map((slot) => {
-                  const log = logs.find((l) => l.intervalIndex === slot.index)
-                  const slotCompleted = log ? log.completed : false
-                  return (
-                    <Button
-                      key={slot.index}
-                      type="button"
-                      size="sm"
-                      variant={slotCompleted ? 'default' : 'outline'}
-                      onClick={() => handleToggleSlot(slot.index)}
-                      className={cn(
-                        'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
-                        slotCompleted && 'bg-primary text-primary-foreground font-semibold'
-                      )}
-                    >
-                      {slotCompleted && <Check className="h-3 w-3" />}
-                      <span>{slot.label}</span>
-                    </Button>
-                  )
-                })}
-              </div>
+                  }).length
+                }{' '}
+                / {slots.length} completed
+              </span>
             </div>
-          )}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {slots.map((slot) => {
+                const log = logs.find((l) => l.intervalIndex === slot.index)
+                const slotCompleted = log ? log.completed : false
+                return (
+                  <Button
+                    key={slot.index}
+                    type="button"
+                    size="sm"
+                    variant={slotCompleted ? 'default' : 'outline'}
+                    onClick={() => handleToggleSlot(slot.index)}
+                    className={cn(
+                      'h-8 px-2.5 text-xs font-medium rounded-lg gap-1 transition-all',
+                      slotCompleted && 'bg-primary text-primary-foreground font-semibold'
+                    )}
+                  >
+                    {slotCompleted && <Check className="h-3 w-3" />}
+                    <span>{slot.label}</span>
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   )

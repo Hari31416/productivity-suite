@@ -127,10 +127,7 @@ describe('taskRepository', () => {
         tags: [],
         archived: false
       },
-      [
-        { title: 'Subtask 1' },
-        { title: 'Subtask 2' }
-      ]
+      [{ title: 'Subtask 1' }, { title: 'Subtask 2' }]
     )
 
     const subtasksBefore = await taskRepository.getSubtasksForTask(task.id)
@@ -399,4 +396,3 @@ describe('taskRepository', () => {
     expect(allTasks.map((t) => t.dueTime)).toEqual(['09:00', '12:00', '15:00'])
   })
 })
-

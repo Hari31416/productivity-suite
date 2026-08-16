@@ -14,13 +14,7 @@ describe('intervalCalculator', () => {
     it('generates slots from 08:00 to 20:00 with 3-hour interval', () => {
       const slots = generateSubdayIntervalSlots('08:00', '20:00', 3)
       expect(slots).toHaveLength(5)
-      expect(slots.map((s) => s.label)).toEqual([
-        '08:00',
-        '11:00',
-        '14:00',
-        '17:00',
-        '20:00'
-      ])
+      expect(slots.map((s) => s.label)).toEqual(['08:00', '11:00', '14:00', '17:00', '20:00'])
       expect(slots[0].index).toBe(0)
       expect(slots[4].index).toBe(4)
     })
@@ -28,23 +22,13 @@ describe('intervalCalculator', () => {
     it('generates slots from 09:00 to 12:00 with 1-hour interval', () => {
       const slots = generateSubdayIntervalSlots('09:00', '12:00', 1)
       expect(slots).toHaveLength(4)
-      expect(slots.map((s) => s.label)).toEqual([
-        '09:00',
-        '10:00',
-        '11:00',
-        '12:00'
-      ])
+      expect(slots.map((s) => s.label)).toEqual(['09:00', '10:00', '11:00', '12:00'])
     })
 
     it('handles fractional interval hours (e.g. 0.5h / 30m)', () => {
       const slots = generateSubdayIntervalSlots('10:00', '11:30', 0.5)
       expect(slots).toHaveLength(4)
-      expect(slots.map((s) => s.label)).toEqual([
-        '10:00',
-        '10:30',
-        '11:00',
-        '11:30'
-      ])
+      expect(slots.map((s) => s.label)).toEqual(['10:00', '10:30', '11:00', '11:30'])
     })
 
     it('handles start time after end time gracefully', () => {

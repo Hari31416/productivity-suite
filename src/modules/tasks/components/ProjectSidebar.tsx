@@ -22,11 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { Project, ProjectWithCount } from '../types'
-import {
-  useProjectsWithCounts,
-  useArchiveProject,
-  useDeleteProject
-} from '../hooks/useProjects'
+import { useProjectsWithCounts, useArchiveProject, useDeleteProject } from '../hooks/useProjects'
 import { useTasks } from '../hooks/useTasks'
 import { ProjectFormModal } from './ProjectFormModal'
 
@@ -243,9 +239,7 @@ export function ProjectSidebar({
                         <span>Edit</span>
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onClick={() =>
-                          archiveMutation.mutate({ id: proj.id, archived: true })
-                        }
+                        onClick={() => archiveMutation.mutate({ id: proj.id, archived: true })}
                       >
                         <Archive className="h-3.5 w-3.5 mr-2" />
                         <span>Archive</span>

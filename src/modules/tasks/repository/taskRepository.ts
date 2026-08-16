@@ -10,10 +10,7 @@ import type {
   TaskReminder
 } from '../types'
 import { generateOccurrenceSlots } from '../utils/recurrence'
-import {
-  scheduleTaskReminder,
-  cancelTaskReminder
-} from '@/core/notifications/notificationService'
+import { scheduleTaskReminder, cancelTaskReminder } from '@/core/notifications/notificationService'
 
 export const taskRepository = {
   async getAllTasks(filter?: TaskFilter): Promise<Task[]> {
@@ -45,7 +42,9 @@ export const taskRepository = {
       }
 
       if (filter.isRecurring !== undefined) {
-        tasks = tasks.filter((t) => Boolean(t.isRecurring || t.recurringParentId) === filter.isRecurring)
+        tasks = tasks.filter(
+          (t) => Boolean(t.isRecurring || t.recurringParentId) === filter.isRecurring
+        )
       }
 
       if (filter.searchQuery && filter.searchQuery.trim()) {
@@ -187,12 +186,19 @@ export const taskRepository = {
       throw new Error('Failed to create task')
     }
 
-    if (created.reminders && created.reminders.length > 0 && created.status !== 'done' && !created.archived) {
+    if (
+      created.reminders &&
+      created.reminders.length > 0 &&
+      created.status !== 'done' &&
+      !created.archived
+    ) {
       await this.scheduleRemindersForTask(created)
     }
 
     if (created.isRecurring && created.recurrence && !created.recurringParentId) {
-      const isSubday = created.recurrence.frequency === 'hourly' || (created.recurrence.timesOfDay && created.recurrence.timesOfDay.length > 0)
+      const isSubday =
+        created.recurrence.frequency === 'hourly' ||
+        (created.recurrence.timesOfDay && created.recurrence.timesOfDay.length > 0)
       const forwardDays = isSubday ? 7 : 30
       await this.materializeRecurringInstances(created, forwardDays)
     }
@@ -243,12 +249,19 @@ export const taskRepository = {
       }
     }
 
-    if (updated.reminders && updated.reminders.length > 0 && updated.status !== 'done' && !updated.archived) {
+    if (
+      updated.reminders &&
+      updated.reminders.length > 0 &&
+      updated.status !== 'done' &&
+      !updated.archived
+    ) {
       await this.scheduleRemindersForTask(updated)
     }
 
     if (
-      (updates.isRecurring !== undefined || updates.recurrence !== undefined || updates.dueDate !== undefined) &&
+      (updates.isRecurring !== undefined ||
+        updates.recurrence !== undefined ||
+        updates.dueDate !== undefined) &&
       !existing.recurringParentId
     ) {
       const todayStr = format(new Date(), 'yyyy-MM-dd')
@@ -263,7 +276,9 @@ export const taskRepository = {
       }
 
       if (updated.isRecurring && updated.recurrence) {
-        const isSubday = updated.recurrence.frequency === 'hourly' || (updated.recurrence.timesOfDay && updated.recurrence.timesOfDay.length > 0)
+        const isSubday =
+          updated.recurrence.frequency === 'hourly' ||
+          (updated.recurrence.timesOfDay && updated.recurrence.timesOfDay.length > 0)
         const forwardDays = isSubday ? 7 : 30
         await this.materializeRecurringInstances(updated, forwardDays)
       }
@@ -429,7 +444,9 @@ export const taskRepository = {
       .toArray()
 
     for (const parent of parentRecurringTasks) {
-      const isSubday = parent.recurrence?.frequency === 'hourly' || (parent.recurrence?.timesOfDay && parent.recurrence.timesOfDay.length > 0)
+      const isSubday =
+        parent.recurrence?.frequency === 'hourly' ||
+        (parent.recurrence?.timesOfDay && parent.recurrence.timesOfDay.length > 0)
       const forwardDays = isSubday ? 7 : windowDays
       await this.materializeRecurringInstances(parent, forwardDays)
     }

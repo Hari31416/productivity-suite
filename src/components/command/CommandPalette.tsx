@@ -14,10 +14,7 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { useTheme } from '@/core/theme/useTheme'
 import { useHabits } from '@/modules/habits/hooks/useHabits'
@@ -287,7 +284,17 @@ export function CommandPalette({
     }
 
     return commands
-  }, [habits, tasks, notes, onRouteChange, onOpenTaskModal, onOpenHabitModal, onOpenNoteModal, onOpenChange, setTheme])
+  }, [
+    habits,
+    tasks,
+    notes,
+    onRouteChange,
+    onOpenTaskModal,
+    onOpenHabitModal,
+    onOpenNoteModal,
+    onOpenChange,
+    setTheme
+  ])
 
   // Filter commands by query
   const filteredCommands = useMemo(() => {
@@ -327,9 +334,7 @@ export function CommandPalette({
       setSelectedIndex((prev) => (prev + 1) % Math.max(1, filteredCommands.length))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setSelectedIndex((prev) =>
-        prev <= 0 ? Math.max(0, filteredCommands.length - 1) : prev - 1
-      )
+      setSelectedIndex((prev) => (prev <= 0 ? Math.max(0, filteredCommands.length - 1) : prev - 1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
       if (filteredCommands[selectedIndex]) {
@@ -371,10 +376,7 @@ export function CommandPalette({
         </div>
 
         {/* Results List */}
-        <div
-          ref={listRef}
-          className="max-h-80 overflow-y-auto p-2 divide-y divide-border/40"
-        >
+        <div ref={listRef} className="max-h-80 overflow-y-auto p-2 divide-y divide-border/40">
           {filteredCommands.length === 0 ? (
             <div className="py-6 px-4 text-center space-y-3">
               <p className="text-xs text-muted-foreground">
@@ -440,7 +442,12 @@ export function CommandPalette({
                         <Icon className="h-3.5 w-3.5" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className={cn('font-medium truncate', isSelected ? 'text-primary-foreground' : 'text-foreground')}>
+                        <p
+                          className={cn(
+                            'font-medium truncate',
+                            isSelected ? 'text-primary-foreground' : 'text-foreground'
+                          )}
+                        >
                           {command.title}
                         </p>
                         {command.subtitle && (
@@ -467,9 +474,7 @@ export function CommandPalette({
                       >
                         {categoryLabels[command.category] || command.category}
                       </span>
-                      {isSelected && (
-                        <ArrowRight className="h-3.5 w-3.5 text-primary-foreground" />
-                      )}
+                      {isSelected && <ArrowRight className="h-3.5 w-3.5 text-primary-foreground" />}
                     </div>
                   </button>
                 )
@@ -482,10 +487,16 @@ export function CommandPalette({
         <div className="border-t bg-muted/30 px-3 py-2 flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-3">
             <span className="flex items-center gap-1">
-              <kbd className="rounded border bg-background px-1 py-0.5 font-mono text-[10px]">↑↓</kbd> Navigate
+              <kbd className="rounded border bg-background px-1 py-0.5 font-mono text-[10px]">
+                ↑↓
+              </kbd>{' '}
+              Navigate
             </span>
             <span className="flex items-center gap-1">
-              <kbd className="rounded border bg-background px-1 py-0.5 font-mono text-[10px]">↵</kbd> Select
+              <kbd className="rounded border bg-background px-1 py-0.5 font-mono text-[10px]">
+                ↵
+              </kbd>{' '}
+              Select
             </span>
           </div>
           <span className="flex items-center gap-1 font-mono text-[10px]">

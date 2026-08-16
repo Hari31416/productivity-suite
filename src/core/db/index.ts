@@ -26,7 +26,8 @@ export class AppDatabase extends Dexie {
     })
 
     this.version(2).stores({
-      tasks: 'id, projectId, status, priority, dueDate, isRecurring, recurringParentId, archived, createdAt'
+      tasks:
+        'id, projectId, status, priority, dueDate, isRecurring, recurringParentId, archived, createdAt'
     })
 
     this.on('populate', (tx) => {

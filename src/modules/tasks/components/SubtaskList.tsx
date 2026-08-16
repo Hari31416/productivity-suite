@@ -43,9 +43,7 @@ export function SubtaskList({
   const toggleMutation = useToggleSubtask()
   const deleteMutation = useDeleteSubtask()
 
-  const subtasks: SubtaskItem[] = isLive
-    ? liveSubtasks
-    : externalSubtasks || []
+  const subtasks: SubtaskItem[] = isLive ? liveSubtasks : externalSubtasks || []
 
   const completedCount = subtasks.filter((s) => s.completed).length
   const totalCount = subtasks.length

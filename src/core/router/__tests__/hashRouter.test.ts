@@ -1,11 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import {
-  parseHashRoute,
-  buildHashRoute,
-  navigateHash,
-  useHashRoute
-} from '../hashRouter'
+import { parseHashRoute, buildHashRoute, navigateHash, useHashRoute } from '../hashRouter'
 
 describe('hashRouter', () => {
   describe('parseHashRoute', () => {

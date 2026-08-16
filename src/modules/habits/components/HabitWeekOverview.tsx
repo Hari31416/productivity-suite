@@ -195,8 +195,8 @@ export function HabitWeekOverview({
         scheduledCount > 0
           ? Math.round((completedCount / scheduledCount) * 100)
           : activeHabits.length > 0
-          ? Math.round((completedCount / activeHabits.length) * 100)
-          : 0
+            ? Math.round((completedCount / activeHabits.length) * 100)
+            : 0
 
       return {
         date: day,
@@ -231,8 +231,7 @@ export function HabitWeekOverview({
         if (isCompleted) daysCompleted += 1
       }
 
-      const rate =
-        daysScheduled > 0 ? Math.round((daysCompleted / daysScheduled) * 100) : 0
+      const rate = daysScheduled > 0 ? Math.round((daysCompleted / daysScheduled) * 100) : 0
 
       return {
         habitId: habit.id,
@@ -362,7 +361,10 @@ export function HabitWeekOverview({
                       {row.formattedFull}
                     </span>
                     {row.isToday && (
-                      <Badge variant="secondary" className="h-4 px-1.5 text-[9px] bg-primary/20 text-primary font-semibold">
+                      <Badge
+                        variant="secondary"
+                        className="h-4 px-1.5 text-[9px] bg-primary/20 text-primary font-semibold"
+                      >
                         Today
                       </Badge>
                     )}
@@ -426,188 +428,187 @@ export function HabitWeekOverview({
                       </div>
                     </th>
 
-                  {/* Daily Progress Bar Column */}
-                  <th className="py-3 px-4 min-w-[180px] font-semibold text-foreground">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-muted-foreground" />
-                      <span>Progress Bar</span>
-                    </div>
-                  </th>
-
-                  {/* One column per habit */}
-                  {activeHabits.map((habit) => {
-                    const IconComponent = getHabitIconComponent(
-                      habit.icon,
-                      habit.title,
-                      habit.categoryId
-                    )
-                    const category = DEFAULT_HABIT_CATEGORIES.find(
-                      (c) => c.id === habit.categoryId
-                    )
-
-                    return (
-                      <th
-                        key={habit.id}
-                        className="py-3 px-3 text-center min-w-[56px] max-w-[90px] group cursor-pointer hover:bg-muted/60 transition-colors"
-                        onClick={() => onEditHabit?.(habit)}
-                        title={`${habit.title} (${category?.name || 'General'})\nClick to view/edit habit`}
-                      >
-                        <div className="flex flex-col items-center justify-center gap-1">
-                          <div
-                            className="flex h-7 w-7 items-center justify-center rounded-lg border shadow-2xs transition-transform group-hover:scale-110"
-                            style={{
-                              backgroundColor: `${habit.color}15`,
-                              borderColor: `${habit.color}40`,
-                              color: habit.color
-                            }}
-                          >
-                            <IconComponent className="h-3.5 w-3.5" />
-                          </div>
-                          <span className="text-[11px] font-medium text-foreground truncate max-w-[75px] block">
-                            {habit.title}
-                          </span>
-                        </div>
-                      </th>
-                    )
-                  })}
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-border">
-                {dayRows.map((row) => (
-                  <tr
-                    key={row.dateStr}
-                    className={cn(
-                      'transition-colors hover:bg-muted/30',
-                      row.isToday && 'bg-primary/5 font-medium'
-                    )}
-                  >
-                    {/* Date Cell */}
-                    <td className="py-3.5 px-4 whitespace-nowrap">
+                    {/* Daily Progress Bar Column */}
+                    <th className="py-3 px-4 min-w-[180px] font-semibold text-foreground">
                       <div className="flex items-center gap-2">
-                        <span
-                          onClick={() => onSelectDate(row.dateStr)}
-                          className={cn(
-                            'cursor-pointer hover:underline text-xs sm:text-sm',
-                            row.isToday ? 'font-bold text-primary' : 'text-foreground'
-                          )}
-                        >
-                          {row.formattedFull}
-                        </span>
-                        {row.isToday && (
-                          <Badge
-                            variant="secondary"
-                            className="h-4 px-1.5 text-[10px] bg-primary/20 text-primary border-primary/30 font-semibold"
-                          >
-                            Today
-                          </Badge>
-                        )}
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <span>Progress Bar</span>
                       </div>
-                    </td>
+                    </th>
 
-                    {/* Progress Bar Cell */}
-                    <td className="py-3.5 px-4">
-                      <div className="flex items-center gap-3">
-                        <div className="relative h-3 w-full max-w-[130px] overflow-hidden rounded-full bg-muted border">
-                          <div
-                            className={cn(
-                              'h-full transition-all duration-300 rounded-full',
-                              row.percentage === 100
-                                ? 'bg-emerald-500'
-                                : row.percentage >= 50
-                                ? 'bg-blue-500'
-                                : 'bg-primary/70'
-                            )}
-                            style={{ width: `${row.percentage}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-semibold tabular-nums min-w-[36px]">
-                          {row.percentage}%
-                        </span>
-                      </div>
-                    </td>
+                    {/* One column per habit */}
+                    {activeHabits.map((habit) => {
+                      const IconComponent = getHabitIconComponent(
+                        habit.icon,
+                        habit.title,
+                        habit.categoryId
+                      )
+                      const category = DEFAULT_HABIT_CATEGORIES.find(
+                        (c) => c.id === habit.categoryId
+                      )
 
-                    {/* Checkbox cell for each habit */}
-                    {row.habitStatuses.map(({ habit, isScheduled, isCompleted }) => {
                       return (
-                        <td
+                        <th
                           key={habit.id}
-                          className="py-3.5 px-3 text-center align-middle"
+                          className="py-3 px-3 text-center min-w-[56px] max-w-[90px] group cursor-pointer hover:bg-muted/60 transition-colors"
+                          onClick={() => onEditHabit?.(habit)}
+                          title={`${habit.title} (${category?.name || 'General'})\nClick to view/edit habit`}
                         >
-                          <div className="flex items-center justify-center">
-                            <button
-                              type="button"
-                              onClick={() => handleCellToggle(habit, row.dateStr)}
-                              aria-label={`Mark ${habit.title} on ${row.formattedFull}`}
-                              className={cn(
-                                'h-6 w-6 rounded-md border flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer',
-                                isCompleted
-                                  ? 'border-transparent shadow-xs scale-105'
-                                  : isScheduled
-                                  ? 'border-muted-foreground/30 bg-background hover:border-primary hover:bg-muted/50'
-                                  : 'border-muted-foreground/15 bg-muted/20 opacity-40 hover:opacity-100 hover:border-muted-foreground/40'
-                              )}
-                              style={
-                                isCompleted
-                                  ? {
-                                      backgroundColor: habit.color || '#3b82f6',
-                                      color: '#ffffff'
-                                    }
-                                  : undefined
-                              }
-                              title={`${habit.title} on ${row.formattedFull}: ${
-                                isCompleted ? 'Completed' : isScheduled ? 'Pending' : 'Not scheduled'
-                              }`}
+                          <div className="flex flex-col items-center justify-center gap-1">
+                            <div
+                              className="flex h-7 w-7 items-center justify-center rounded-lg border shadow-2xs transition-transform group-hover:scale-110"
+                              style={{
+                                backgroundColor: `${habit.color}15`,
+                                borderColor: `${habit.color}40`,
+                                color: habit.color
+                              }}
                             >
-                              {isCompleted && (
-                                <Check className="h-3.5 w-3.5 stroke-[3]" />
-                              )}
-                            </button>
+                              <IconComponent className="h-3.5 w-3.5" />
+                            </div>
+                            <span className="text-[11px] font-medium text-foreground truncate max-w-[75px] block">
+                              {habit.title}
+                            </span>
                           </div>
-                        </td>
+                        </th>
                       )
                     })}
                   </tr>
-                ))}
-              </tbody>
+                </thead>
 
-              {/* Bottom Summary / Average Row */}
-              <tfoot>
-                <tr className="border-t-2 border-border bg-muted/30 font-semibold text-xs text-muted-foreground">
-                  <td className="py-3.5 px-4 uppercase tracking-wider text-[11px] font-bold text-foreground">
-                    AVERAGE / TOTAL
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-3">
-                      <div className="relative h-2.5 w-full max-w-[130px] overflow-hidden rounded-full bg-muted border">
-                        <div
-                          className="h-full bg-emerald-500 transition-all rounded-full"
-                          style={{ width: `${overallWeekAverage}%` }}
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-foreground tabular-nums min-w-[36px]">
-                        {overallWeekAverage}%
-                      </span>
-                    </div>
-                  </td>
-                  {habitColumnAverages.map((col) => (
-                    <td
-                      key={col.habitId}
-                      className="py-3.5 px-3 text-center text-xs font-bold text-foreground"
+                <tbody className="divide-y divide-border">
+                  {dayRows.map((row) => (
+                    <tr
+                      key={row.dateStr}
+                      className={cn(
+                        'transition-colors hover:bg-muted/30',
+                        row.isToday && 'bg-primary/5 font-medium'
+                      )}
                     >
-                      <div className="flex flex-col items-center">
-                        <span className="tabular-nums">{col.daysCompleted}</span>
-                        <span className="text-[10px] text-muted-foreground font-normal">
-                          {col.rate}%
+                      {/* Date Cell */}
+                      <td className="py-3.5 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span
+                            onClick={() => onSelectDate(row.dateStr)}
+                            className={cn(
+                              'cursor-pointer hover:underline text-xs sm:text-sm',
+                              row.isToday ? 'font-bold text-primary' : 'text-foreground'
+                            )}
+                          >
+                            {row.formattedFull}
+                          </span>
+                          {row.isToday && (
+                            <Badge
+                              variant="secondary"
+                              className="h-4 px-1.5 text-[10px] bg-primary/20 text-primary border-primary/30 font-semibold"
+                            >
+                              Today
+                            </Badge>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Progress Bar Cell */}
+                      <td className="py-3.5 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="relative h-3 w-full max-w-[130px] overflow-hidden rounded-full bg-muted border">
+                            <div
+                              className={cn(
+                                'h-full transition-all duration-300 rounded-full',
+                                row.percentage === 100
+                                  ? 'bg-emerald-500'
+                                  : row.percentage >= 50
+                                    ? 'bg-blue-500'
+                                    : 'bg-primary/70'
+                              )}
+                              style={{ width: `${row.percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-xs font-semibold tabular-nums min-w-[36px]">
+                            {row.percentage}%
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Checkbox cell for each habit */}
+                      {row.habitStatuses.map(({ habit, isScheduled, isCompleted }) => {
+                        return (
+                          <td key={habit.id} className="py-3.5 px-3 text-center align-middle">
+                            <div className="flex items-center justify-center">
+                              <button
+                                type="button"
+                                onClick={() => handleCellToggle(habit, row.dateStr)}
+                                aria-label={`Mark ${habit.title} on ${row.formattedFull}`}
+                                className={cn(
+                                  'h-6 w-6 rounded-md border flex items-center justify-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1 cursor-pointer',
+                                  isCompleted
+                                    ? 'border-transparent shadow-xs scale-105'
+                                    : isScheduled
+                                      ? 'border-muted-foreground/30 bg-background hover:border-primary hover:bg-muted/50'
+                                      : 'border-muted-foreground/15 bg-muted/20 opacity-40 hover:opacity-100 hover:border-muted-foreground/40'
+                                )}
+                                style={
+                                  isCompleted
+                                    ? {
+                                        backgroundColor: habit.color || '#3b82f6',
+                                        color: '#ffffff'
+                                      }
+                                    : undefined
+                                }
+                                title={`${habit.title} on ${row.formattedFull}: ${
+                                  isCompleted
+                                    ? 'Completed'
+                                    : isScheduled
+                                      ? 'Pending'
+                                      : 'Not scheduled'
+                                }`}
+                              >
+                                {isCompleted && <Check className="h-3.5 w-3.5 stroke-[3]" />}
+                              </button>
+                            </div>
+                          </td>
+                        )
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+
+                {/* Bottom Summary / Average Row */}
+                <tfoot>
+                  <tr className="border-t-2 border-border bg-muted/30 font-semibold text-xs text-muted-foreground">
+                    <td className="py-3.5 px-4 uppercase tracking-wider text-[11px] font-bold text-foreground">
+                      AVERAGE / TOTAL
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-2.5 w-full max-w-[130px] overflow-hidden rounded-full bg-muted border">
+                          <div
+                            className="h-full bg-emerald-500 transition-all rounded-full"
+                            style={{ width: `${overallWeekAverage}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-foreground tabular-nums min-w-[36px]">
+                          {overallWeekAverage}%
                         </span>
                       </div>
                     </td>
-                  ))}
-                </tr>
-              </tfoot>
-            </table>
+                    {habitColumnAverages.map((col) => (
+                      <td
+                        key={col.habitId}
+                        className="py-3.5 px-3 text-center text-xs font-bold text-foreground"
+                      >
+                        <div className="flex flex-col items-center">
+                          <span className="tabular-nums">{col.daysCompleted}</span>
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            {col.rate}%
+                          </span>
+                        </div>
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
-        </div>
         </>
       ) : (
         /* Weekly Progress Chart Sub-view */
@@ -616,7 +617,9 @@ export function HabitWeekOverview({
             <CardHeader className="pb-2">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-primary" />
-                <span>Daily Completion Trend ({format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')})</span>
+                <span>
+                  Daily Completion Trend ({format(weekStart, 'MMM d')} – {format(weekEnd, 'MMM d')})
+                </span>
               </CardTitle>
               <CardDescription>
                 Percentage of scheduled habits achieved each day across the week.
@@ -626,7 +629,11 @@ export function HabitWeekOverview({
               <div className="h-64 w-full pt-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      vertical={false}
+                      className="stroke-muted"
+                    />
                     <XAxis
                       dataKey="name"
                       tickLine={false}
@@ -669,8 +676,8 @@ export function HabitWeekOverview({
                             entry.percentage === 100
                               ? '#10b981'
                               : entry.percentage >= 50
-                              ? '#3b82f6'
-                              : '#64748b'
+                                ? '#3b82f6'
+                                : '#64748b'
                           }
                         />
                       ))}
@@ -688,9 +695,7 @@ export function HabitWeekOverview({
                 <Flame className="h-4 w-4 text-amber-500" />
                 <span>Week Performance</span>
               </CardTitle>
-              <CardDescription>
-                Summary of habit consistency this week.
-              </CardDescription>
+              <CardDescription>Summary of habit consistency this week.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
               <div className="flex items-center justify-between rounded-lg border bg-muted/20 p-3">

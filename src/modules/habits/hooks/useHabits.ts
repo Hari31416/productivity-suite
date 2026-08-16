@@ -4,8 +4,7 @@ import type { Habit, HabitLog } from '../types'
 
 export const habitQueryKeys = {
   allHabits: ['habits'] as const,
-  habitList: (includeArchived: boolean) =>
-    ['habits', 'list', { includeArchived }] as const,
+  habitList: (includeArchived: boolean) => ['habits', 'list', { includeArchived }] as const,
   habitDetail: (id: string) => ['habits', 'detail', id] as const,
   allLogs: ['habitLogs'] as const,
   logsByDate: (date: string) => ['habitLogs', 'date', date] as const,
@@ -139,14 +138,7 @@ export function useSetHabitLogValue() {
       value: number
       intervalIndex?: number
       completed?: boolean
-    }) =>
-      habitRepository.setHabitLogValue(
-        habitId,
-        date,
-        value,
-        intervalIndex,
-        completed
-      ),
+    }) => habitRepository.setHabitLogValue(habitId, date, value, intervalIndex, completed),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: habitQueryKeys.allLogs })
     }
@@ -157,9 +149,8 @@ export function useSaveHabitLog() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (
-      log: Omit<HabitLog, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }
-    ) => habitRepository.saveHabitLog(log),
+    mutationFn: (log: Omit<HabitLog, 'id' | 'createdAt' | 'updatedAt'> & { id?: string }) =>
+      habitRepository.saveHabitLog(log),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: habitQueryKeys.allLogs })
     }

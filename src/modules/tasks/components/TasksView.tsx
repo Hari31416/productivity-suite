@@ -21,13 +21,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
-import type {
-  Task,
-  TaskViewMode,
-  PriorityLevel,
-  TaskStatus,
-  TaskFilter
-} from '../types'
+import type { Task, TaskViewMode, PriorityLevel, TaskStatus, TaskFilter } from '../types'
 import { useTasks, useTaskTags, useCreateTask } from '../hooks/useTasks'
 import { useProjects } from '../hooks/useProjects'
 import { parseSmartTaskInput } from '../utils/smartTaskParser'
@@ -69,23 +63,17 @@ export function TasksView() {
   const activeFilter: TaskFilter = useMemo(() => {
     return {
       projectId: selectedProjectId,
-      smartFilter: selectedSmartFilter !== 'all'
-        ? (selectedSmartFilter as TaskFilter['smartFilter'])
-        : undefined,
+      smartFilter:
+        selectedSmartFilter !== 'all'
+          ? (selectedSmartFilter as TaskFilter['smartFilter'])
+          : undefined,
       priority: priorityFilter !== 'all' ? (priorityFilter as PriorityLevel) : undefined,
       status: statusFilter !== 'all' ? (statusFilter as TaskStatus) : undefined,
       tag: tagFilter !== 'all' ? tagFilter : undefined,
       searchQuery: searchQuery.trim() || undefined,
       includeArchived: selectedSmartFilter === 'archived'
     }
-  }, [
-    selectedProjectId,
-    selectedSmartFilter,
-    priorityFilter,
-    statusFilter,
-    tagFilter,
-    searchQuery
-  ])
+  }, [selectedProjectId, selectedSmartFilter, priorityFilter, statusFilter, tagFilter, searchQuery])
 
   const { data: tasks = [], isLoading: tasksLoading } = useTasks(activeFilter)
   const { data: tags = [] } = useTaskTags()
@@ -196,7 +184,8 @@ export function TasksView() {
     if (!trimmed) return
 
     const todayStr = format(new Date(), 'yyyy-MM-dd')
-    const finalDueDate = parsedQuickTask.dueDate || (selectedSmartFilter === 'today' ? todayStr : undefined)
+    const finalDueDate =
+      parsedQuickTask.dueDate || (selectedSmartFilter === 'today' ? todayStr : undefined)
     const finalPriority = parsedQuickTask.priority || quickPriority
     const finalProjectId = parsedQuickTask.projectId || selectedProjectId
     const finalTitle = parsedQuickTask.title || trimmed
@@ -284,8 +273,10 @@ export function TasksView() {
     return {
       all: activeTasks.length,
       today: activeTasks.filter((t) => t.dueDate === todayStr && t.status !== 'done').length,
-      upcoming: activeTasks.filter((t) => t.dueDate && t.dueDate > todayStr && t.status !== 'done').length,
-      overdue: activeTasks.filter((t) => t.dueDate && t.dueDate < todayStr && t.status !== 'done').length
+      upcoming: activeTasks.filter((t) => t.dueDate && t.dueDate > todayStr && t.status !== 'done')
+        .length,
+      overdue: activeTasks.filter((t) => t.dueDate && t.dueDate < todayStr && t.status !== 'done')
+        .length
     }
   }, [tasks])
 
@@ -412,16 +403,35 @@ export function TasksView() {
               <div className="flex items-center gap-2 flex-1 min-w-0">
                 {/* Mobile Sidebar & Filters Trigger */}
                 <Button
-                  variant={showMobileSidebar || (priorityFilter !== 'all' || statusFilter !== 'all' || tagFilter !== 'all') ? 'default' : 'outline'}
+                  variant={
+                    showMobileSidebar ||
+                    priorityFilter !== 'all' ||
+                    statusFilter !== 'all' ||
+                    tagFilter !== 'all'
+                      ? 'default'
+                      : 'outline'
+                  }
                   size="sm"
                   onClick={() => setShowMobileSidebar(!showMobileSidebar)}
                   className="md:hidden h-8 sm:h-9 px-2.5 shrink-0 text-xs gap-1.5"
                 >
                   <SlidersHorizontal className="h-3.5 w-3.5" />
                   <span>Filters</span>
-                  {(priorityFilter !== 'all' || statusFilter !== 'all' || tagFilter !== 'all' || selectedProjectId || selectedSmartFilter !== 'all') && (
+                  {(priorityFilter !== 'all' ||
+                    statusFilter !== 'all' ||
+                    tagFilter !== 'all' ||
+                    selectedProjectId ||
+                    selectedSmartFilter !== 'all') && (
                     <span className="ml-0.5 rounded-full bg-primary-foreground text-primary text-[10px] w-4 h-4 inline-flex items-center justify-center font-bold">
-                      {[priorityFilter !== 'all', statusFilter !== 'all', tagFilter !== 'all', !!selectedProjectId, selectedSmartFilter !== 'all'].filter(Boolean).length}
+                      {
+                        [
+                          priorityFilter !== 'all',
+                          statusFilter !== 'all',
+                          tagFilter !== 'all',
+                          !!selectedProjectId,
+                          selectedSmartFilter !== 'all'
+                        ].filter(Boolean).length
+                      }
                     </span>
                   )}
                 </Button>
@@ -507,7 +517,9 @@ export function TasksView() {
             {/* Active Filter Chips Banner */}
             {hasActiveFilters && (
               <div className="flex items-center gap-1.5 flex-wrap px-1 text-xs">
-                <span className="text-muted-foreground font-medium text-[11px]">Active filters:</span>
+                <span className="text-muted-foreground font-medium text-[11px]">
+                  Active filters:
+                </span>
                 {selectedSmartFilter !== 'all' && (
                   <Badge variant="secondary" className="gap-1 text-xs font-normal">
                     <span>Filter: {selectedSmartFilter}</span>
@@ -671,7 +683,9 @@ export function TasksView() {
                 </div>
 
                 <div className="border-t pt-2">
-                  <span className="text-xs font-semibold text-foreground block mb-2">Projects & Lists</span>
+                  <span className="text-xs font-semibold text-foreground block mb-2">
+                    Projects & Lists
+                  </span>
                   <ProjectSidebar
                     selectedSmartFilter={selectedSmartFilter}
                     selectedProjectId={selectedProjectId}
@@ -691,9 +705,7 @@ export function TasksView() {
                     style={{ backgroundColor: activeProject.color || '#3b82f6' }}
                   />
                 )}
-                <h3 className="font-semibold text-lg text-foreground">
-                  {activeFilterTitle}
-                </h3>
+                <h3 className="font-semibold text-lg text-foreground">{activeFilterTitle}</h3>
                 <Badge variant="secondary" className="text-xs font-normal">
                   {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
                 </Badge>
@@ -720,27 +732,44 @@ export function TasksView() {
                   <option value="high">High</option>
                   <option value="urgent">Urgent</option>
                 </select>
-                <Button type="submit" size="sm" className="h-9 px-3 sm:px-4 text-xs font-medium shrink-0" disabled={!quickTitle.trim()}>
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="h-9 px-3 sm:px-4 text-xs font-medium shrink-0"
+                  disabled={!quickTitle.trim()}
+                >
                   Add
                 </Button>
               </form>
 
               {/* Smart Token Live Preview */}
-              {(parsedQuickTask.priority || parsedQuickTask.dueDate || parsedQuickTask.projectName || parsedQuickTask.tags.length > 0) && (
+              {(parsedQuickTask.priority ||
+                parsedQuickTask.dueDate ||
+                parsedQuickTask.projectName ||
+                parsedQuickTask.tags.length > 0) && (
                 <div className="flex items-center gap-1.5 text-[11px] px-1 flex-wrap text-muted-foreground">
                   <span className="font-medium text-foreground">Parsed:</span>
                   {parsedQuickTask.priority && (
-                    <Badge variant="outline" className="text-[10px] h-4 py-0 capitalize border-amber-500/40 text-amber-600 dark:text-amber-400">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 py-0 capitalize border-amber-500/40 text-amber-600 dark:text-amber-400"
+                    >
                       !{parsedQuickTask.priority}
                     </Badge>
                   )}
                   {parsedQuickTask.dueDate && (
-                    <Badge variant="outline" className="text-[10px] h-4 py-0 border-blue-500/40 text-blue-600 dark:text-blue-400">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 py-0 border-blue-500/40 text-blue-600 dark:text-blue-400"
+                    >
                       @{parsedQuickTask.dueDate}
                     </Badge>
                   )}
                   {parsedQuickTask.projectName && (
-                    <Badge variant="outline" className="text-[10px] h-4 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] h-4 py-0 border-emerald-500/40 text-emerald-600 dark:text-emerald-400"
+                    >
                       #{parsedQuickTask.projectName}
                     </Badge>
                   )}

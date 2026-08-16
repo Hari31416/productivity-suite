@@ -15,14 +15,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import {
-  Tag as TagIcon,
-  X,
-  Plus,
-  RotateCw,
-  Bell,
-  Clock
-} from 'lucide-react'
+import { Tag as TagIcon, X, Plus, RotateCw, Bell, Clock } from 'lucide-react'
 import type {
   Task,
   PriorityLevel,
@@ -128,9 +121,7 @@ export function TaskFormModal({
       setStatus(taskToEdit.status)
       setDueDate(taskToEdit.dueDate || '')
       setDueTime(taskToEdit.dueTime || '')
-      setEstimatedMinutes(
-        taskToEdit.estimatedMinutes ? String(taskToEdit.estimatedMinutes) : ''
-      )
+      setEstimatedMinutes(taskToEdit.estimatedMinutes ? String(taskToEdit.estimatedMinutes) : '')
       setTags(taskToEdit.tags || [])
       setSubtasks(
         existingSubtasks.map((s) => ({
@@ -383,9 +374,7 @@ export function TaskFormModal({
   }
 
   const isPending =
-    createTaskMutation.isPending ||
-    updateTaskMutation.isPending ||
-    batchSubtasksMutation.isPending
+    createTaskMutation.isPending || updateTaskMutation.isPending || batchSubtasksMutation.isPending
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -460,10 +449,7 @@ export function TaskFormModal({
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Priority
               </label>
-              <Select
-                value={priority}
-                onValueChange={(val) => setPriority(val as PriorityLevel)}
-              >
+              <Select value={priority} onValueChange={(val) => setPriority(val as PriorityLevel)}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Priority" />
                 </SelectTrigger>
@@ -482,10 +468,7 @@ export function TaskFormModal({
               <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                 Status
               </label>
-              <Select
-                value={status}
-                onValueChange={(val) => setStatus(val as TaskStatus)}
-              >
+              <Select value={status} onValueChange={(val) => setStatus(val as TaskStatus)}>
                 <SelectTrigger className="h-9">
                   <SelectValue placeholder="Status" />
                 </SelectTrigger>
@@ -594,7 +577,9 @@ export function TaskFormModal({
                         min="1"
                         max="99"
                         value={interval}
-                        onChange={(e) => setInterval(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        onChange={(e) =>
+                          setInterval(Math.max(1, parseInt(e.target.value, 10) || 1))
+                        }
                         className="h-8 text-xs"
                       />
                       <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -603,20 +588,20 @@ export function TaskFormModal({
                             ? 'hour'
                             : 'hours'
                           : frequency === 'daily'
-                          ? interval === 1
-                            ? 'day'
-                            : 'days'
-                          : frequency === 'weekly'
-                          ? interval === 1
-                            ? 'week'
-                            : 'weeks'
-                          : frequency === 'monthly'
-                          ? interval === 1
-                            ? 'month'
-                            : 'months'
-                          : interval === 1
-                          ? 'year'
-                          : 'years'}
+                            ? interval === 1
+                              ? 'day'
+                              : 'days'
+                            : frequency === 'weekly'
+                              ? interval === 1
+                                ? 'week'
+                                : 'weeks'
+                              : frequency === 'monthly'
+                                ? interval === 1
+                                  ? 'month'
+                                  : 'months'
+                                : interval === 1
+                                  ? 'year'
+                                  : 'years'}
                       </span>
                     </div>
                   </div>
@@ -732,9 +717,7 @@ export function TaskFormModal({
                 {/* End condition */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div className="space-y-1">
-                    <label className="text-[11px] font-medium text-muted-foreground">
-                      Ends
-                    </label>
+                    <label className="text-[11px] font-medium text-muted-foreground">Ends</label>
                     <Select
                       value={endType}
                       onValueChange={(v) => setEndType(v as 'never' | 'after_count' | 'on_date')}
@@ -760,7 +743,9 @@ export function TaskFormModal({
                         min="1"
                         max="365"
                         value={endCount}
-                        onChange={(e) => setEndCount(Math.max(1, parseInt(e.target.value, 10) || 1))}
+                        onChange={(e) =>
+                          setEndCount(Math.max(1, parseInt(e.target.value, 10) || 1))
+                        }
                         className="h-8 text-xs"
                       />
                     </div>
@@ -932,11 +917,7 @@ export function TaskFormModal({
             <label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Subtasks Checklist
             </label>
-            <SubtaskList
-              subtasks={subtasks}
-              onChange={setSubtasks}
-              showProgress={true}
-            />
+            <SubtaskList subtasks={subtasks} onChange={setSubtasks} showProgress={true} />
           </div>
 
           <DialogFooter className="pt-2">

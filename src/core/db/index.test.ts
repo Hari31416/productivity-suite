@@ -159,4 +159,3 @@ describe('AppDatabase Dexie Stores', () => {
     await reopenedDb.delete()
   })
 })
-

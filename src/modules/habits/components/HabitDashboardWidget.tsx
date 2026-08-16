@@ -75,9 +75,7 @@ export function HabitDashboardWidget() {
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>Daily Completion</span>
-              <span className="font-medium text-foreground">
-                {completionStats.percentage}%
-              </span>
+              <span className="font-medium text-foreground">{completionStats.percentage}%</span>
             </div>
             <Progress value={completionStats.percentage} className="h-2" />
           </div>

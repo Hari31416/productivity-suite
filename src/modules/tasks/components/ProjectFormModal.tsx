@@ -134,9 +134,7 @@ export function ProjectFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>
-            {projectToEdit ? 'Edit Project' : 'Create New Project'}
-          </DialogTitle>
+          <DialogTitle>{projectToEdit ? 'Edit Project' : 'Create New Project'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
@@ -184,7 +182,8 @@ export function ProjectFormModal({
                   onClick={() => setColor(preset)}
                   className={cn(
                     'h-7 w-7 rounded-full transition-transform hover:scale-110 flex items-center justify-center',
-                    color === preset && 'ring-2 ring-foreground ring-offset-2 ring-offset-background'
+                    color === preset &&
+                      'ring-2 ring-foreground ring-offset-2 ring-offset-background'
                   )}
                   style={{ backgroundColor: preset }}
                 />

@@ -25,9 +25,7 @@ export const noteRepository = {
 
       if (filter.tag) {
         const tagFilter = filter.tag.toLowerCase()
-        notes = notes.filter((n) =>
-          n.tags?.some((t) => t.toLowerCase() === tagFilter)
-        )
+        notes = notes.filter((n) => n.tags?.some((t) => t.toLowerCase() === tagFilter))
       }
 
       if (filter.searchQuery && filter.searchQuery.trim()) {
@@ -88,8 +86,8 @@ export const noteRepository = {
       input.wordCount !== undefined
         ? input.wordCount
         : input.content !== undefined
-        ? calculateWordCount(input.content)
-        : existing.wordCount
+          ? calculateWordCount(input.content)
+          : existing.wordCount
 
     const updatedNote: Note = {
       ...existing,

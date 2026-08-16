@@ -42,7 +42,9 @@ import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
 interface MarkdownEditorProps {
   initialNote?: Note | null
-  onSave: (noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }) => Promise<Note | void>
+  onSave: (
+    noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }
+  ) => Promise<Note | void>
   onClose: () => void
 }
 
@@ -115,19 +117,22 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const stats = getNoteStats(content)
   const headings = useMemo(() => extractHeadings(content), [content])
 
-  const handleToggleCheckbox = useCallback((lineIndex: number) => {
-    const lines = content.split(/\r?\n/)
-    if (lineIndex < 0 || lineIndex >= lines.length) return
-    const targetLine = lines[lineIndex]
-    const checkMatch = targetLine.match(/^(\s*[-*]\s+\[)([ xX])(\]\s+.*)$/)
-    if (checkMatch) {
-      const isChecked = checkMatch[2].toLowerCase() === 'x'
-      const newChar = isChecked ? ' ' : 'x'
-      lines[lineIndex] = `${checkMatch[1]}${newChar}${checkMatch[3]}`
-      const newContent = lines.join('\n')
-      setContent(newContent)
-    }
-  }, [content])
+  const handleToggleCheckbox = useCallback(
+    (lineIndex: number) => {
+      const lines = content.split(/\r?\n/)
+      if (lineIndex < 0 || lineIndex >= lines.length) return
+      const targetLine = lines[lineIndex]
+      const checkMatch = targetLine.match(/^(\s*[-*]\s+\[)([ xX])(\]\s+.*)$/)
+      if (checkMatch) {
+        const isChecked = checkMatch[2].toLowerCase() === 'x'
+        const newChar = isChecked ? ' ' : 'x'
+        lines[lineIndex] = `${checkMatch[1]}${newChar}${checkMatch[3]}`
+        const newContent = lines.join('\n')
+        setContent(newContent)
+      }
+    },
+    [content]
+  )
 
   const handleJumpToHeading = (headingId: string) => {
     const el = document.getElementById(headingId)
@@ -280,14 +285,20 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     onClose()
   }
 
-  const insertFormatting = (prefix: string, suffix: string = '', defaultPlaceholder: string = '') => {
+  const insertFormatting = (
+    prefix: string,
+    suffix: string = '',
+    defaultPlaceholder: string = ''
+  ) => {
     const textarea = textareaRef.current
     if (!textarea) return
 
     const start = textarea.selectionStart
     const end = textarea.selectionEnd
     const selectedText = content.substring(start, end)
-    const replacement = selectedText ? `${prefix}${selectedText}${suffix}` : `${prefix}${defaultPlaceholder}${suffix}`
+    const replacement = selectedText
+      ? `${prefix}${selectedText}${suffix}`
+      : `${prefix}${defaultPlaceholder}${suffix}`
 
     const newContent = content.substring(0, start) + replacement + content.substring(end)
     setContent(newContent)
@@ -381,7 +392,9 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
               type="button"
               onClick={() => setViewMode('edit')}
               className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-                viewMode === 'edit' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
+                viewMode === 'edit'
+                  ? 'bg-background shadow-xs text-foreground'
+                  : 'text-muted-foreground'
               }`}
               title="Edit Only"
             >
@@ -392,7 +405,9 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
               type="button"
               onClick={() => setViewMode('split')}
               className={`hidden md:inline-flex rounded px-2 py-1 text-xs font-medium transition-colors ${
-                viewMode === 'split' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
+                viewMode === 'split'
+                  ? 'bg-background shadow-xs text-foreground'
+                  : 'text-muted-foreground'
               }`}
               title="Split View"
             >
@@ -402,7 +417,9 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
               type="button"
               onClick={() => setViewMode('preview')}
               className={`rounded px-2 py-1 text-xs font-medium transition-colors ${
-                viewMode === 'preview' ? 'bg-background shadow-xs text-foreground' : 'text-muted-foreground'
+                viewMode === 'preview'
+                  ? 'bg-background shadow-xs text-foreground'
+                  : 'text-muted-foreground'
               }`}
               title="Preview Only"
             >
@@ -460,7 +477,9 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 p-2 space-y-2">
                 <div>
-                  <span className="text-[11px] font-semibold text-muted-foreground px-1">Note Color</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground px-1">
+                    Note Color
+                  </span>
                   <div className="grid grid-cols-5 gap-1.5 pt-1">
                     {COLOR_OPTIONS.map((opt) => (
                       <button
@@ -485,7 +504,11 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
                     <span>{pinned ? 'Unpin Note' : 'Pin Note'}</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setIsZenMode(!isZenMode)}>
-                    {isZenMode ? <Minimize2 className="h-3.5 w-3.5 mr-2" /> : <Maximize2 className="h-3.5 w-3.5 mr-2" />}
+                    {isZenMode ? (
+                      <Minimize2 className="h-3.5 w-3.5 mr-2" />
+                    ) : (
+                      <Maximize2 className="h-3.5 w-3.5 mr-2" />
+                    )}
                     <span>{isZenMode ? 'Exit Zen Mode' : 'Zen Focus Mode'}</span>
                   </DropdownMenuItem>
                 </div>
@@ -502,12 +525,19 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             className="hidden sm:inline-flex h-8 px-2 text-xs gap-1"
             title={isZenMode ? 'Exit Zen Focus Mode (Esc)' : 'Zen Focus Mode'}
           >
-            {isZenMode ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
+            {isZenMode ? (
+              <Minimize2 className="h-3.5 w-3.5" />
+            ) : (
+              <Maximize2 className="h-3.5 w-3.5" />
+            )}
             <span className="hidden md:inline">{isZenMode ? 'Exit Zen' : 'Zen'}</span>
           </Button>
 
           {/* Auto-Save Status Indicator */}
-          <div className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground select-none" title={`Status: ${saveStatus}`}>
+          <div
+            className="flex items-center gap-1.5 px-2 py-1 text-xs text-muted-foreground select-none"
+            title={`Status: ${saveStatus}`}
+          >
             {saveStatus === 'saving' ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
@@ -516,7 +546,9 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             ) : saveStatus === 'saved' ? (
               <>
                 <Check className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="hidden sm:inline text-xs text-emerald-600 dark:text-emerald-400">Saved</span>
+                <span className="hidden sm:inline text-xs text-emerald-600 dark:text-emerald-400">
+                  Saved
+                </span>
               </>
             ) : (
               <>
@@ -714,9 +746,7 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             size="sm"
             className="h-8 w-8 min-h-[32px] min-w-[32px] p-0 shrink-0"
             onClick={() =>
-              insertFormatting(
-                '| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |\n'
-              )
+              insertFormatting('| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |\n')
             }
             title="Insert Table"
           >

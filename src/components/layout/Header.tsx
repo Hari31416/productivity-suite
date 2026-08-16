@@ -49,9 +49,7 @@ export function Header({
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-muted-foreground hidden sm:block truncate">
-              {subtitle}
-            </p>
+            <p className="text-xs text-muted-foreground hidden sm:block truncate">{subtitle}</p>
           )}
         </div>
       </div>

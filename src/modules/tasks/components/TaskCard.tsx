@@ -1,13 +1,5 @@
 import { useState, useMemo } from 'react'
-import {
-  format,
-  parseISO,
-  isToday,
-  isTomorrow,
-  isYesterday,
-  isPast,
-  startOfDay
-} from 'date-fns'
+import { format, parseISO, isToday, isTomorrow, isYesterday, isPast, startOfDay } from 'date-fns'
 import {
   MoreVertical,
   CheckSquare,
@@ -40,11 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import type { Task, PriorityLevel, TaskStatus, Project } from '../types'
-import {
-  useUpdateTaskStatus,
-  useArchiveTask,
-  useDeleteTask
-} from '../hooks/useTasks'
+import { useUpdateTaskStatus, useArchiveTask, useDeleteTask } from '../hooks/useTasks'
 import { SubtaskList } from './SubtaskList'
 import { useSubtasks } from '../hooks/useSubtasks'
 import { formatRecurrenceRule } from '../utils/recurrence'
@@ -413,7 +401,9 @@ export function TaskCard({
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => archiveMutation.mutate({ id: task.id, archived: !task.archived })}>
+              <DropdownMenuItem
+                onClick={() => archiveMutation.mutate({ id: task.id, archived: !task.archived })}
+              >
                 {task.archived ? (
                   <>
                     <ArchiveRestore className="h-3.5 w-3.5 mr-2" />

@@ -1,10 +1,6 @@
 import type { Task, TaskReminder } from '@/modules/tasks/types'
 
-export type NotificationPermissionStatus =
-  | 'granted'
-  | 'denied'
-  | 'default'
-  | 'unsupported'
+export type NotificationPermissionStatus = 'granted' | 'denied' | 'default' | 'unsupported'
 
 export interface NotificationPayload {
   id?: number | string
@@ -174,9 +170,7 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
   }
 }
 
-export function getNotificationTargetRoute(
-  data?: Record<string, unknown>
-): string | null {
+export function getNotificationTargetRoute(data?: Record<string, unknown>): string | null {
   if (!data) return null
   if (data.taskId) {
     return `/tasks?taskId=${data.taskId}`
@@ -200,33 +194,26 @@ export function setupNotificationListeners(
   if (capPlugin && capPlugin.addListener && !notificationListenersSetup) {
     notificationListenersSetup = true
     try {
-      const listenerHandle = capPlugin.addListener(
-        'localNotificationActionPerformed',
-        (action) => {
-          const extra = action?.notification?.extra
-          const targetRoute = getNotificationTargetRoute(extra)
-          if (targetRoute) {
-            if (onNavigate) {
-              onNavigate(targetRoute)
-            } else {
-              window.location.hash = targetRoute
-            }
+      const listenerHandle = capPlugin.addListener('localNotificationActionPerformed', (action) => {
+        const extra = action?.notification?.extra
+        const targetRoute = getNotificationTargetRoute(extra)
+        if (targetRoute) {
+          if (onNavigate) {
+            onNavigate(targetRoute)
+          } else {
+            window.location.hash = targetRoute
           }
         }
-      )
+      })
       return () => {
         if (
           listenerHandle &&
-          typeof (listenerHandle as Promise<{ remove: () => void }>).then ===
-            'function'
+          typeof (listenerHandle as Promise<{ remove: () => void }>).then === 'function'
         ) {
-          ;(listenerHandle as Promise<{ remove: () => void }>).then((h) =>
-            h.remove?.()
-          )
+          ;(listenerHandle as Promise<{ remove: () => void }>).then((h) => h.remove?.())
         } else if (
           listenerHandle &&
-          typeof (listenerHandle as { remove: () => void }).remove ===
-            'function'
+          typeof (listenerHandle as { remove: () => void }).remove === 'function'
         ) {
           ;(listenerHandle as { remove: () => void }).remove()
         }
@@ -242,9 +229,7 @@ export function resetNotificationListenersSetupForTesting(): void {
   notificationListenersSetup = false
 }
 
-export async function sendLocalNotification(
-  payload: NotificationPayload
-): Promise<boolean> {
+export async function sendLocalNotification(payload: NotificationPayload): Promise<boolean> {
   if (typeof window === 'undefined') return false
 
   const capPlugin = getCapacitorBridge()
@@ -252,9 +237,7 @@ export async function sendLocalNotification(
     try {
       await ensureNotificationChannel()
       const numericId =
-        typeof payload.id === 'number'
-          ? payload.id
-          : Math.floor(Math.random() * 1000000)
+        typeof payload.id === 'number' ? payload.id : Math.floor(Math.random() * 1000000)
       await capPlugin.schedule({
         notifications: [
           {
@@ -406,14 +389,8 @@ export function computeTaskReminderDate(
   return null
 }
 
-export async function scheduleTaskReminder(
-  options: TaskReminderOptions
-): Promise<number | null> {
-  const targetDate = computeTaskReminderDate(
-    options.reminder,
-    options.dueDate,
-    options.dueTime
-  )
+export async function scheduleTaskReminder(options: TaskReminderOptions): Promise<number | null> {
+  const targetDate = computeTaskReminderDate(options.reminder, options.dueDate, options.dueTime)
 
   const reminderId =
     options.reminder.notificationId ||
@@ -476,9 +453,7 @@ export async function scheduleTaskReminder(
   return null
 }
 
-export async function cancelHabitReminder(
-  notificationId: number | string
-): Promise<boolean> {
+export async function cancelHabitReminder(notificationId: number | string): Promise<boolean> {
   const capPlugin = getCapacitorBridge()
   if (capPlugin && capPlugin.cancel && typeof notificationId === 'number') {
     try {
@@ -499,9 +474,7 @@ export async function cancelHabitReminder(
   return true
 }
 
-export async function cancelTaskReminder(
-  notificationId: number | string
-): Promise<boolean> {
+export async function cancelTaskReminder(notificationId: number | string): Promise<boolean> {
   return cancelHabitReminder(notificationId)
 }
 

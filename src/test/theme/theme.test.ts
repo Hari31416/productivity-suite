@@ -3,19 +3,10 @@ import fs from 'fs'
 import path from 'path'
 
 describe('Brand Identity & Color System Verification', () => {
-  const indexCss = fs.readFileSync(
-    path.resolve(__dirname, '../../index.css'),
-    'utf-8'
-  )
-  const indexHtml = fs.readFileSync(
-    path.resolve(__dirname, '../../../index.html'),
-    'utf-8'
-  )
+  const indexCss = fs.readFileSync(path.resolve(__dirname, '../../index.css'), 'utf-8')
+  const indexHtml = fs.readFileSync(path.resolve(__dirname, '../../../index.html'), 'utf-8')
   const manifestJson = JSON.parse(
-    fs.readFileSync(
-      path.resolve(__dirname, '../../../public/manifest.json'),
-      'utf-8'
-    )
+    fs.readFileSync(path.resolve(__dirname, '../../../public/manifest.json'), 'utf-8')
   )
 
   it('configures light mode core brand and neutral tokens in index.css', () => {
@@ -63,8 +54,8 @@ describe('Brand Identity & Color System Verification', () => {
   })
 
   it('defines the brand gradient correctly', () => {
-    expect(indexCss).toContain(
-      'linear-gradient(135deg, #0A7A64 0%, #14B8A6 50%, #34D399 100%)'
+    expect(indexCss.toLowerCase()).toContain(
+      'linear-gradient(135deg, #0a7a64 0%, #14b8a6 50%, #34d399 100%)'
     )
   })
 

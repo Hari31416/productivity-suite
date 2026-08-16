@@ -5,24 +5,24 @@
 @layer base {
   :root {
     /* Light Mode */
-      --background: 210 40% 98%;
-      /* #F8FAFC */
-      --foreground: 222.2 47.4% 11.2%;
-      /* #0F172A */
+    --background: 210 40% 98%;
+    /* #F8FAFC */
+    --foreground: 222.2 47.4% 11.2%;
+    /* #0F172A */
 
     --card: 0 0% 100%;
-      /* #FFFFFF */
-      --card-foreground: 222.2 47.4% 11.2%;
-      /* #0F172A */
+    /* #FFFFFF */
+    --card-foreground: 222.2 47.4% 11.2%;
+    /* #0F172A */
 
     --popover: 0 0% 100%;
-      /* #FFFFFF */
-      --popover-foreground: 222.2 47.4% 11.2%;
-      /* #0F172A */
+    /* #FFFFFF */
+    --popover-foreground: 222.2 47.4% 11.2%;
+    /* #0F172A */
 
     --elevated-surface: 0 0% 100%;
-    
-      /* Brand Primary (Deep Teal / Forest Emerald) */
+
+    /* Brand Primary (Deep Teal / Forest Emerald) */
     --primary: 168.2 84.8% 25.9%; /* #0A7A64 */
     --primary-hover: 167.9 85.5% 21.6%; /* #086653 */
     --primary-active: 168.2 86.4% 17.3%; /* #065243 */
@@ -110,7 +110,9 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: 'rlig' 1, 'calt' 1;
+    font-feature-settings:
+      'rlig' 1,
+      'calt' 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     padding-left: var(--safe-area-inset-left);
@@ -120,11 +122,11 @@
 
 /* Brand Logo Gradient */
 .brand-gradient {
-  background: linear-gradient(135deg, #0A7A64 0%, #14B8A6 50%, #34D399 100%);
+  background: linear-gradient(135deg, #0a7a64 0%, #14b8a6 50%, #34d399 100%);
 }
 
 .brand-gradient-text {
-  background: linear-gradient(135deg, #0A7A64 0%, #14B8A6 50%, #34D399 100%);
+  background: linear-gradient(135deg, #0a7a64 0%, #14b8a6 50%, #34d399 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -155,4 +157,3 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
-

@@ -15,11 +15,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import type {
-  Habit,
-  HabitFrequencyType,
-  HabitTargetType
-} from '../types'
+import type { Habit, HabitFrequencyType, HabitTargetType } from '../types'
 import { DEFAULT_HABIT_CATEGORIES, PRESET_COLORS, HABIT_ICONS } from '../constants'
 import { useCreateHabit, useUpdateHabit } from '../hooks/useHabits'
 import { cn } from '@/lib/utils'
@@ -40,11 +36,7 @@ const DAYS_OF_WEEK = [
   { label: 'Sun', value: 0 }
 ]
 
-export function HabitFormModal({
-  open,
-  onOpenChange,
-  habitToEdit
-}: HabitFormModalProps) {
+export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormModalProps) {
   const createMutation = useCreateHabit()
   const updateMutation = useUpdateHabit()
 
@@ -126,23 +118,13 @@ export function HabitFormModal({
         icon,
         categoryId,
         frequencyType,
-        targetDaysOfWeek:
-          frequencyType === 'custom_days' ? targetDaysOfWeek : undefined,
-        targetCountPerWeek:
-          frequencyType === 'weekly' ? targetCountPerWeek : undefined,
-        intervalHours:
-          frequencyType === 'subday_interval' ? intervalHours : undefined,
-        timesPerDay:
-          frequencyType === 'times_per_day' ? timesPerDay : undefined,
-        timeWindow:
-          frequencyType === 'subday_interval'
-            ? { startTime, endTime }
-            : undefined,
+        targetDaysOfWeek: frequencyType === 'custom_days' ? targetDaysOfWeek : undefined,
+        targetCountPerWeek: frequencyType === 'weekly' ? targetCountPerWeek : undefined,
+        intervalHours: frequencyType === 'subday_interval' ? intervalHours : undefined,
+        timesPerDay: frequencyType === 'times_per_day' ? timesPerDay : undefined,
+        timeWindow: frequencyType === 'subday_interval' ? { startTime, endTime } : undefined,
         targetType,
-        targetValue:
-          targetType === 'numeric' || targetType === 'timer'
-            ? targetValue
-            : undefined,
+        targetValue: targetType === 'numeric' || targetType === 'timer' ? targetValue : undefined,
         unit: targetType === 'numeric' && unit ? unit.trim() : undefined,
         archived: habitToEdit ? habitToEdit.archived : false
       }
@@ -166,16 +148,12 @@ export function HabitFormModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>
-            {habitToEdit ? 'Edit Habit' : 'Create New Habit'}
-          </DialogTitle>
+          <DialogTitle>{habitToEdit ? 'Edit Habit' : 'Create New Habit'}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
           {error && (
-            <div className="rounded-md bg-destructive/15 p-3 text-xs text-destructive">
-              {error}
-            </div>
+            <div className="rounded-md bg-destructive/15 p-3 text-xs text-destructive">{error}</div>
           )}
 
           <div className="space-y-1.5">
@@ -277,9 +255,7 @@ export function HabitFormModal({
             <label className="text-sm font-medium">Frequency</label>
             <Select
               value={frequencyType}
-              onValueChange={(val) =>
-                setFrequencyType(val as HabitFrequencyType)
-              }
+              onValueChange={(val) => setFrequencyType(val as HabitFrequencyType)}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select frequency" />
@@ -330,9 +306,7 @@ export function HabitFormModal({
                   max="7"
                   value={targetCountPerWeek}
                   onChange={(e) =>
-                    setTargetCountPerWeek(
-                      Math.max(1, Math.min(7, Number(e.target.value) || 1))
-                    )
+                    setTargetCountPerWeek(Math.max(1, Math.min(7, Number(e.target.value) || 1)))
                   }
                 />
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
@@ -355,11 +329,7 @@ export function HabitFormModal({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium">End Time</label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+                  <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                 </div>
               </div>
               <div className="space-y-1">
@@ -369,9 +339,7 @@ export function HabitFormModal({
                   min="0.5"
                   step="0.5"
                   value={intervalHours}
-                  onChange={(e) =>
-                    setIntervalHours(Number(e.target.value) || 1)
-                  }
+                  onChange={(e) => setIntervalHours(Number(e.target.value) || 1)}
                 />
                 <p className="text-[11px] text-muted-foreground">
                   Generates check-in checkpoints throughout your active window.
@@ -390,14 +358,10 @@ export function HabitFormModal({
                   max="24"
                   value={timesPerDay}
                   onChange={(e) =>
-                    setTimesPerDay(
-                      Math.max(1, Math.min(24, Number(e.target.value) || 1))
-                    )
+                    setTimesPerDay(Math.max(1, Math.min(24, Number(e.target.value) || 1)))
                   }
                 />
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  slots daily
-                </span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">slots daily</span>
               </div>
             </div>
           )}
@@ -434,7 +398,8 @@ export function HabitFormModal({
                     onClick={() => setIcon(item.name)}
                     className={cn(
                       'h-9 rounded-lg border flex items-center justify-center text-muted-foreground transition-all hover:text-foreground hover:bg-muted/60',
-                      isSelected && 'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-offset-1 ring-offset-background'
+                      isSelected &&
+                        'border-primary bg-primary/10 text-primary ring-2 ring-primary ring-offset-1 ring-offset-background'
                     )}
                     title={item.label}
                     aria-label={item.label}
@@ -447,17 +412,10 @@ export function HabitFormModal({
           </div>
 
           <DialogFooter className="pt-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
+            <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
               {habitToEdit ? 'Save Changes' : 'Create Habit'}
             </Button>
           </DialogFooter>

@@ -72,10 +72,7 @@ export function formatRecurrenceRule(rule: RecurrenceRule): string {
   return text
 }
 
-export function computeNextDueDate(
-  currentDueDate: string,
-  rule: RecurrenceRule
-): string | null {
+export function computeNextDueDate(currentDueDate: string, rule: RecurrenceRule): string | null {
   const baseDate = parseISO(currentDueDate)
   const interval = Math.max(1, rule.interval || 1)
   let nextDate: Date
@@ -144,7 +141,7 @@ export function generateOccurrenceSlots(
 
   const interval = Math.max(1, rule.interval || 1)
   const maxOccurrences =
-    rule.endCondition?.type === 'after_count' ? rule.endCondition.count ?? 100 : 500
+    rule.endCondition?.type === 'after_count' ? (rule.endCondition.count ?? 100) : 500
 
   let totalCount = initialCount !== undefined ? initialCount : existingSet.size
   let cursor = startOfDay(start)
@@ -153,7 +150,11 @@ export function generateOccurrenceSlots(
 
   // Helper to add slot
   const tryAddSlot = (dateStr: string, timeStr?: string): boolean => {
-    if (rule.endCondition?.type === 'on_date' && rule.endCondition.endDate && dateStr > rule.endCondition.endDate) {
+    if (
+      rule.endCondition?.type === 'on_date' &&
+      rule.endCondition.endDate &&
+      dateStr > rule.endCondition.endDate
+    ) {
       return false
     }
     const key = `${dateStr}@${timeStr || 'default'}`
@@ -177,9 +178,7 @@ export function generateOccurrenceSlots(
     const endMin = rule.endTime ? parseInt(rule.endTime.split(':')[1] || '0', 10) : 0
 
     const daysOfWeek =
-      rule.daysOfWeek && rule.daysOfWeek.length > 0
-        ? new Set(rule.daysOfWeek)
-        : null
+      rule.daysOfWeek && rule.daysOfWeek.length > 0 ? new Set(rule.daysOfWeek) : null
 
     while (!isAfter(cursor, upTo) && loopGuard++ < maxLoops) {
       const currentDayOfWeek = getDay(cursor)

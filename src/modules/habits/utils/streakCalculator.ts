@@ -26,18 +26,12 @@ export interface HeatmapDay {
   level: 0 | 1 | 2 | 3 | 4
 }
 
-export function isHabitCompletedOnDate(
-  habit: Habit,
-  logsForDate: HabitLog[]
-): boolean {
+export function isHabitCompletedOnDate(habit: Habit, logsForDate: HabitLog[]): boolean {
   if (!logsForDate || logsForDate.length === 0) {
     return false
   }
 
-  if (
-    habit.frequencyType === 'subday_interval' ||
-    habit.frequencyType === 'times_per_day'
-  ) {
+  if (habit.frequencyType === 'subday_interval' || habit.frequencyType === 'times_per_day') {
     return isSubdayHabitCompleted(habit, logsForDate)
   }
 
@@ -66,10 +60,7 @@ export function isHabitCompletedOnDate(
   return logsForDate.some((log) => log.completed)
 }
 
-export function isHabitScheduledOnDate(
-  habit: Habit,
-  date: Date | string
-): boolean {
+export function isHabitScheduledOnDate(habit: Habit, date: Date | string): boolean {
   const dateObj = typeof date === 'string' ? parseISO(date) : date
 
   if (
@@ -135,7 +126,7 @@ export function calculateStreak(
   let runningStreak = 0
 
   const habitCreatedDate = habit.createdAt ? parseISO(habit.createdAt) : subDays(targetDateObj, 90)
-  
+
   let earliestLogDate = habitCreatedDate
   for (const dateKey of logsByDate.keys()) {
     try {
@@ -152,9 +143,7 @@ export function calculateStreak(
     ? subDays(targetDateObj, 365)
     : earliestLogDate
 
-  const normalizedStartDate = isAfter(startDate, targetDateObj)
-    ? targetDateObj
-    : startDate
+  const normalizedStartDate = isAfter(startDate, targetDateObj) ? targetDateObj : startDate
 
   const allDays = eachDayOfInterval({
     start: normalizedStartDate,
@@ -235,9 +224,7 @@ export function calculateStreak(
   }
 
   const completionRate30Days =
-    scheduled30Count > 0
-      ? Math.round((completed30Count / scheduled30Count) * 100)
-      : 0
+    scheduled30Count > 0 ? Math.round((completed30Count / scheduled30Count) * 100) : 0
 
   return {
     currentStreak,
@@ -291,9 +278,7 @@ function calculateWeeklyStreak(
   }
 
   const currentWeekQualified = weekQualifies[weekQualifies.length - 1]
-  let idx = currentWeekQualified
-    ? weekQualifies.length - 1
-    : weekQualifies.length - 2
+  let idx = currentWeekQualified ? weekQualifies.length - 1 : weekQualifies.length - 2
 
   while (idx >= 0 && weekQualifies[idx]) {
     currentStreak += 1
@@ -334,9 +319,7 @@ export function generateHeatmapData(
 
   return days.map((day) => {
     const dateStr = format(day, 'yyyy-MM-dd')
-    const scheduledHabits = activeHabits.filter((h) =>
-      isHabitScheduledOnDate(h, day)
-    )
+    const scheduledHabits = activeHabits.filter((h) => isHabitScheduledOnDate(h, day))
 
     const total = scheduledHabits.length
     const dayLogs = logsByDate.get(dateStr) || []

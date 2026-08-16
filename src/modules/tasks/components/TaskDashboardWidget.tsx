@@ -82,9 +82,7 @@ export function TaskDashboardWidget() {
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>Daily Completion</span>
-                <span className="font-medium text-foreground">
-                  {completionPercentage}%
-                </span>
+                <span className="font-medium text-foreground">{completionPercentage}%</span>
               </div>
               <Progress value={completionPercentage} className="h-2" />
             </div>
@@ -93,9 +91,7 @@ export function TaskDashboardWidget() {
           <div className="space-y-2">
             {featuredTasks.length === 0 ? (
               <div className="py-4 text-center space-y-2">
-                <p className="text-xs text-muted-foreground">
-                  No urgent tasks or tasks due today.
-                </p>
+                <p className="text-xs text-muted-foreground">No urgent tasks or tasks due today.</p>
                 <Button
                   variant="outline"
                   size="sm"
@@ -119,9 +115,7 @@ export function TaskDashboardWidget() {
                     key={task.id}
                     className={cn(
                       'flex items-center justify-between p-2 rounded-md border text-xs transition-colors',
-                      isDone
-                        ? 'bg-primary/5 border-primary/20 opacity-75'
-                        : 'hover:bg-muted/30',
+                      isDone ? 'bg-primary/5 border-primary/20 opacity-75' : 'hover:bg-muted/30',
                       isUrgent && !isDone && 'border-red-500/30 bg-red-500/5'
                     )}
                   >

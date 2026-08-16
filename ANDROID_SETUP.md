@@ -95,4 +95,3 @@ The repository includes a GitHub Actions workflow located at [.github/workflows/
 - Uploads `app-debug.apk` as a downloadable workflow artifact
 
 The workflow triggers automatically when pushing a release tag (e.g. `v1.0.0`) or manually via the **Run workflow** button in the GitHub Actions tab.
-

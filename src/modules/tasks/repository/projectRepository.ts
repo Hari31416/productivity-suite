@@ -28,9 +28,7 @@ export const projectRepository = {
     return db.projects.get(id)
   },
 
-  async createProject(
-    projectData: CreateProjectInput
-  ): Promise<Project> {
+  async createProject(projectData: CreateProjectInput): Promise<Project> {
     const now = new Date().toISOString()
     const project: Project = {
       ...projectData,

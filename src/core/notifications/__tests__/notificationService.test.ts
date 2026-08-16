@@ -224,9 +224,10 @@ describe('notificationService', () => {
       const mockClose = vi.fn()
       const mockFocus = vi.fn()
 
-      const mockNotificationConstructor = vi.fn().mockImplementation(function (
-        this: { onclick?: () => void; close?: () => void }
-      ) {
+      const mockNotificationConstructor = vi.fn().mockImplementation(function (this: {
+        onclick?: () => void
+        close?: () => void
+      }) {
         this.close = mockClose
         createdNotificationInstance = this
         return this
@@ -250,8 +251,7 @@ describe('notificationService', () => {
       if (createdNotificationInstance) {
         ;(createdNotificationInstance as { onclick?: () => void }).onclick?.()
         expect(
-          (globalThis as unknown as { window: { location: { hash: string } } })
-            .window.location.hash
+          (globalThis as unknown as { window: { location: { hash: string } } }).window.location.hash
         ).toBe('/tasks?taskId=t-123')
         expect(mockFocus).toHaveBeenCalled()
         expect(mockClose).toHaveBeenCalled()
@@ -296,12 +296,8 @@ describe('notificationService', () => {
     it('resolves correct route for taskId, habitId, or custom route', () => {
       expect(getNotificationTargetRoute()).toBeNull()
       expect(getNotificationTargetRoute({})).toBeNull()
-      expect(getNotificationTargetRoute({ taskId: 'task-10' })).toBe(
-        '/tasks?taskId=task-10'
-      )
-      expect(getNotificationTargetRoute({ habitId: 'habit-20' })).toBe(
-        '/habits?habitId=habit-20'
-      )
+      expect(getNotificationTargetRoute({ taskId: 'task-10' })).toBe('/tasks?taskId=task-10')
+      expect(getNotificationTargetRoute({ habitId: 'habit-20' })).toBe('/habits?habitId=habit-20')
       expect(getNotificationTargetRoute({ route: '/notes?noteId=note-30' })).toBe(
         '/notes?noteId=note-30'
       )
@@ -469,9 +465,11 @@ describe('notificationService', () => {
       expect(offsetDate?.getHours()).toBe(9)
       expect(offsetDate?.getMinutes()).toBe(45)
 
-      const exactDate = computeTaskReminderDate(
-        { id: 'r2', type: 'exact', exactDateTime: '2026-08-16T14:30:00' }
-      )
+      const exactDate = computeTaskReminderDate({
+        id: 'r2',
+        type: 'exact',
+        exactDateTime: '2026-08-16T14:30:00'
+      })
       expect(exactDate).toBeDefined()
       expect(exactDate?.getHours()).toBe(14)
       expect(exactDate?.getMinutes()).toBe(30)

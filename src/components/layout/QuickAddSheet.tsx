@@ -1,10 +1,5 @@
 import { CheckSquare, Activity, FileText } from 'lucide-react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 export interface QuickAddSheetProps {
   open: boolean
@@ -46,7 +41,9 @@ export function QuickAddSheet({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground">Add Task</div>
-              <div className="text-xs text-muted-foreground truncate">Create a new task with due date and priority</div>
+              <div className="text-xs text-muted-foreground truncate">
+                Create a new task with due date and priority
+              </div>
             </div>
           </button>
 
@@ -60,7 +57,9 @@ export function QuickAddSheet({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground">Add Habit</div>
-              <div className="text-xs text-muted-foreground truncate">Track daily routines, counters, or timers</div>
+              <div className="text-xs text-muted-foreground truncate">
+                Track daily routines, counters, or timers
+              </div>
             </div>
           </button>
 
@@ -74,7 +73,9 @@ export function QuickAddSheet({
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-foreground">Add Note</div>
-              <div className="text-xs text-muted-foreground truncate">Capture ideas, markdown notes, and thoughts</div>
+              <div className="text-xs text-muted-foreground truncate">
+                Capture ideas, markdown notes, and thoughts
+              </div>
             </div>
           </button>
         </div>

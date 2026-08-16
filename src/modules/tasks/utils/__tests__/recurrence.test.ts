@@ -1,9 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  computeNextDueDate,
-  generateOccurrenceSlots,
-  formatRecurrenceRule
-} from '../recurrence'
+import { computeNextDueDate, generateOccurrenceSlots, formatRecurrenceRule } from '../recurrence'
 
 describe('recurrence utility', () => {
   describe('formatRecurrenceRule', () => {
@@ -35,9 +31,9 @@ describe('recurrence utility', () => {
       expect(
         formatRecurrenceRule({ frequency: 'weekly', interval: 1, daysOfWeek: [1, 3, 5] })
       ).toBe('Weekly on Mon, Wed, Fri')
-      expect(
-        formatRecurrenceRule({ frequency: 'weekly', interval: 2, daysOfWeek: [0] })
-      ).toBe('Every 2 weeks on Sun')
+      expect(formatRecurrenceRule({ frequency: 'weekly', interval: 2, daysOfWeek: [0] })).toBe(
+        'Every 2 weeks on Sun'
+      )
     })
 
     it('formats monthly and yearly recurrence with end conditions', () => {

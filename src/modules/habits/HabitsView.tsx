@@ -1,12 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
-import {
-  format,
-  addDays,
-  subDays,
-  parseISO,
-  isToday as checkIsToday,
-  isSameDay
-} from 'date-fns'
+import { format, addDays, subDays, parseISO, isToday as checkIsToday, isSameDay } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
@@ -54,9 +47,7 @@ export function HabitsView() {
   const deepLinkedHabitId = queryParams.habitId
   const processedDeepLinkRef = useRef<string | null>(null)
 
-  const [selectedDate, setSelectedDate] = useState(() =>
-    format(new Date(), 'yyyy-MM-dd')
-  )
+  const [selectedDate, setSelectedDate] = useState(() => format(new Date(), 'yyyy-MM-dd'))
   const [viewMode, setViewMode] = useState<'tracker' | 'week' | 'analytics'>('tracker')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -379,7 +370,10 @@ export function HabitsView() {
 
             <form
               onSubmit={handleQuickAdd}
-              className={cn('flex gap-1.5 sm:gap-2 items-center', !showQuickAdd && 'hidden sm:flex')}
+              className={cn(
+                'flex gap-1.5 sm:gap-2 items-center',
+                !showQuickAdd && 'hidden sm:flex'
+              )}
             >
               <div className="relative flex-1 min-w-0">
                 <Input
@@ -470,13 +464,15 @@ export function HabitsView() {
                   onClick={() => setSelectedDate(d.dateStr)}
                   className={`flex flex-col items-center justify-center flex-1 sm:flex-initial min-w-[32px] sm:min-w-[36px] h-9 sm:h-10 px-1 rounded-md text-[11px] transition-all ${
                     d.isSelected
-                    ? 'bg-primary text-primary-foreground font-bold shadow-xs'
+                      ? 'bg-primary text-primary-foreground font-bold shadow-xs'
                       : d.isToday
-                      ? 'border border-primary/40 text-primary bg-primary/5 hover:bg-primary/10'
-                      : 'hover:bg-muted text-muted-foreground hover:text-foreground'
+                        ? 'border border-primary/40 text-primary bg-primary/5 hover:bg-primary/10'
+                        : 'hover:bg-muted text-muted-foreground hover:text-foreground'
                   }`}
                 >
-                  <span className="text-[9px] sm:text-[10px] leading-tight opacity-80">{d.dayName}</span>
+                  <span className="text-[9px] sm:text-[10px] leading-tight opacity-80">
+                    {d.dayName}
+                  </span>
                   <span className="font-semibold leading-tight text-xs">{d.dayNum}</span>
                 </button>
               ))}
@@ -519,7 +515,6 @@ export function HabitsView() {
             </Button>
           </div>
 
-
           {/* Full-width Scrollable Category Ribbon */}
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-thin">
             <Button
@@ -555,11 +550,8 @@ export function HabitsView() {
             })}
           </div>
 
-
           {habitsLoading ? (
-            <div className="py-16 text-center text-sm text-muted-foreground">
-              Loading habits...
-            </div>
+            <div className="py-16 text-center text-sm text-muted-foreground">Loading habits...</div>
           ) : scheduledHabits.length === 0 ? (
             <Card className="p-10 text-center">
               <CardHeader>
@@ -599,9 +591,7 @@ export function HabitsView() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3">
               {scheduledHabits.map((habit) => {
                 const habitLogs = currentLogs.filter((l) => l.habitId === habit.id)
-                const habitHistoryLogs = allRangeLogs.filter(
-                  (l) => l.habitId === habit.id
-                )
+                const habitHistoryLogs = allRangeLogs.filter((l) => l.habitId === habit.id)
 
                 return (
                   <HabitCard
@@ -640,10 +630,7 @@ export function HabitsView() {
                   className="h-8 text-xs shrink-0 gap-1.5"
                   onClick={() => setSelectedCategory(cat.id)}
                 >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: cat.color }}
-                  />
+                  <span className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
                   <span>{cat.name}</span>
                 </Button>
               ))}
@@ -706,20 +693,15 @@ export function HabitsView() {
             </DialogTitle>
             <DialogDescription>
               Are you sure you want to permanently delete{' '}
-              <strong className="text-foreground">{habitToDelete?.title}</strong>? All associated daily check-ins and streaks will be removed.
+              <strong className="text-foreground">{habitToDelete?.title}</strong>? All associated
+              daily check-ins and streaks will be removed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0">
-            <Button
-              variant="outline"
-              onClick={() => setHabitToDelete(null)}
-            >
+            <Button variant="outline" onClick={() => setHabitToDelete(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmDelete}
-            >
+            <Button variant="destructive" onClick={confirmDelete}>
               Delete Habit
             </Button>
           </DialogFooter>

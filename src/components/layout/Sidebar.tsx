@@ -3,12 +3,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { moduleRegistry } from '@/core/modules/registry'
 import { DynamicIcon } from '@/components/icons/DynamicIcon'
 import { Button } from '@/components/ui/button'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 export interface SidebarProps {
@@ -43,9 +38,7 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
                 <span className="text-sm font-semibold tracking-tight leading-tight">
                   Productivity
                 </span>
-                <span className="text-[10px] text-muted-foreground font-medium">
-                  Suite
-                </span>
+                <span className="text-[10px] text-muted-foreground font-medium">Suite</span>
               </div>
             </div>
           ) : (
@@ -63,8 +56,7 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
         <nav className="flex-1 space-y-1.5 p-2 overflow-y-auto">
           {modules.map((module) => {
             const isActive =
-              activeRoute === module.route ||
-              activeRoute.startsWith(`${module.route}/`)
+              activeRoute === module.route || activeRoute.startsWith(`${module.route}/`)
 
             const buttonContent = (
               <button
@@ -84,12 +76,12 @@ export function Sidebar({ activeRoute, onRouteChange }: SidebarProps) {
                   name={module.iconName}
                   className={cn(
                     'h-4 w-4 shrink-0 transition-transform group-hover:scale-110',
-                    isActive ? 'text-primary-foreground' : 'text-foreground/60 group-hover:text-foreground'
+                    isActive
+                      ? 'text-primary-foreground'
+                      : 'text-foreground/60 group-hover:text-foreground'
                   )}
                 />
-                {!collapsed && (
-                  <span className="truncate text-left">{module.title}</span>
-                )}
+                {!collapsed && <span className="truncate text-left">{module.title}</span>}
               </button>
             )
 

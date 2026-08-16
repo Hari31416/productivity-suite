@@ -118,23 +118,11 @@ describe('habitRepository', () => {
       archived: false
     })
 
-    const log1 = await habitRepository.setHabitLogValue(
-      habit.id,
-      '2026-08-15',
-      4,
-      undefined,
-      false
-    )
+    const log1 = await habitRepository.setHabitLogValue(habit.id, '2026-08-15', 4, undefined, false)
     expect(log1.value).toBe(4)
     expect(log1.completed).toBe(false)
 
-    const log2 = await habitRepository.setHabitLogValue(
-      habit.id,
-      '2026-08-15',
-      8,
-      undefined,
-      true
-    )
+    const log2 = await habitRepository.setHabitLogValue(habit.id, '2026-08-15', 8, undefined, true)
     expect(log2.value).toBe(8)
     expect(log2.completed).toBe(true)
   })
@@ -152,10 +140,7 @@ describe('habitRepository', () => {
     await habitRepository.toggleHabitLog(habit.id, '2026-08-12')
     await habitRepository.toggleHabitLog(habit.id, '2026-08-15')
 
-    const rangeLogs = await habitRepository.getLogsForDateRange(
-      '2026-08-10',
-      '2026-08-13'
-    )
+    const rangeLogs = await habitRepository.getLogsForDateRange('2026-08-10', '2026-08-13')
     expect(rangeLogs).toHaveLength(2)
   })
 })

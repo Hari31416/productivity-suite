@@ -1,13 +1,5 @@
 import { useState, useMemo } from 'react'
-import {
-  format,
-  parseISO,
-  isToday,
-  isTomorrow,
-  isPast,
-  startOfDay,
-  addDays
-} from 'date-fns'
+import { format, parseISO, isToday, isTomorrow, isPast, startOfDay, addDays } from 'date-fns'
 import {
   ChevronDown,
   ChevronRight,
@@ -229,11 +221,7 @@ export function TaskListView({
   }
 
   if (isLoading) {
-    return (
-      <div className="py-16 text-center text-sm text-muted-foreground">
-        Loading tasks...
-      </div>
-    )
+    return <div className="py-16 text-center text-sm text-muted-foreground">Loading tasks...</div>
   }
 
   if (tasks.length === 0) {
@@ -262,7 +250,9 @@ export function TaskListView({
               <strong>{selectedTaskIds.length}</strong> of {tasks.length} selected
             </span>
           ) : (
-            <span>{tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} total</span>
+            <span>
+              {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'} total
+            </span>
           )}
         </div>
 
@@ -274,7 +264,9 @@ export function TaskListView({
                 variant="ghost"
                 size="sm"
                 className="h-8 text-xs px-2.5"
-                onClick={selectedTaskIds.length === tasks.length ? handleDeselectAll : handleSelectAll}
+                onClick={
+                  selectedTaskIds.length === tasks.length ? handleDeselectAll : handleSelectAll
+                }
               >
                 {selectedTaskIds.length === tasks.length ? 'Deselect All' : 'Select All'}
               </Button>

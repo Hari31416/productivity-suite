@@ -46,7 +46,10 @@ describe('Automated Testing: To-Do & Task Management End-to-End Workflow', () =>
 
     // 3. Add subtasks to urgentTask
     const subtask1 = await taskRepository.createSubtask(urgentTask.id, 'Check Dexie schema indexes')
-    const subtask2 = await taskRepository.createSubtask(urgentTask.id, 'Verify Zod backup validation')
+    const subtask2 = await taskRepository.createSubtask(
+      urgentTask.id,
+      'Verify Zod backup validation'
+    )
     await taskRepository.createSubtask(urgentTask.id, 'Test offline PWA mode')
 
     const subtasks = await taskRepository.getSubtasksForTask(urgentTask.id)

@@ -95,16 +95,17 @@ export function App() {
     moduleRegistry.get('dashboard') ||
     moduleRegistry.get('habits')
 
-  const ActiveComponent =
-    activeModule?.routes[0]?.component || (() => <div>View not found</div>)
+  const ActiveComponent = activeModule?.routes[0]?.component || (() => <div>View not found</div>)
 
   const today = new Date()
   const baseGreeting = getGreeting(today)
   const dashboardTitle = userName ? `${baseGreeting}, ${userName}` : baseGreeting
   const formattedDate = format(today, 'EEEE, MMM d')
 
-  const title = pathname === '/' ? dashboardTitle : (activeModule ? activeModule.title : 'Productivity')
-  const subtitle = pathname === '/' ? formattedDate : (activeModule ? activeModule.description : undefined)
+  const title =
+    pathname === '/' ? dashboardTitle : activeModule ? activeModule.title : 'Productivity'
+  const subtitle =
+    pathname === '/' ? formattedDate : activeModule ? activeModule.description : undefined
 
   return (
     <>
@@ -139,18 +140,9 @@ export function App() {
       />
 
       {/* Global Action Modals */}
-      <HabitFormModal
-        open={quickHabitModalOpen}
-        onOpenChange={setQuickHabitModalOpen}
-      />
-      <TaskFormModal
-        open={quickTaskModalOpen}
-        onOpenChange={setQuickTaskModalOpen}
-      />
-      <NoteFormModal
-        open={quickNoteModalOpen}
-        onOpenChange={setQuickNoteModalOpen}
-      />
+      <HabitFormModal open={quickHabitModalOpen} onOpenChange={setQuickHabitModalOpen} />
+      <TaskFormModal open={quickTaskModalOpen} onOpenChange={setQuickTaskModalOpen} />
+      <NoteFormModal open={quickNoteModalOpen} onOpenChange={setQuickNoteModalOpen} />
 
       {/* First-Run Startup Onboarding Modal */}
       <StartupModal />

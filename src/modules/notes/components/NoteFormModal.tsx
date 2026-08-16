@@ -199,9 +199,7 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
             </div>
 
             <div>
-              <label className="text-xs font-medium text-muted-foreground block mb-1">
-                Tags
-              </label>
+              <label className="text-xs font-medium text-muted-foreground block mb-1">Tags</label>
               <div className="flex items-center gap-2">
                 <Input
                   placeholder="Add tag and press Enter"
@@ -268,14 +266,13 @@ export function NoteFormModal({ open, onOpenChange }: NoteFormModalProps) {
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={createNoteMutation.isPending || (!title.trim() && !content.trim())}>
+            <Button
+              type="submit"
+              disabled={createNoteMutation.isPending || (!title.trim() && !content.trim())}
+            >
               {createNoteMutation.isPending ? 'Saving...' : 'Create Note'}
             </Button>
           </DialogFooter>

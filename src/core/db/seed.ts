@@ -4,7 +4,6 @@ import type { Project, Task, Subtask } from '@/modules/tasks/types'
 import type { Note, Tag } from '@/modules/notes/types'
 import type { AppDatabase } from './index'
 
-
 export const SEED_STORAGE_KEY = 'productivity_suite_seeded_v1'
 
 export async function seedInitialData(target: AppDatabase | Transaction): Promise<void> {
@@ -51,7 +50,6 @@ export async function seedInitialData(target: AppDatabase | Transaction): Promis
       archived: false
     }
   ]
-
 
   const defaultTasks: Task[] = [
     {
@@ -154,8 +152,6 @@ Feel free to edit or delete this note at any time.`
   }
 }
 
-
-
 export async function ensureDatabaseSeeded(database: AppDatabase): Promise<boolean> {
   if (typeof window === 'undefined') {
     return false
@@ -190,5 +186,3 @@ export async function ensureDatabaseSeeded(database: AppDatabase): Promise<boole
     return false
   }
 }
-
-

@@ -26,9 +26,7 @@ class ModuleRegistry {
   }
 
   getAll(): AppModuleManifest[] {
-    return Array.from(this.modules.values()).sort(
-      (a, b) => a.navOrder - b.navOrder
-    )
+    return Array.from(this.modules.values()).sort((a, b) => a.navOrder - b.navOrder)
   }
 
   clear(): void {

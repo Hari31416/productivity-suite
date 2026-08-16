@@ -18,7 +18,6 @@ const queryClient = new QueryClient({
 // Initialize modular registry before app mounts
 initializeModules(queryClient)
 
-
 const rootElement = document.getElementById('root')
 
 if (!rootElement) {

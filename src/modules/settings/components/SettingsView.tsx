@@ -29,11 +29,7 @@ import {
 import { useTheme } from '@/core/theme/useTheme'
 import { db } from '@/core/db'
 import { seedInitialData } from '@/core/db/seed'
-import {
-  exportBackup,
-  validateBackupJson,
-  restoreBackup
-} from '@/core/backup/backupService'
+import { exportBackup, validateBackupJson, restoreBackup } from '@/core/backup/backupService'
 import type { BackupArchiveData, RestoreMode } from '@/core/backup/types'
 import {
   Database,
@@ -97,10 +93,7 @@ export function SettingsView() {
 
   // Timezone
   const [timezone, setTimezone] = useState<string>(() => {
-    return (
-      localStorage.getItem('productivity_timezone') ||
-      'Asia/Kolkata'
-    )
+    return localStorage.getItem('productivity_timezone') || 'Asia/Kolkata'
   })
 
   // Notification states
@@ -139,7 +132,6 @@ export function SettingsView() {
     }
   }
 
-
   // Fetch storage diagnostics & table counts
   const refreshStorageDiagnostics = async () => {
     if (typeof navigator !== 'undefined' && navigator.storage) {
@@ -166,16 +158,15 @@ export function SettingsView() {
     }
 
     try {
-      const [habits, habitLogs, projects, tasks, subtasks, notes, tags] =
-        await Promise.all([
-          db.habits.count(),
-          db.habitLogs.count(),
-          db.projects.count(),
-          db.tasks.count(),
-          db.subtasks.count(),
-          db.notes.count(),
-          db.tags.count()
-        ])
+      const [habits, habitLogs, projects, tasks, subtasks, notes, tags] = await Promise.all([
+        db.habits.count(),
+        db.habitLogs.count(),
+        db.projects.count(),
+        db.tasks.count(),
+        db.subtasks.count(),
+        db.notes.count(),
+        db.tags.count()
+      ])
 
       setTableCounts({
         habits,
@@ -314,9 +305,7 @@ export function SettingsView() {
       )
       setImportedBackup(null)
     } catch (err) {
-      setValidationError(
-        `Restore failed: ${err instanceof Error ? err.message : 'Unknown error'}`
-      )
+      setValidationError(`Restore failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
     } finally {
       setIsRestoring(false)
     }
@@ -329,15 +318,7 @@ export function SettingsView() {
     try {
       await db.transaction(
         'rw',
-        [
-          db.habits,
-          db.habitLogs,
-          db.projects,
-          db.tasks,
-          db.subtasks,
-          db.notes,
-          db.tags
-        ],
+        [db.habits, db.habitLogs, db.projects, db.tasks, db.subtasks, db.notes, db.tags],
         async () => {
           await Promise.all([
             db.habits.clear(),
@@ -374,7 +355,8 @@ export function SettingsView() {
         <CardHeader>
           <CardTitle className="text-base font-semibold">Appearance & Theme</CardTitle>
           <CardDescription>
-            Choose your preferred color theme. Currently active: <span className="font-semibold text-foreground capitalize">{resolvedTheme}</span>
+            Choose your preferred color theme. Currently active:{' '}
+            <span className="font-semibold text-foreground capitalize">{resolvedTheme}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -419,9 +401,7 @@ export function SettingsView() {
           </CardDescription>
         </CardHeader>
         <CardContent className="max-w-md space-y-2">
-          <label className="text-xs font-medium text-muted-foreground">
-            Current Timezone
-          </label>
+          <label className="text-xs font-medium text-muted-foreground">Current Timezone</label>
           <Select value={timezone} onValueChange={handleTimezoneChange}>
             <SelectTrigger className="text-xs">
               <SelectValue placeholder="Select timezone" />
@@ -454,7 +434,10 @@ export function SettingsView() {
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold">Permission Status</span>
                 {notificationPermission === 'granted' && (
-                  <Badge variant="secondary" className="gap-1 text-emerald-600 dark:text-emerald-400">
+                  <Badge
+                    variant="secondary"
+                    className="gap-1 text-emerald-600 dark:text-emerald-400"
+                  >
                     <CheckCircle2 className="h-3.5 w-3.5" />
                     Granted
                   </Badge>
@@ -540,7 +523,8 @@ export function SettingsView() {
             <CardTitle className="text-base font-semibold">Backup & Restore</CardTitle>
           </div>
           <CardDescription>
-            Export all application tables into a structured, validated JSON file or restore previous archives.
+            Export all application tables into a structured, validated JSON file or restore previous
+            archives.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -597,7 +581,8 @@ export function SettingsView() {
               <div>
                 <h4 className="text-sm font-semibold mb-1">Load Showcase Sample Data</h4>
                 <p className="text-xs text-muted-foreground">
-                  Populate starter habits (Hydration, Reading), tasks, projects, and guides to explore the app.
+                  Populate starter habits (Hydration, Reading), tasks, projects, and guides to
+                  explore the app.
                 </p>
               </div>
               <Button
@@ -613,7 +598,6 @@ export function SettingsView() {
           </div>
         </CardContent>
       </Card>
-
 
       {/* Storage Diagnostics & Database Inspector */}
       <Card>
@@ -700,7 +684,9 @@ export function SettingsView() {
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-            <span>Zero telemetry or third-party tracking. All data is exclusively stored offline.</span>
+            <span>
+              Zero telemetry or third-party tracking. All data is exclusively stored offline.
+            </span>
           </div>
         </CardContent>
       </Card>
@@ -821,11 +807,7 @@ export function SettingsView() {
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setImportModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setImportModalOpen(false)}>
               Cancel
             </Button>
             {importedBackup && (
@@ -836,7 +818,9 @@ export function SettingsView() {
                 }}
                 disabled={isRestoring}
               >
-                {isRestoring ? 'Restoring...' : `Proceed with ${selectedRestoreMode === 'replace' ? 'Replace' : 'Merge'}`}
+                {isRestoring
+                  ? 'Restoring...'
+                  : `Proceed with ${selectedRestoreMode === 'replace' ? 'Replace' : 'Merge'}`}
               </Button>
             )}
           </DialogFooter>
@@ -852,13 +836,15 @@ export function SettingsView() {
               Confirm Database Wipe
             </DialogTitle>
             <DialogDescription>
-              This will permanently delete all habits, logs, projects, tasks, subtasks, notes, and tags from this browser.
+              This will permanently delete all habits, logs, projects, tasks, subtasks, notes, and
+              tags from this browser.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-3 py-2 text-xs">
             <p className="text-muted-foreground">
-              Please type <span className="font-mono font-bold text-destructive">DELETE</span> below to confirm.
+              Please type <span className="font-mono font-bold text-destructive">DELETE</span> below
+              to confirm.
             </p>
             <Input
               placeholder="Type DELETE"
@@ -870,11 +856,7 @@ export function SettingsView() {
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setClearDataModalOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setClearDataModalOpen(false)}>
               Cancel
             </Button>
             <Button

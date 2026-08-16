@@ -319,12 +319,7 @@ describe('streakCalculator', () => {
         }
       ]
 
-      const heatmap = generateHeatmapData(
-        habits,
-        logs,
-        '2026-08-13',
-        '2026-08-15'
-      )
+      const heatmap = generateHeatmapData(habits, logs, '2026-08-13', '2026-08-15')
       expect(heatmap).toHaveLength(3)
 
       // 2026-08-13: 0 completed out of 2 -> ratio 0, level 0

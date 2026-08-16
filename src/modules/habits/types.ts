@@ -1,9 +1,5 @@
 export type HabitFrequencyType =
-  | 'daily'
-  | 'weekly'
-  | 'custom_days'
-  | 'subday_interval'
-  | 'times_per_day'
+  'daily' | 'weekly' | 'custom_days' | 'subday_interval' | 'times_per_day'
 
 export type HabitTargetType = 'boolean' | 'numeric' | 'timer'
 
@@ -59,4 +55,3 @@ export type CreateHabitInput = Omit<Habit, 'id' | 'createdAt' | 'updatedAt' | 'a
 }
 
 export type UpdateHabitInput = Partial<Omit<Habit, 'id' | 'createdAt' | 'updatedAt'>>
-

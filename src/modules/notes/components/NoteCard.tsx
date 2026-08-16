@@ -67,14 +67,20 @@ function getSnippet(content: string, searchQuery?: string, maxLength = 160): Rea
       const suffix = end < cleaned.length ? '...' : ''
       const segment = cleaned.substring(start, end)
 
-      const regex = new RegExp(`(${searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi')
+      const regex = new RegExp(
+        `(${searchQuery.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`,
+        'gi'
+      )
       const parts = segment.split(regex)
       return (
         <span>
           {prefix}
           {parts.map((part, i) =>
             part.toLowerCase() === q ? (
-              <mark key={i} className="bg-amber-300/50 dark:bg-amber-500/40 text-foreground px-0.5 rounded font-medium">
+              <mark
+                key={i}
+                className="bg-amber-300/50 dark:bg-amber-500/40 text-foreground px-0.5 rounded font-medium"
+              >
                 {part}
               </mark>
             ) : (
@@ -103,9 +109,7 @@ export function NoteCard({
   onDelete,
   onTagClick
 }: NoteCardProps) {
-  const formattedDate = note.updatedAt
-    ? format(parseISO(note.updatedAt), 'MMM d, yyyy')
-    : 'Unknown'
+  const formattedDate = note.updatedAt ? format(parseISO(note.updatedAt), 'MMM d, yyyy') : 'Unknown'
 
   const readingTime = calculateReadingTime(note.wordCount)
   const snippet = getSnippet(note.content, searchQuery)
@@ -127,9 +131,7 @@ export function NoteCard({
       >
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <div className="flex items-center gap-2">
-            {note.pinned && (
-              <Pin className="h-3.5 w-3.5 fill-primary text-primary" />
-            )}
+            {note.pinned && <Pin className="h-3.5 w-3.5 fill-primary text-primary" />}
             <h3 className="truncate font-semibold text-foreground">{note.title}</h3>
           </div>
 
@@ -171,9 +173,7 @@ export function NoteCard({
                 </Badge>
               ))}
               {note.tags.length > 2 && (
-                <span className="text-[10px] text-muted-foreground">
-                  +{note.tags.length - 2}
-                </span>
+                <span className="text-[10px] text-muted-foreground">+{note.tags.length - 2}</span>
               )}
             </div>
           )}
@@ -187,7 +187,11 @@ export function NoteCard({
           <div onClick={(e) => e.stopPropagation()}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-80 group-hover:opacity-100">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 opacity-80 group-hover:opacity-100"
+                >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -258,9 +262,7 @@ export function NoteCard({
         {/* Header */}
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            {note.pinned && (
-              <Pin className="h-3.5 w-3.5 shrink-0 fill-primary text-primary" />
-            )}
+            {note.pinned && <Pin className="h-3.5 w-3.5 shrink-0 fill-primary text-primary" />}
             <h3 className="truncate font-semibold tracking-tight text-foreground text-sm sm:text-base">
               {note.title || 'Untitled Note'}
             </h3>
@@ -364,9 +366,7 @@ export function NoteCard({
               </Badge>
             ))}
             {note.tags.length > 3 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{note.tags.length - 3}
-              </span>
+              <span className="text-[10px] text-muted-foreground">+{note.tags.length - 3}</span>
             )}
           </div>
         )}
@@ -374,7 +374,9 @@ export function NoteCard({
         <div className="flex items-center justify-between text-[11px] text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <FileText className="h-3 w-3" />
-            <span>{note.wordCount} words ({readingTime}m)</span>
+            <span>
+              {note.wordCount} words ({readingTime}m)
+            </span>
           </div>
           <span>{formattedDate}</span>
         </div>
@@ -382,4 +384,3 @@ export function NoteCard({
     </div>
   )
 }
-

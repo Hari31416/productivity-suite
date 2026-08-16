@@ -66,12 +66,7 @@ const COLUMNS: KanbanColumn[] = [
   }
 ]
 
-export function TaskKanbanView({
-  tasks,
-  projects,
-  onEditTask,
-  onAddTask
-}: TaskKanbanViewProps) {
+export function TaskKanbanView({ tasks, projects, onEditTask, onAddTask }: TaskKanbanViewProps) {
   const [dragOverColumn, setDragOverColumn] = useState<TaskStatus | null>(null)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
 
@@ -136,7 +131,9 @@ export function TaskKanbanView({
     }
   }
 
-  const getAdjacentStatuses = (currentStatus: TaskStatus): { prev?: TaskStatus; next?: TaskStatus } => {
+  const getAdjacentStatuses = (
+    currentStatus: TaskStatus
+  ): { prev?: TaskStatus; next?: TaskStatus } => {
     const order: TaskStatus[] = ['todo', 'in_progress', 'blocked', 'done']
     const idx = order.indexOf(currentStatus)
     return {
@@ -170,7 +167,10 @@ export function TaskKanbanView({
                   <span className="font-bold text-sm sm:text-base text-foreground">
                     {column.title}
                   </span>
-                  <Badge variant="secondary" className="text-[11px] h-5 px-2 font-bold rounded-full bg-muted-foreground/15 text-foreground">
+                  <Badge
+                    variant="secondary"
+                    className="text-[11px] h-5 px-2 font-bold rounded-full bg-muted-foreground/15 text-foreground"
+                  >
                     {columnTasks.length}
                   </Badge>
                 </div>
@@ -309,7 +309,10 @@ export function TaskKanbanView({
                         {/* Project Tag if available */}
                         {project && (
                           <div>
-                            <Badge variant="outline" className="text-[10px] font-normal px-1.5 py-0 h-4">
+                            <Badge
+                              variant="outline"
+                              className="text-[10px] font-normal px-1.5 py-0 h-4"
+                            >
                               {project.name}
                             </Badge>
                           </div>

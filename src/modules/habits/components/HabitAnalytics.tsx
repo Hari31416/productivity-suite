@@ -32,10 +32,7 @@ import {
   Calendar
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
-import {
-  calculateStreak,
-  generateHeatmapData
-} from '../utils/streakCalculator'
+import { calculateStreak, generateHeatmapData } from '../utils/streakCalculator'
 import { cn } from '@/lib/utils'
 
 interface HabitAnalyticsProps {
@@ -152,9 +149,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{activeHabits.length}</div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Routines currently tracked
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Routines currently tracked</p>
           </CardContent>
         </Card>
 
@@ -182,9 +177,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{bestOverallStreak} days</div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              All-time record across habits
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">All-time record across habits</p>
           </CardContent>
         </Card>
 
@@ -195,9 +188,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{avgConsistency}%</div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Average adherence score
-            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Average adherence score</p>
           </CardContent>
         </Card>
       </div>
@@ -206,9 +197,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between pb-4">
             <div>
-              <CardTitle className="text-base font-semibold">
-                Completion Trend
-              </CardTitle>
+              <CardTitle className="text-base font-semibold">Completion Trend</CardTitle>
               <p className="text-xs text-muted-foreground">
                 Percentage of active habits completed per day
               </p>
@@ -282,12 +271,8 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">
-              Top Streaks
-            </CardTitle>
-            <p className="text-xs text-muted-foreground">
-              Most consistent active habits
-            </p>
+            <CardTitle className="text-base font-semibold">Top Streaks</CardTitle>
+            <p className="text-xs text-muted-foreground">Most consistent active habits</p>
           </CardHeader>
           <CardContent className="space-y-3">
             {topStreaks.length === 0 ? (
@@ -306,9 +291,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
                       style={{ backgroundColor: habit.color || '#3b82f6' }}
                     />
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold truncate leading-tight">
-                        {habit.title}
-                      </p>
+                      <p className="text-xs font-semibold truncate leading-tight">{habit.title}</p>
                       <p className="text-[11px] text-muted-foreground">
                         {consistency30}% consistency
                       </p>
@@ -329,14 +312,10 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
         <CardHeader className="flex flex-row items-center justify-between pb-3">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-base font-semibold">
-              Monthly Consistency Heatmap
-            </CardTitle>
+            <CardTitle className="text-base font-semibold">Monthly Consistency Heatmap</CardTitle>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
-              {format(currentMonth, 'MMMM yyyy')}
-            </span>
+            <span className="text-sm font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
             <div className="flex items-center gap-1">
               <Button
                 variant="outline"
@@ -376,10 +355,7 @@ export function HabitAnalytics({ habits, logs }: HabitAnalyticsProps) {
 
           <div className="grid grid-cols-7 gap-1.5">
             {Array.from({ length: firstDayOfMonthOffset }).map((_, i) => (
-              <div
-                key={`empty-${i}`}
-                className="h-10 rounded-md bg-transparent"
-              />
+              <div key={`empty-${i}`} className="h-10 rounded-md bg-transparent" />
             ))}
 
             {monthHeatmapData.map((item) => {

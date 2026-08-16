@@ -1,10 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { unzipSync } from 'fflate'
-import {
-  sanitizeFilename,
-  buildNoteMarkdownContent,
-  generateZipArchive
-} from '../noteExporter'
+import { sanitizeFilename, buildNoteMarkdownContent, generateZipArchive } from '../noteExporter'
 import type { Note } from '../../types'
 
 describe('noteExporter utility', () => {

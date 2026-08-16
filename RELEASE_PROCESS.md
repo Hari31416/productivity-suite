@@ -40,6 +40,7 @@ Document new features, fixes, and architectural enhancements in `CHANGELOG.md` u
 ## [0.2.0] - YYYY-MM-DD
 
 ### Added
+
 - Feature details...
 ```
 

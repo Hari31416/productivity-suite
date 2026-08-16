@@ -1,12 +1,7 @@
 import { z } from 'zod'
 import { db } from '@/core/db'
 import { saveAndExportTextFile } from '@/core/utils/fileExporter'
-import type {
-  BackupArchiveData,
-  BackupMetadata,
-  RestoreMode,
-  ValidationResult
-} from './types'
+import type { BackupArchiveData, BackupMetadata, RestoreMode, ValidationResult } from './types'
 
 export const CURRENT_BACKUP_FORMAT_VERSION = 1
 export const APP_VERSION = '1.0.0'
@@ -30,13 +25,7 @@ export const habitSchema = z.object({
   color: z.string(),
   icon: z.string().optional(),
   categoryId: z.string().optional(),
-  frequencyType: z.enum([
-    'daily',
-    'weekly',
-    'custom_days',
-    'subday_interval',
-    'times_per_day'
-  ]),
+  frequencyType: z.enum(['daily', 'weekly', 'custom_days', 'subday_interval', 'times_per_day']),
   targetDaysOfWeek: z.array(z.number()).optional(),
   targetCountPerWeek: z.number().optional(),
   intervalHours: z.number().optional(),
@@ -135,16 +124,15 @@ export const backupArchiveDataSchema = z.object({
 })
 
 export async function generateBackupData(): Promise<BackupArchiveData> {
-  const [habits, habitLogs, projects, tasks, subtasks, notes, tags] =
-    await Promise.all([
-      db.habits.toArray(),
-      db.habitLogs.toArray(),
-      db.projects.toArray(),
-      db.tasks.toArray(),
-      db.subtasks.toArray(),
-      db.notes.toArray(),
-      db.tags.toArray()
-    ])
+  const [habits, habitLogs, projects, tasks, subtasks, notes, tags] = await Promise.all([
+    db.habits.toArray(),
+    db.habitLogs.toArray(),
+    db.projects.toArray(),
+    db.tasks.toArray(),
+    db.subtasks.toArray(),
+    db.notes.toArray(),
+    db.tags.toArray()
+  ])
 
   const metadata: BackupMetadata = {
     formatVersion: CURRENT_BACKUP_FORMAT_VERSION,
@@ -222,21 +210,10 @@ export function validateBackupJson(jsonString: string): ValidationResult {
   }
 }
 
-export async function restoreBackup(
-  data: BackupArchiveData,
-  mode: RestoreMode
-): Promise<void> {
+export async function restoreBackup(data: BackupArchiveData, mode: RestoreMode): Promise<void> {
   await db.transaction(
     'rw',
-    [
-      db.habits,
-      db.habitLogs,
-      db.projects,
-      db.tasks,
-      db.subtasks,
-      db.notes,
-      db.tags
-    ],
+    [db.habits, db.habitLogs, db.projects, db.tasks, db.subtasks, db.notes, db.tags],
     async () => {
       if (mode === 'replace') {
         await Promise.all([

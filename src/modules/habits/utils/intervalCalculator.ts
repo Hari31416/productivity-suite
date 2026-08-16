@@ -115,10 +115,7 @@ export function getHabitSlots(habit: Habit): HabitSlot[] {
   ]
 }
 
-export function mapLogsToSlots(
-  slots: HabitSlot[],
-  logs: HabitLog[]
-): SubdaySlotProgress[] {
+export function mapLogsToSlots(slots: HabitSlot[], logs: HabitLog[]): SubdaySlotProgress[] {
   return slots.map((slot) => {
     const log = logs.find((l) => l.intervalIndex === slot.index)
     return {
@@ -130,10 +127,7 @@ export function mapLogsToSlots(
   })
 }
 
-export function getSubdayProgress(
-  habit: Habit,
-  logsForDate: HabitLog[]
-): SubdayProgress {
+export function getSubdayProgress(habit: Habit, logsForDate: HabitLog[]): SubdayProgress {
   const slots = getHabitSlots(habit)
   const mappedSlots = mapLogsToSlots(slots, logsForDate)
   const completedCount = mappedSlots.filter((s) => s.completed).length
@@ -150,9 +144,6 @@ export function getSubdayProgress(
   }
 }
 
-export function isSubdayHabitCompleted(
-  habit: Habit,
-  logsForDate: HabitLog[]
-): boolean {
+export function isSubdayHabitCompleted(habit: Habit, logsForDate: HabitLog[]): boolean {
   return getSubdayProgress(habit, logsForDate).isCompleted
 }

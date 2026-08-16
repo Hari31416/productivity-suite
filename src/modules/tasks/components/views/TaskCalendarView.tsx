@@ -16,14 +16,7 @@ import {
   addDays,
   subDays
 } from 'date-fns'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Clock,
-  CheckCircle2,
-  Circle
-} from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, Clock, CheckCircle2, Circle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
@@ -194,14 +187,10 @@ export function TaskCalendarView({
           <h3 className="font-bold text-sm sm:text-base text-foreground truncate">
             {calendarMode === 'month' && format(currentDate, 'MMMM yyyy')}
             {calendarMode === 'day' && format(selectedDate, 'MMM d, yyyy')}
-            {calendarMode === 'week' && `Week of ${format(startOfWeek(currentDate), 'MMM d, yyyy')}`}
+            {calendarMode === 'week' &&
+              `Week of ${format(startOfWeek(currentDate), 'MMM d, yyyy')}`}
           </h3>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToday}
-            className="text-xs h-7 px-2"
-          >
+          <Button variant="outline" size="sm" onClick={handleToday} className="text-xs h-7 px-2">
             Today
           </Button>
         </div>
@@ -271,10 +260,10 @@ export function TaskCalendarView({
                         isSelected
                           ? 'bg-primary text-primary-foreground font-bold shadow-xs'
                           : dayIsToday
-                          ? 'border-2 border-primary text-primary font-bold'
-                          : isCurrentMonth
-                          ? 'text-foreground group-hover:bg-muted/50'
-                          : 'text-muted-foreground/40'
+                            ? 'border-2 border-primary text-primary font-bold'
+                            : isCurrentMonth
+                              ? 'text-foreground group-hover:bg-muted/50'
+                              : 'text-muted-foreground/40'
                       )}
                     >
                       {format(day, 'd')}
@@ -288,9 +277,11 @@ export function TaskCalendarView({
                             'h-1.5 w-1.5 rounded-full',
                             isSelected
                               ? 'bg-primary-foreground'
-                              : dayTasks.some((t) => t.priority === 'urgent' || t.priority === 'high')
-                              ? 'bg-rose-500'
-                              : 'bg-primary'
+                              : dayTasks.some(
+                                    (t) => t.priority === 'urgent' || t.priority === 'high'
+                                  )
+                                ? 'bg-rose-500'
+                                : 'bg-primary'
                           )}
                         />
                       )}
@@ -316,7 +307,9 @@ export function TaskCalendarView({
               <div className="space-y-2 pt-3">
                 {selectedDayTasks.length === 0 ? (
                   <div className="py-12 text-center">
-                    <p className="text-xs text-muted-foreground">No tasks scheduled for this day.</p>
+                    <p className="text-xs text-muted-foreground">
+                      No tasks scheduled for this day.
+                    </p>
                     <Button
                       variant="outline"
                       size="sm"
@@ -435,14 +428,14 @@ export function TaskCalendarView({
                   <span
                     className={cn(
                       'mt-1 h-7 w-7 sm:h-8 sm:w-8 rounded-full flex items-center justify-center text-xs sm:text-sm font-semibold transition-all',
-                      isSelected ? 'bg-primary text-primary-foreground shadow-xs' : 'text-foreground'
+                      isSelected
+                        ? 'bg-primary text-primary-foreground shadow-xs'
+                        : 'text-foreground'
                     )}
                   >
                     {format(day, 'd')}
                   </span>
-                  {hasTasks && (
-                    <span className="h-1 w-1 rounded-full bg-primary mt-1" />
-                  )}
+                  {hasTasks && <span className="h-1 w-1 rounded-full bg-primary mt-1" />}
                 </div>
               )
             })}
@@ -466,7 +459,9 @@ export function TaskCalendarView({
                       <span className="font-medium text-xs sm:text-sm text-foreground truncate">
                         {task.title}
                       </span>
-                      <span className="text-[11px] text-muted-foreground shrink-0 ml-2">All day</span>
+                      <span className="text-[11px] text-muted-foreground shrink-0 ml-2">
+                        All day
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -496,7 +491,9 @@ export function TaskCalendarView({
                       ) : (
                         <div className="space-y-1.5">
                           {slotTasks.map((task) => {
-                            const project = task.projectId ? projectMap.get(task.projectId) : undefined
+                            const project = task.projectId
+                              ? projectMap.get(task.projectId)
+                              : undefined
                             return (
                               <div
                                 key={task.id}
@@ -559,7 +556,9 @@ export function TaskCalendarView({
                     <span
                       className={cn(
                         'h-6 w-6 rounded-full flex items-center justify-center font-bold text-xs',
-                        dayIsToday ? 'bg-primary text-primary-foreground shadow-xs' : 'text-foreground'
+                        dayIsToday
+                          ? 'bg-primary text-primary-foreground shadow-xs'
+                          : 'text-foreground'
                       )}
                     >
                       {format(day, 'd')}

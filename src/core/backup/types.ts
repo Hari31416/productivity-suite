@@ -23,5 +23,4 @@ export interface BackupArchiveData {
 export type RestoreMode = 'replace' | 'merge'
 
 export type ValidationResult =
-  | { success: true; data: BackupArchiveData }
-  | { success: false; error: string }
+  { success: true; data: BackupArchiveData } | { success: false; error: string }

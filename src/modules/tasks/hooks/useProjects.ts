@@ -5,8 +5,7 @@ import { taskQueryKeys } from './useTasks'
 
 export const projectQueryKeys = {
   all: ['projects'] as const,
-  list: (includeArchived: boolean) =>
-    ['projects', 'list', { includeArchived }] as const,
+  list: (includeArchived: boolean) => ['projects', 'list', { includeArchived }] as const,
   withCounts: (includeArchived: boolean) =>
     ['projects', 'withCounts', { includeArchived }] as const,
   detail: (id: string) => ['projects', 'detail', id] as const
@@ -38,9 +37,8 @@ export function useCreateProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (
-      projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>
-    ) => projectRepository.createProject(projectData),
+    mutationFn: (projectData: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>) =>
+      projectRepository.createProject(projectData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectQueryKeys.all })
     }
@@ -51,13 +49,8 @@ export function useUpdateProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      id,
-      updates
-    }: {
-      id: string
-      updates: Partial<Project>
-    }) => projectRepository.updateProject(id, updates),
+    mutationFn: ({ id, updates }: { id: string; updates: Partial<Project> }) =>
+      projectRepository.updateProject(id, updates),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: projectQueryKeys.all })
       queryClient.invalidateQueries({
@@ -84,13 +77,8 @@ export function useDeleteProject() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({
-      id,
-      deleteTasks
-    }: {
-      id: string
-      deleteTasks?: boolean
-    }) => projectRepository.deleteProject(id, deleteTasks),
+    mutationFn: ({ id, deleteTasks }: { id: string; deleteTasks?: boolean }) =>
+      projectRepository.deleteProject(id, deleteTasks),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectQueryKeys.all })
       queryClient.invalidateQueries({ queryKey: taskQueryKeys.all })

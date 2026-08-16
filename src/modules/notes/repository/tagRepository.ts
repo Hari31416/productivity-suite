@@ -41,8 +41,7 @@ export const tagRepository = {
     }
 
     const randomColor =
-      input.color ||
-      DEFAULT_TAG_COLORS[Math.floor(Math.random() * DEFAULT_TAG_COLORS.length)]
+      input.color || DEFAULT_TAG_COLORS[Math.floor(Math.random() * DEFAULT_TAG_COLORS.length)]
 
     const tag: Tag = {
       id: crypto.randomUUID(),

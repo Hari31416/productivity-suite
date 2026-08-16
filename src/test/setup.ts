@@ -55,7 +55,10 @@ global.ResizeObserver = class ResizeObserver {
 }
 
 // Mock URL createObjectURL and revokeObjectURL
-if (typeof window.URL.createObjectURL === 'undefined' || window.URL.createObjectURL.toString().includes('native')) {
+if (
+  typeof window.URL.createObjectURL === 'undefined' ||
+  window.URL.createObjectURL.toString().includes('native')
+) {
   Object.defineProperty(window.URL, 'createObjectURL', {
     value: () => 'blob:mock-url',
     writable: true
