@@ -689,21 +689,46 @@ export function HabitDetailView({
             <div className="space-y-3 rounded-xl border bg-muted/20 p-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setDirectValueInput(`${currentTimerMinutes}`)
-                      setIsEditingDirect(true)
-                    }}
-                    className="group flex items-center gap-1.5 hover:text-primary transition-colors text-left"
-                    title="Click to edit timer minutes directly"
-                  >
-                    <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
-                      {currentTimerMinutes}
-                    </span>
-                    <span className="text-sm text-muted-foreground">/ {targetValue} min</span>
-                    <Pencil className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
-                  </button>
+                  {isEditingDirect ? (
+                    <form onSubmit={handleDirectSubmit} className="flex items-center gap-1.5">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={directValueInput}
+                        onChange={(e) => setDirectValueInput(e.target.value)}
+                        className="h-8 w-24 text-sm px-2 font-semibold"
+                        autoFocus
+                      />
+                      <Button type="submit" size="sm" className="h-8 px-2.5 text-xs font-medium">
+                        Set
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2 text-xs"
+                        onClick={() => setIsEditingDirect(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </form>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDirectValueInput(`${currentTimerMinutes}`)
+                        setIsEditingDirect(true)
+                      }}
+                      className="group flex items-center gap-1.5 hover:text-primary transition-colors text-left"
+                      title="Click to edit timer minutes directly"
+                    >
+                      <span className="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
+                        {currentTimerMinutes}
+                      </span>
+                      <span className="text-sm text-muted-foreground">/ {targetValue} min</span>
+                      <Pencil className="h-3.5 w-3.5 text-muted-foreground/60 group-hover:text-primary transition-colors" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-1.5 flex-wrap">

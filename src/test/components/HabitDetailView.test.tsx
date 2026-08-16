@@ -117,6 +117,13 @@ describe('HabitDetailView Component', () => {
 
     expect(screen.getByRole('button', { name: /start focus/i })).toBeInTheDocument()
     expect(screen.getByText('20:00')).toBeInTheDocument()
+
+    // Test clicking direct edit for timer minutes
+    const editDirectBtn = screen.getByTitle('Click to edit timer minutes directly')
+    fireEvent.click(editDirectBtn)
+
+    const input = screen.getByRole('spinbutton')
+    expect(input).toBeInTheDocument()
   })
 
   it('opens edit modal when edit button is clicked', async () => {
