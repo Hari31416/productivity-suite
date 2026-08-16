@@ -458,10 +458,12 @@ describe('notificationService', () => {
 
   describe('Task Reminders', () => {
     it('computes offset and exact reminder dates correctly', () => {
+      const baseTime = new Date('2026-08-16T08:00:00')
       const offsetDate = computeTaskReminderDate(
         { id: 'r1', type: 'offset', offsetMinutes: 15 },
         '2026-08-16',
-        '10:00'
+        '10:00',
+        baseTime
       )
       expect(offsetDate).toBeDefined()
       // 10:00 minus 15 min = 09:45
@@ -476,6 +478,74 @@ describe('notificationService', () => {
       expect(exactDate).toBeDefined()
       expect(exactDate?.getHours()).toBe(14)
       expect(exactDate?.getMinutes()).toBe(30)
+    })
+
+    it('computes reminder date when dueDate or dueTime is omitted', () => {
+      // 1. Future date with no dueTime defaults to 09:00 AM minus offset
+      const futureBase = new Date('2026-08-16T08:00:00')
+      const futureDate = computeTaskReminderDate(
+        { id: 'r3', type: 'offset', offsetMinutes: 30 },
+        '2026-08-20',
+        undefined,
+        futureBase
+      )
+      expect(futureDate).toBeDefined()
+      expect(futureDate?.getDate()).toBe(20)
+      expect(futureDate?.getHours()).toBe(8)
+      expect(futureDate?.getMinutes()).toBe(30)
+
+      // 2. Today with no dueTime picks next future daytime slot
+      const morningBase = new Date('2026-08-16T10:00:00')
+      const todayDate = computeTaskReminderDate(
+        { id: 'r4', type: 'offset', offsetMinutes: 0 },
+        '2026-08-16',
+        undefined,
+        morningBase
+      )
+      expect(todayDate).toBeDefined()
+      // Next checkpoint is 12:00:00
+      expect(todayDate?.getHours()).toBe(12)
+
+      // 3. No dueDate and no dueTime defaults to today with next available checkpoint
+      const afternoonBase = new Date('2026-08-16T13:30:00')
+      const noDateTask = computeTaskReminderDate(
+        { id: 'r5', type: 'offset', offsetMinutes: 0 },
+        undefined,
+        undefined,
+        afternoonBase
+      )
+      expect(noDateTask).toBeDefined()
+      expect(noDateTask?.getHours()).toBe(15)
+
+      // 4. Late night fallback when all daytime slots passed
+      const lateNightBase = new Date('2026-08-16T23:00:00')
+      const lateNightTask = computeTaskReminderDate(
+        { id: 'r6', type: 'offset', offsetMinutes: 15 },
+        undefined,
+        undefined,
+        lateNightBase
+      )
+      expect(lateNightTask).toBeDefined()
+      expect(lateNightTask!.getTime()).toBeGreaterThan(lateNightBase.getTime())
+    })
+
+    it('schedules task reminder even when dueDate and dueTime are omitted', async () => {
+      const mockNotificationConstructor = vi.fn()
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Notification: Object.assign(mockNotificationConstructor, {
+          permission: 'granted',
+          requestPermission: vi.fn()
+        })
+      }
+
+      const reminderId = await scheduleTaskReminder({
+        taskId: 't-no-date',
+        taskTitle: 'Quick Thought Task',
+        reminder: { id: 'r-quick', type: 'offset', offsetMinutes: 0 }
+      })
+
+      expect(reminderId).toBeDefined()
+      expect(mockNotificationConstructor).not.toHaveBeenCalled()
     })
 
     it('schedules and triggers task reminders on web timer', async () => {

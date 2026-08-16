@@ -13,6 +13,7 @@ import { habitRepository } from './habits/repository/habitRepository'
 import {
   rescheduleAllTaskReminders,
   rescheduleAllHabitReminders,
+  clearAllScheduledReminders,
   sendLocalNotification
 } from '@/core/notifications/notificationService'
 import { db } from '@/core/db'
@@ -116,7 +117,10 @@ export function initializeModules(queryClient?: QueryClient): void {
           queryClient.invalidateQueries()
         }
       })
-      .then(() => taskRepository.syncRecurringInstances(30))
+      .then(() => {
+        clearAllScheduledReminders()
+        return taskRepository.syncRecurringInstances(30)
+      })
       .then(() => taskRepository.getAllTasks({ includeArchived: false }))
       .then((tasks) => rescheduleAllTaskReminders(tasks))
       .then(() => habitRepository.getAllHabits(false))

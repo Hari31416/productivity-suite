@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-16
+
+### Fixed
+
+- **Task Notification Due Date & Time Fallbacks**:
+  - Enhanced `computeTaskReminderDate` to support task notifications when `dueDate` or `dueTime` is omitted.
+  - Automatically calculates upcoming daytime checkpoints (`09:00`, `12:00`, `15:00`, `18:00`, `21:00`) for same-day tasks without due time to prevent expired past timestamps.
+  - Added fallback forward offsets for late-night or undated quick tasks.
+- **Deterministic Task Notification ID Generation**:
+  - Implemented 32-bit integer hash generation (`getTaskNotificationId`) for tasks to ensure consistent identification and prevent ID collisions across rescheduling cycles.
+  - Improved reminder cancellation in `taskRepository` on task update and deletion.
+- **Startup Reminder Synchronization Isolation**:
+  - Isolated web reminder cancellation so that background task and habit rescheduling do not overwrite or clear each other's active timers during app initialization.
+
 ## [0.4.0] - 2026-08-16
 
 ### Added

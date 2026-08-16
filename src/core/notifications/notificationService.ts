@@ -403,36 +403,72 @@ export async function scheduleHabitReminder(
 export function computeTaskReminderDate(
   reminder: TaskReminder,
   dueDate?: string,
-  dueTime?: string
+  dueTime?: string,
+  baseNow: Date = new Date()
 ): Date | null {
   if (reminder.type === 'exact' && reminder.exactDateTime) {
     const d = new Date(reminder.exactDateTime)
     return isNaN(d.getTime()) ? null : d
   }
 
-  if (reminder.type === 'offset' && dueDate) {
-    const timeStr = dueTime ? `${dueTime}:00` : '09:00:00'
-    const fullIso = `${dueDate}T${timeStr}`
-    const baseDate = new Date(fullIso)
-    if (isNaN(baseDate.getTime())) return null
-
+  if (reminder.type === 'offset') {
+    const todayStr = format(baseNow, 'yyyy-MM-dd')
+    const effectiveDueDate = dueDate || todayStr
     const offsetMs = (reminder.offsetMinutes ?? 0) * 60 * 1000
-    return new Date(baseDate.getTime() - offsetMs)
+
+    if (dueTime) {
+      const timePart = dueTime.length === 5 ? `${dueTime}:00` : dueTime
+      const fullIso = `${effectiveDueDate}T${timePart}`
+      const baseDate = new Date(fullIso)
+      if (isNaN(baseDate.getTime())) return null
+      return new Date(baseDate.getTime() - offsetMs)
+    }
+
+    // When dueTime is omitted:
+    // If dueDate is in the future (> todayStr), default to 09:00 AM on that future date
+    if (effectiveDueDate > todayStr) {
+      const fullIso = `${effectiveDueDate}T09:00:00`
+      const baseDate = new Date(fullIso)
+      if (isNaN(baseDate.getTime())) return null
+      return new Date(baseDate.getTime() - offsetMs)
+    }
+
+    // If effectiveDueDate is today (or past):
+    // Search standard daytime checkpoints (09:00, 12:00, 15:00, 18:00, 21:00) for the next future reminder slot
+    const candidateSlots = ['09:00:00', '12:00:00', '15:00:00', '18:00:00', '21:00:00']
+    for (const slot of candidateSlots) {
+      const fullIso = `${effectiveDueDate}T${slot}`
+      const candidateDate = new Date(new Date(fullIso).getTime() - offsetMs)
+      if (candidateDate.getTime() > baseNow.getTime()) {
+        return candidateDate
+      }
+    }
+
+    // If all daily checkpoints today have passed, schedule for fallback offset from right now
+    const fallbackDelayMs = Math.max(5 * 60 * 1000, offsetMs || 15 * 60 * 1000)
+    return new Date(baseNow.getTime() + fallbackDelayMs)
   }
 
   return null
 }
 
 export async function scheduleTaskReminder(options: TaskReminderOptions): Promise<number | null> {
-  const targetDate = computeTaskReminderDate(options.reminder, options.dueDate, options.dueTime)
+  let targetDate = computeTaskReminderDate(options.reminder, options.dueDate, options.dueTime)
+
+  if (targetDate && targetDate.getTime() <= Date.now()) {
+    if (options.reminder.type === 'offset') {
+      targetDate = new Date(Date.now() + 60 * 1000)
+    } else {
+      return null
+    }
+  }
 
   const reminderId =
-    options.reminder.notificationId ||
-    Math.floor(Date.now() % 1000000) + Math.floor(Math.random() * 1000)
+    options.reminder.notificationId || getTaskNotificationId(options.taskId, options.reminder.id)
 
   const title = `Task Reminder: ${options.taskTitle}`
   const body = options.dueTime
-    ? `Scheduled for ${options.dueDate} at ${options.dueTime}`
+    ? `Scheduled for ${options.dueDate || 'today'} at ${options.dueTime}`
     : `Due on ${options.dueDate || 'today'}`
 
   const capPlugin = getCapacitorBridge()
@@ -468,6 +504,11 @@ export async function scheduleTaskReminder(options: TaskReminderOptions): Promis
     const delayMs = targetDate.getTime() - Date.now()
     if (delayMs <= 0) {
       return null // Already in past
+    }
+
+    const existingTimer = scheduledTimers.get(reminderId)
+    if (existingTimer) {
+      clearTimeout(existingTimer)
     }
 
     const timer = setTimeout(() => {
@@ -513,7 +554,6 @@ export async function cancelTaskReminder(notificationId: number | string): Promi
 }
 
 export async function rescheduleAllTaskReminders(tasks: Task[]): Promise<void> {
-  clearAllScheduledReminders()
   const now = Date.now()
 
   for (const task of tasks) {

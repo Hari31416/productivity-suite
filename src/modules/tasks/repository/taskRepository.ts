@@ -10,7 +10,11 @@ import type {
   TaskReminder
 } from '../types'
 import { generateOccurrenceSlots } from '../utils/recurrence'
-import { scheduleTaskReminder, cancelTaskReminder } from '@/core/notifications/notificationService'
+import {
+  scheduleTaskReminder,
+  cancelTaskReminder,
+  getTaskNotificationId
+} from '@/core/notifications/notificationService'
 
 export const taskRepository = {
   async getAllTasks(filter?: TaskFilter): Promise<Task[]> {
@@ -243,9 +247,8 @@ export const taskRepository = {
 
     if (existing.reminders) {
       for (const r of existing.reminders) {
-        if (r.notificationId) {
-          await cancelTaskReminder(r.notificationId)
-        }
+        const notifId = r.notificationId || getTaskNotificationId(existing.id, r.id)
+        await cancelTaskReminder(notifId)
       }
     }
 
@@ -301,9 +304,8 @@ export const taskRepository = {
 
     if (task.reminders) {
       for (const r of task.reminders) {
-        if (r.notificationId) {
-          await cancelTaskReminder(r.notificationId)
-        }
+        const notifId = r.notificationId || getTaskNotificationId(task.id, r.id)
+        await cancelTaskReminder(notifId)
       }
     }
 
@@ -316,9 +318,8 @@ export const taskRepository = {
       for (const t of relatedTasks) {
         if (t.reminders) {
           for (const r of t.reminders) {
-            if (r.notificationId) {
-              await cancelTaskReminder(r.notificationId)
-            }
+            const notifId = r.notificationId || getTaskNotificationId(t.id, r.id)
+            await cancelTaskReminder(notifId)
           }
         }
         await db.transaction('rw', db.tasks, db.subtasks, async () => {
