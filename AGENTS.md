@@ -1,0 +1,4 @@
+- We use `pnpm` for package management
+- Dev server runs on `3000` not `5173`
+- The UI should look good on both mobile and desktop. Though, mobile is focus.
+- The app will be shared 
