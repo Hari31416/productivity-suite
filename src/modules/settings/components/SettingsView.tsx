@@ -49,6 +49,7 @@ import {
   getNotificationPermission,
   requestNotificationPermission,
   sendLocalNotification,
+  scheduleHabitReminder,
   type NotificationPermissionStatus
 } from '@/core/notifications/notificationService'
 
@@ -211,46 +212,79 @@ export function SettingsView() {
     }
   }
 
-  const handleTestNotification = async (type: 'habit' | 'task' = 'habit') => {
+  const handleTestNotification = async (
+    type: 'habit_boolean' | 'habit_numeric' | 'habit_timer' | 'task' = 'habit_boolean'
+  ) => {
     setIsTestingNotification(true)
     setNotificationFeedback(null)
     try {
-      let targetHabitId = 'habit_drink_water'
-      let targetTaskId = 'task_explore_app'
-
-      try {
-        const firstHabit = await db.habits.toCollection().first()
-        if (firstHabit) targetHabitId = firstHabit.id
-        const firstTask = await db.tasks.toCollection().first()
-        if (firstTask) targetTaskId = firstTask.id
-      } catch {
-        // Use defaults
+      let sent = false
+      const habits = await db.habits.toArray()
+      if (type === 'habit_boolean') {
+        const booleanHabit =
+          habits.find((h) => h.targetType === 'boolean' || !h.targetType) || habits[0]
+        const habitId = booleanHabit?.id || 'habit_reading'
+        const habitTitle = booleanHabit?.title || 'Mindful Reading'
+        const id = await scheduleHabitReminder({
+          habitId,
+          habitTitle,
+          targetType: 'boolean',
+          body: 'Ready for your daily check-in?'
+        })
+        sent = id !== null
+      } else if (type === 'habit_numeric') {
+        const numericHabit = habits.find((h) => h.targetType === 'numeric') || {
+          id: 'habit_hydration',
+          title: 'Hydration',
+          targetType: 'numeric' as const,
+          targetValue: 2000,
+          unit: 'ml'
+        }
+        const id = await scheduleHabitReminder({
+          habitId: numericHabit.id,
+          habitTitle: numericHabit.title,
+          targetType: 'numeric',
+          targetValue: numericHabit.targetValue || 2000,
+          unit: numericHabit.unit || 'ml'
+        })
+        sent = id !== null
+      } else if (type === 'habit_timer') {
+        const timerHabit = habits.find((h) => h.targetType === 'timer') || {
+          id: 'habit_meditation',
+          title: 'Mindful Meditation',
+          targetType: 'timer' as const,
+          targetValue: 15
+        }
+        const id = await scheduleHabitReminder({
+          habitId: timerHabit.id,
+          habitTitle: timerHabit.title,
+          targetType: 'timer',
+          targetValue: timerHabit.targetValue || 15
+        })
+        sent = id !== null
+      } else if (type === 'task') {
+        const task = (await db.tasks.toArray())[0] || {
+          id: 'task_demo',
+          title: 'Review Project Roadmap'
+        }
+        sent = await sendLocalNotification({
+          title: task.title,
+          body: 'Scheduled for today. Tap to view task details.',
+          data: { taskId: task.id }
+        })
       }
 
-      const payload =
-        type === 'habit'
-          ? {
-              title: 'Habit Reminder: Daily Check-in',
-              body: 'Time for your habit routine! Tap to open check-in.',
-              data: { habitId: targetHabitId }
-            }
-          : {
-              title: 'Task Reminder: Scheduled Task',
-              body: 'Time to review your tasks. Tap to view task details.',
-              data: { taskId: targetTaskId }
-            }
-
-      const sent = await sendLocalNotification(payload)
       if (sent) {
         setNotificationFeedback(
-          `Test ${type === 'habit' ? 'Habit' : 'Task'} notification sent. Tap or click the alert to test deep linking.`
+          `Test ${type.replace('_', ' ')} notification sent instantly. Pull down notification shade to test quick action buttons.`
         )
       } else {
         setNotificationFeedback(
           'Failed to trigger notification. Please check app/browser permission settings.'
         )
       }
-      setNotificationPermission(getNotificationPermission())
+    } catch {
+      setNotificationFeedback('An error occurred while dispatching the test notification.')
     } finally {
       setIsTestingNotification(false)
     }
@@ -477,7 +511,7 @@ export function SettingsView() {
               </p>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+            <div className="flex items-center gap-2 flex-wrap shrink-0">
               {notificationPermission !== 'granted' && notificationPermission !== 'unsupported' && (
                 <Button
                   size="sm"
@@ -491,12 +525,32 @@ export function SettingsView() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => handleTestNotification('habit')}
+                onClick={() => handleTestNotification('habit_boolean')}
                 disabled={isTestingNotification}
                 className="text-xs gap-1.5 min-h-[44px]"
               >
                 <Bell className="h-4 w-4" />
-                <span>Test Habit Alert</span>
+                <span>Test Check-In (Yes/No)</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestNotification('habit_numeric')}
+                disabled={isTestingNotification}
+                className="text-xs gap-1.5 min-h-[44px]"
+              >
+                <Bell className="h-4 w-4" />
+                <span>Test Progress (+Step)</span>
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleTestNotification('habit_timer')}
+                disabled={isTestingNotification}
+                className="text-xs gap-1.5 min-h-[44px]"
+              >
+                <Bell className="h-4 w-4" />
+                <span>Test Timer Action</span>
               </Button>
               <Button
                 variant="outline"
