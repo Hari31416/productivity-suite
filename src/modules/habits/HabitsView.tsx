@@ -21,12 +21,13 @@ import {
   Calendar as CalendarIcon,
   Archive,
   RotateCcw,
-  Trash2
+  Trash2,
+  Layers
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { useBackButton } from '@/core/platform/backButton'
-import type { Habit } from './types'
+import type { Habit, HabitRoutineStack } from './types'
 import { DEFAULT_HABIT_CATEGORIES } from './constants'
 import {
   useHabits,
@@ -35,27 +36,33 @@ import {
   useHabitRangeLogs,
   useArchiveHabit,
   useDeleteHabit,
-  useCreateHabit
+  useCreateHabit,
+  useToggleHabitLog
 } from './hooks/useHabits'
-import { isHabitScheduledOnDate, calculateStreak } from './utils/streakCalculator'
+import { isHabitCompletedOnDate, calculateStreak } from './utils/streakCalculator'
 import { HabitCard } from './components/HabitCard'
 import { HabitDetailView } from './components/HabitDetailView'
 import { HabitFormModal } from './components/HabitFormModal'
 import { HabitAnalytics } from './components/HabitAnalytics'
 import { HabitWeekOverview } from './components/HabitWeekOverview'
+import { HabitRoutineChain } from './components/HabitRoutineChain'
+import { RoutineNextPromptModal } from './components/RoutineNextPromptModal'
+import { RoutineStackModal } from './components/RoutineStackModal'
 
 export function HabitsView() {
   const { queryParams, navigate } = useHashRoute()
   const deepLinkedHabitId = queryParams.habitId
 
   const [selectedDate, setSelectedDate] = useState(() => format(new Date(), 'yyyy-MM-dd'))
-  const [viewMode, setViewMode] = useState<'tracker' | 'week' | 'analytics'>('tracker')
+  const [viewMode, setViewMode] = useState<'tracker' | 'routines' | 'week' | 'analytics'>('tracker')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [showArchived, setShowArchived] = useState<boolean>(false)
   const [isFormOpen, setIsFormOpen] = useState<boolean>(false)
   const [habitToEdit, setHabitToEdit] = useState<Habit | null>(null)
   const [habitToDelete, setHabitToDelete] = useState<Habit | null>(null)
+  const [isRoutineStackModalOpen, setIsRoutineStackModalOpen] = useState<boolean>(false)
+  const [routineToEdit, setRoutineToEdit] = useState<HabitRoutineStack | null>(null)
   const [quickTitle, setQuickTitle] = useState('')
   const [quickCategory, setQuickCategory] = useState(DEFAULT_HABIT_CATEGORIES[0].id)
   const [sortBy, setSortBy] = useState<'default' | 'streak' | 'name' | 'category' | 'pinned'>(
@@ -63,11 +70,29 @@ export function HabitsView() {
   )
   const [showQuickAdd, setShowQuickAdd] = useState(false)
 
+  // Routine Next-Step Progression Prompt State
+  const [routinePromptState, setRoutinePromptState] = useState<{
+    open: boolean
+    completedHabit: Habit | null
+    nextHabit: Habit | null
+    routineName: string
+  }>({
+    open: false,
+    completedHabit: null,
+    nextHabit: null,
+    routineName: ''
+  })
+
   // Handle Android Back button inside Habits module
   useBackButton(
     () => {
       if (habitToDelete) {
         setHabitToDelete(null)
+        return true
+      }
+      if (isRoutineStackModalOpen) {
+        setIsRoutineStackModalOpen(false)
+        setRoutineToEdit(null)
         return true
       }
       if (isFormOpen) {
@@ -109,6 +134,54 @@ export function HabitsView() {
   const createMutation = useCreateHabit()
   const archiveMutation = useArchiveHabit()
   const deleteMutation = useDeleteHabit()
+  const toggleMutation = useToggleHabitLog()
+
+  const routineStacks = useMemo(() => {
+    const map = new Map<string, Habit[]>()
+    habits
+      .filter((h) => !h.archived && h.routineName)
+      .forEach((h) => {
+        const key = h.routineName!
+        const list = map.get(key) || []
+        list.push(h)
+        map.set(key, list)
+      })
+
+    const stacks: HabitRoutineStack[] = []
+    map.forEach((routineHabits, name) => {
+      const sorted = [...routineHabits].sort(
+        (a, b) => (a.routineOrder || 1) - (b.routineOrder || 1)
+      )
+      let completedCount = 0
+      sorted.forEach((h) => {
+        const logs = currentLogs.filter((l) => l.habitId === h.id)
+        if (isHabitCompletedOnDate(h, logs)) {
+          completedCount += 1
+        }
+      })
+      stacks.push({
+        id: sorted[0].routineId || name.toLowerCase().replace(/[^a-z0-9]+/g, '_'),
+        name,
+        habits: sorted,
+        completedTodayCount: completedCount,
+        totalCount: sorted.length,
+        isFullyCompletedToday: completedCount === sorted.length && sorted.length > 0
+      })
+    })
+
+    return stacks
+  }, [habits, currentLogs])
+
+  const handleCheckInNextHabit = (nextHabit: Habit) => {
+    toggleMutation.mutate({
+      habitId: nextHabit.id,
+      date: selectedDate
+    })
+  }
+
+  const handleLaunchTimerNextHabit = (nextHabit: Habit) => {
+    navigate('/habits', { habitId: nextHabit.id })
+  }
 
   const selectedDateObj = useMemo(() => {
     return parseISO(selectedDate)
@@ -154,6 +227,16 @@ export function HabitsView() {
   const handleCreateNew = () => {
     setHabitToEdit(null)
     setIsFormOpen(true)
+  }
+
+  const handleCreateRoutineStack = () => {
+    setRoutineToEdit(null)
+    setIsRoutineStackModalOpen(true)
+  }
+
+  const handleEditRoutineStack = (routine: HabitRoutineStack) => {
+    setRoutineToEdit(routine)
+    setIsRoutineStackModalOpen(true)
   }
 
   const handleEditHabit = (habit: Habit) => {
@@ -216,9 +299,17 @@ export function HabitsView() {
   }, [habits, selectedCategory, searchQuery])
 
   const scheduledHabits = useMemo(() => {
-    const list = filteredHabits.filter((h) =>
-      showArchived ? true : isHabitScheduledOnDate(h, selectedDate)
-    )
+    const list = filteredHabits.filter((h) => {
+      if (showArchived) return true
+      if (h.frequencyType === 'custom_days') {
+        const targetDays = h.targetDaysOfWeek || []
+        if (targetDays.length > 0) {
+          const dayOfWeek = parseISO(selectedDate).getDay()
+          return targetDays.includes(dayOfWeek)
+        }
+      }
+      return true
+    })
 
     if (sortBy === 'pinned') {
       return [...list].sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0))
@@ -292,6 +383,15 @@ export function HabitsView() {
             <span>Daily</span>
           </Button>
           <Button
+            variant={viewMode === 'routines' ? 'default' : 'ghost'}
+            size="sm"
+            className="h-8 text-xs px-3 sm:px-4 gap-1.5 flex-1 sm:flex-initial rounded-lg font-medium"
+            onClick={() => setViewMode('routines')}
+          >
+            <Layers className="h-3.5 w-3.5" />
+            <span>Routines</span>
+          </Button>
+          <Button
             variant={viewMode === 'week' ? 'default' : 'ghost'}
             size="sm"
             className="h-8 text-xs px-3 sm:px-4 gap-1.5 flex-1 sm:flex-initial rounded-lg font-medium"
@@ -313,11 +413,11 @@ export function HabitsView() {
 
         <Button
           size="sm"
-          onClick={handleCreateNew}
+          onClick={viewMode === 'routines' ? handleCreateRoutineStack : handleCreateNew}
           className="hidden sm:inline-flex h-9 gap-1.5 shadow-xs shrink-0 text-xs px-4 rounded-xl font-medium"
         >
           <Plus className="h-4 w-4" />
-          <span>New Habit</span>
+          <span>{viewMode === 'routines' ? 'New Routine' : 'New Habit'}</span>
         </Button>
       </div>
 
@@ -542,37 +642,44 @@ export function HabitsView() {
           {habitsLoading ? (
             <div className="py-16 text-center text-sm text-muted-foreground">Loading habits...</div>
           ) : scheduledHabits.length === 0 ? (
-            <Card className="p-10 text-center">
+            <Card className="p-8 text-center border-dashed">
               <CardHeader>
-                <CardTitle className="text-lg font-semibold">
-                  {habits.length === 0
-                    ? 'No habits created yet'
-                    : 'No habits scheduled for this day'}
+                <CardTitle className="text-base font-semibold">
+                  {habits.length === 0 ? 'No habits created yet' : 'No habits match your filters'}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-xs">
                   {habits.length === 0
-                    ? 'Create your first daily, weekly, or sub-day recurring habit routine to get started.'
-                    : 'Try changing the date, clearing search filters, or adding a new habit.'}
+                    ? 'Create your first daily, weekly, or routine habit to start tracking streaks.'
+                    : 'Try selecting another date or resetting category and search filters.'}
                 </CardDescription>
               </CardHeader>
-              <CardContent className="flex justify-center gap-3">
+              <CardContent className="flex justify-center gap-2">
                 {habits.length === 0 ? (
-                  <Button onClick={handleCreateNew} className="gap-2">
-                    <Plus className="h-4 w-4" />
+                  <Button onClick={handleCreateNew} size="sm" className="gap-1.5 text-xs">
+                    <Plus className="h-3.5 w-3.5" />
                     <span>Create Your First Habit</span>
                   </Button>
                 ) : (
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setSelectedCategory('all')
-                      setSearchQuery('')
-                    }}
-                    className="gap-2"
-                  >
-                    <RotateCcw className="h-4 w-4" />
-                    <span>Reset Filters</span>
-                  </Button>
+                  <>
+                    {(selectedCategory !== 'all' || searchQuery.trim()) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedCategory('all')
+                          setSearchQuery('')
+                        }}
+                        className="gap-1.5 text-xs"
+                      >
+                        <RotateCcw className="h-3.5 w-3.5" />
+                        <span>Reset Filters</span>
+                      </Button>
+                    )}
+                    <Button onClick={handleCreateNew} size="sm" className="gap-1.5 text-xs">
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>Create New Habit</span>
+                    </Button>
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -595,6 +702,64 @@ export function HabitsView() {
                   />
                 )
               })}
+            </div>
+          )}
+        </div>
+      ) : viewMode === 'routines' ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-2 p-3 rounded-2xl border bg-card shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Layers className="h-4 w-4" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-foreground truncate">Routine Stacks</h2>
+                <p className="text-[11px] text-muted-foreground">Sequential habit chains</p>
+              </div>
+            </div>
+            <Button
+              size="sm"
+              onClick={handleCreateRoutineStack}
+              className="h-8 text-xs px-3 rounded-xl gap-1 shrink-0"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              <span>New Routine</span>
+            </Button>
+          </div>
+
+          {routineStacks.length === 0 ? (
+            <div className="rounded-2xl border bg-card/60 p-8 text-center space-y-3">
+              <div className="flex h-12 w-12 mx-auto items-center justify-center rounded-2xl bg-muted text-muted-foreground">
+                <Layers className="h-6 w-6" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-sm font-semibold text-foreground">No Routines Yet</h3>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  Chain habits into sequential flows where finishing one step prompts the next.
+                </p>
+              </div>
+              <Button
+                size="sm"
+                onClick={handleCreateRoutineStack}
+                className="h-8 text-xs rounded-xl gap-1"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Create Routine</span>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {routineStacks.map((routine) => (
+                <HabitRoutineChain
+                  key={routine.id}
+                  routine={routine}
+                  allLogs={allRangeLogs}
+                  selectedDate={selectedDate}
+                  onSelectHabit={(habitId) => navigate('/habits', { habitId })}
+                  onOpenTimer={(habit) => navigate('/habits', { habitId: habit.id })}
+                  onEditRoutine={handleEditRoutineStack}
+                />
+              ))}
             </div>
           )}
         </div>
@@ -662,6 +827,25 @@ export function HabitsView() {
       )}
 
       <HabitFormModal open={isFormOpen} onOpenChange={setIsFormOpen} habitToEdit={habitToEdit} />
+
+      {/* Routine Stack Creation & Editing Modal */}
+      <RoutineStackModal
+        open={isRoutineStackModalOpen}
+        onOpenChange={setIsRoutineStackModalOpen}
+        existingRoutine={routineToEdit}
+        allHabits={habits}
+      />
+
+      {/* Routine Next Step Progression Prompt */}
+      <RoutineNextPromptModal
+        open={routinePromptState.open}
+        onOpenChange={(open) => setRoutinePromptState((prev) => ({ ...prev, open }))}
+        completedHabit={routinePromptState.completedHabit}
+        nextHabit={routinePromptState.nextHabit}
+        routineName={routinePromptState.routineName}
+        onCheckInNext={handleCheckInNextHabit}
+        onLaunchTimerNext={handleLaunchTimerNextHabit}
+      />
 
       {/* In-App Habit Delete Confirmation Dialog */}
       <Dialog
