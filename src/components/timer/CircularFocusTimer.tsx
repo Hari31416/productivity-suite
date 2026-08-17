@@ -1,5 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
-import { Play, Pause, RotateCcw, Check, Plus, Minus, Timer, Sparkles, Pencil } from 'lucide-react'
+import {
+  Play,
+  Pause,
+  RotateCcw,
+  Check,
+  Plus,
+  Minus,
+  Timer,
+  Sparkles,
+  Pencil,
+  Headphones,
+  Volume2,
+  VolumeX
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -10,8 +23,21 @@ import {
   DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { fireConfetti } from '@/lib/confetti'
 import { cn } from '@/lib/utils'
+import {
+  ambientSynthesizer,
+  AMBIENT_SOUNDSCAPES,
+  type AmbientSoundscapeType
+} from '@/core/audio/ambientSynthesizer'
 
 export interface CircularFocusTimerProps {
   title?: string
@@ -52,6 +78,11 @@ export function CircularFocusTimer({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [customMinutesInput, setCustomMinutesInput] = useState(`${Math.round(totalSeconds / 60)}`)
 
+  // Ambient Focus Audio State
+  const [selectedSoundscape, setSelectedSoundscape] = useState<AmbientSoundscapeType>('none')
+  const [ambientVolume, setAmbientVolume] = useState(0.5)
+  const [isAudioSettingsOpen, setIsAudioSettingsOpen] = useState(false)
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const prevRemainingRef = useRef(initialDuration)
 
@@ -66,6 +97,21 @@ export function CircularFocusTimer({
     }
   }, [initialDuration, isRunning])
 
+  // Sync ambient audio with timer running state
+  useEffect(() => {
+    if (isRunning && selectedSoundscape !== 'none') {
+      ambientSynthesizer.setSoundscape(selectedSoundscape)
+      ambientSynthesizer.setVolume(ambientVolume)
+      ambientSynthesizer.play()
+    } else {
+      ambientSynthesizer.pause()
+    }
+
+    return () => {
+      ambientSynthesizer.pause()
+    }
+  }, [isRunning, selectedSoundscape, ambientVolume])
+
   // Timer interval engine
   useEffect(() => {
     if (isRunning) {
@@ -74,6 +120,7 @@ export function CircularFocusTimer({
           if (prev <= 1) {
             clearInterval(timerRef.current!)
             setIsRunning(false)
+            ambientSynthesizer.pause()
             handleFinishSession(Math.round(totalSeconds / 60))
             return 0
           }
@@ -93,11 +140,13 @@ export function CircularFocusTimer({
     if (secondsLeft === 0) {
       setSecondsLeft(totalSeconds)
     }
-    setIsRunning(!isRunning)
+    const nextRunning = !isRunning
+    setIsRunning(nextRunning)
   }
 
   const handleReset = () => {
     setIsRunning(false)
+    ambientSynthesizer.pause()
     setSecondsLeft(totalSeconds)
   }
 
@@ -110,6 +159,7 @@ export function CircularFocusTimer({
   const handleSetExactMinutes = (mins: number) => {
     const validMins = Math.max(1, Math.min(720, mins))
     setIsRunning(false)
+    ambientSynthesizer.pause()
     const s = validMins * 60
     setTotalSeconds(s)
     setSecondsLeft(s)
@@ -136,7 +186,21 @@ export function CircularFocusTimer({
     }
 
     setIsRunning(false)
+    ambientSynthesizer.pause()
     setSecondsLeft(totalSeconds)
+  }
+
+  const handleSoundscapeChange = (type: AmbientSoundscapeType) => {
+    setSelectedSoundscape(type)
+    ambientSynthesizer.setSoundscape(type)
+    if (type !== 'none' && isRunning) {
+      ambientSynthesizer.play(type)
+    }
+  }
+
+  const handleVolumeChange = (newVol: number) => {
+    setAmbientVolume(newVol)
+    ambientSynthesizer.setVolume(newVol)
   }
 
   // Circular progress ring calculations
@@ -397,7 +461,131 @@ export function CircularFocusTimer({
             50m Block
           </Button>
         </div>
+
+        {/* Ambient Focus Audio Bar */}
+        <div className="w-full max-w-sm pt-2 border-t mt-1">
+          <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded-xl bg-muted/40 text-xs">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <Headphones
+                className={cn(
+                  'h-3.5 w-3.5 shrink-0',
+                  selectedSoundscape !== 'none' ? 'text-primary' : 'text-muted-foreground'
+                )}
+              />
+              <span className="font-medium text-foreground truncate">Ambient Sound:</span>
+            </div>
+
+            <div className="flex items-center gap-1.5 shrink-0">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(
+                      'h-6 text-[11px] px-2 rounded-lg font-normal gap-1 max-w-[150px] truncate',
+                      selectedSoundscape !== 'none' &&
+                        'border-primary/40 bg-primary/10 text-primary font-medium'
+                    )}
+                  >
+                    <span className="truncate">
+                      {AMBIENT_SOUNDSCAPES.find((s) => s.id === selectedSoundscape)?.label ||
+                        'None'}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56 rounded-xl">
+                  <DropdownMenuLabel className="text-xs">Offline Focus Audio</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  {AMBIENT_SOUNDSCAPES.map((sound) => (
+                    <DropdownMenuItem
+                      key={sound.id}
+                      onClick={() => handleSoundscapeChange(sound.id)}
+                      className={cn(
+                        'text-xs flex items-center justify-between cursor-pointer',
+                        selectedSoundscape === sound.id &&
+                          'font-semibold bg-accent text-accent-foreground'
+                      )}
+                    >
+                      <div className="flex flex-col">
+                        <span>{sound.label}</span>
+                        <span className="text-[10px] text-muted-foreground line-clamp-1">
+                          {sound.description}
+                        </span>
+                      </div>
+                      {selectedSoundscape === sound.id && (
+                        <Check className="h-3.5 w-3.5 ml-1 text-primary shrink-0" />
+                      )}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {selectedSoundscape !== 'none' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsAudioSettingsOpen(true)}
+                  className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+                  title="Adjust ambient volume"
+                  aria-label="Adjust ambient volume"
+                >
+                  {ambientVolume === 0 ? (
+                    <VolumeX className="h-3.5 w-3.5" />
+                  ) : (
+                    <Volume2 className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </CardContent>
+
+      {/* Ambient Audio Settings Dialog */}
+      <Dialog open={isAudioSettingsOpen} onOpenChange={setIsAudioSettingsOpen}>
+        <DialogContent className="sm:max-w-xs rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold flex items-center gap-2">
+              <Headphones className="h-4 w-4 text-primary" />
+              <span>Ambient Focus Audio</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <label className="text-xs font-medium text-foreground flex items-center justify-between">
+                <span>Volume</span>
+                <span className="text-muted-foreground">{Math.round(ambientVolume * 100)}%</span>
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={ambientVolume}
+                onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary"
+              />
+            </div>
+
+            <div className="text-[11px] text-muted-foreground bg-muted/40 p-2.5 rounded-xl space-y-1">
+              <p className="font-medium text-foreground">100% Offline Synthesis</p>
+              <p>
+                Procedurally generated Web Audio soundscapes that play while the focus timer is
+                active.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              size="sm"
+              onClick={() => setIsAudioSettingsOpen(false)}
+              className="rounded-xl w-full"
+            >
+              Done
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Duration Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
