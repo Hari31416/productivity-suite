@@ -2,7 +2,8 @@ import { db } from '@/core/db'
 import type { Habit, HabitLog, CreateHabitInput, UpdateHabitInput } from '../types'
 import {
   scheduleHabitReminders,
-  cancelHabitReminders
+  cancelHabitReminders,
+  recalculateHabitReminders
 } from '@/core/notifications/notificationService'
 
 export const habitRepository = {
@@ -110,6 +111,7 @@ export const habitRepository = {
     )
 
     const now = new Date().toISOString()
+    let resultLog: HabitLog
 
     if (existing) {
       const updated: HabitLog = {
@@ -118,22 +120,30 @@ export const habitRepository = {
         updatedAt: now
       }
       await db.habitLogs.put(updated)
-      return updated
+      resultLog = updated
+    } else {
+      const newLog: HabitLog = {
+        id: crypto.randomUUID(),
+        habitId,
+        date,
+        timestamp: now,
+        intervalIndex,
+        completed: true,
+        createdAt: now,
+        updatedAt: now
+      }
+
+      await db.habitLogs.add(newLog)
+      resultLog = newLog
     }
 
-    const newLog: HabitLog = {
-      id: crypto.randomUUID(),
-      habitId,
-      date,
-      timestamp: now,
-      intervalIndex,
-      completed: true,
-      createdAt: now,
-      updatedAt: now
+    try {
+      await recalculateHabitReminders(habitId, date)
+    } catch {
+      // Ignore notification recalculation error in offline context
     }
 
-    await db.habitLogs.add(newLog)
-    return newLog
+    return resultLog
   },
 
   async setHabitLogValue(
@@ -153,6 +163,7 @@ export const habitRepository = {
     )
 
     const now = new Date().toISOString()
+    let resultLog: HabitLog
 
     if (existing) {
       const updated: HabitLog = {
@@ -163,24 +174,32 @@ export const habitRepository = {
         updatedAt: now
       }
       await db.habitLogs.put(updated)
-      return updated
+      resultLog = updated
+    } else {
+      const newLog: HabitLog = {
+        id: crypto.randomUUID(),
+        habitId,
+        date,
+        timestamp: now,
+        intervalIndex,
+        value,
+        durationSeconds: isTimer ? value * 60 : undefined,
+        completed: completed !== undefined ? completed : value > 0,
+        createdAt: now,
+        updatedAt: now
+      }
+
+      await db.habitLogs.add(newLog)
+      resultLog = newLog
     }
 
-    const newLog: HabitLog = {
-      id: crypto.randomUUID(),
-      habitId,
-      date,
-      timestamp: now,
-      intervalIndex,
-      value,
-      durationSeconds: isTimer ? value * 60 : undefined,
-      completed: completed !== undefined ? completed : value > 0,
-      createdAt: now,
-      updatedAt: now
+    try {
+      await recalculateHabitReminders(habitId, date)
+    } catch {
+      // Ignore notification recalculation error in offline context
     }
 
-    await db.habitLogs.add(newLog)
-    return newLog
+    return resultLog
   },
 
   async saveHabitLog(
@@ -194,10 +213,26 @@ export const habitRepository = {
       updatedAt: now
     }
     await db.habitLogs.put(fullLog)
+
+    try {
+      await recalculateHabitReminders(fullLog.habitId, fullLog.date)
+    } catch {
+      // Ignore notification recalculation error in offline context
+    }
+
     return fullLog
   },
 
   async deleteHabitLog(id: string): Promise<void> {
+    const existing = await db.habitLogs.get(id)
     await db.habitLogs.delete(id)
+
+    if (existing) {
+      try {
+        await recalculateHabitReminders(existing.habitId, existing.date)
+      } catch {
+        // Ignore notification recalculation error in offline context
+      }
+    }
   }
 }

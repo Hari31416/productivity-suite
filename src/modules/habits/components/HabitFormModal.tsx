@@ -39,6 +39,12 @@ const DAYS_OF_WEEK = [
 
 const UNIT_PRESETS = ['glasses', 'pages', 'reps', 'steps', 'ml', 'km', 'mins', 'cal']
 const TIMER_PRESETS = [15, 25, 30, 45, 60]
+const REMINDER_PRESETS = [
+  { label: 'Morning', time: '08:00' },
+  { label: 'Midday', time: '12:30' },
+  { label: 'Evening', time: '18:00' },
+  { label: 'Night', time: '21:30' }
+]
 
 export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormModalProps) {
   const createMutation = useCreateHabit()
@@ -500,7 +506,36 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
               )}
             </div>
 
-            {/* Add Reminder Input */}
+            {/* Preset Times Quick Chips */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span className="text-[11px] text-muted-foreground">Quick Presets:</span>
+              {REMINDER_PRESETS.map((p) => {
+                const isSelected = reminderTimes.includes(p.time)
+                return (
+                  <button
+                    key={p.time}
+                    type="button"
+                    onClick={() => {
+                      if (isSelected) {
+                        handleRemoveReminder(p.time)
+                      } else {
+                        setReminderTimes([...reminderTimes, p.time].sort())
+                      }
+                    }}
+                    className={cn(
+                      'px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors',
+                      isSelected
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-background text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {p.label} ({p.time})
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Add Custom Reminder Input */}
             <div className="flex items-center gap-2 pt-1">
               <Input
                 type="time"
@@ -516,7 +551,7 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
                 className="h-8 text-xs gap-1 rounded-lg"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Add Reminder</span>
+                <span>Add Time</span>
               </Button>
             </div>
           </div>

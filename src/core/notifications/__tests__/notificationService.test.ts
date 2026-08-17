@@ -15,8 +15,14 @@ import {
   clearAllScheduledReminders,
   getNotificationTargetRoute,
   setupNotificationListeners,
-  resetNotificationListenersSetupForTesting
+  resetNotificationListenersSetupForTesting,
+  ensureNotificationChannel,
+  getHabitActionTypeId,
+  executeHabitNotificationAction,
+  recalculateHabitReminders,
+  HABIT_ACTION_TYPES
 } from '../notificationService'
+import { db } from '@/core/db'
 
 interface MockWindow {
   Notification?: unknown
@@ -26,16 +32,227 @@ interface MockWindow {
 }
 
 describe('notificationService', () => {
-  beforeEach(() => {
-    vi.useFakeTimers()
+  beforeEach(async () => {
+    vi.useRealTimers()
     clearAllScheduledReminders()
     ;(globalThis as unknown as { window: MockWindow }).window = {}
+    await db.habits.clear()
+    await db.habitLogs.clear()
   })
 
-  afterEach(() => {
+  afterEach(async () => {
     vi.useRealTimers()
     clearAllScheduledReminders()
     delete (globalThis as unknown as { window?: unknown }).window
+    await db.habits.clear()
+    await db.habitLogs.clear()
+  })
+
+  describe('ensureNotificationChannel and Action Types', () => {
+    it('registers notification channel and action types with Capacitor plugin', async () => {
+      const mockCreateChannel = vi.fn().mockResolvedValue(undefined)
+      const mockRegisterActionTypes = vi.fn().mockResolvedValue(undefined)
+
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Capacitor: {
+          isNativePlatform: () => true,
+          Plugins: {
+            LocalNotifications: {
+              createChannel: mockCreateChannel,
+              registerActionTypes: mockRegisterActionTypes
+            }
+          }
+        }
+      }
+
+      await ensureNotificationChannel()
+      expect(mockCreateChannel).toHaveBeenCalledWith(
+        expect.objectContaining({
+          id: 'productivity-reminders'
+        })
+      )
+      expect(mockRegisterActionTypes).toHaveBeenCalledWith({
+        types: expect.arrayContaining([
+          expect.objectContaining({ id: HABIT_ACTION_TYPES.BOOLEAN }),
+          expect.objectContaining({ id: HABIT_ACTION_TYPES.NUMERIC }),
+          expect.objectContaining({ id: HABIT_ACTION_TYPES.TIMER }),
+          expect.objectContaining({ id: HABIT_ACTION_TYPES.INTERVAL })
+        ])
+      })
+    })
+
+    it('determines correct action type id based on habit properties', () => {
+      expect(getHabitActionTypeId('boolean', undefined)).toBe(HABIT_ACTION_TYPES.BOOLEAN)
+      expect(getHabitActionTypeId('numeric', undefined)).toBe(HABIT_ACTION_TYPES.NUMERIC)
+      expect(getHabitActionTypeId('timer', undefined)).toBe(HABIT_ACTION_TYPES.TIMER)
+      expect(getHabitActionTypeId('boolean', 2)).toBe(HABIT_ACTION_TYPES.INTERVAL)
+    })
+  })
+
+  describe('executeHabitNotificationAction', () => {
+    it('marks boolean habit completed on CHECK_IN_DONE', async () => {
+      const habit = {
+        id: 'h-action-1',
+        title: 'Morning Walk',
+        color: '#10b981',
+        frequencyType: 'daily' as const,
+        targetType: 'boolean' as const,
+        targetValue: 1,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(habit)
+
+      const route = await executeHabitNotificationAction('CHECK_IN_DONE', { habitId: habit.id })
+      expect(route).toBe('/habits?habitId=h-action-1')
+
+      const logs = await db.habitLogs.where('habitId').equals(habit.id).toArray()
+      expect(logs.length).toBe(1)
+      expect(logs[0].completed).toBe(true)
+    })
+
+    it('increments numeric habit value on CHECK_IN_PLUS_ONE', async () => {
+      const habit = {
+        id: 'h-action-2',
+        title: 'Drink Water',
+        color: '#3b82f6',
+        frequencyType: 'daily' as const,
+        targetType: 'numeric' as const,
+        targetValue: 8,
+        unit: 'glasses',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(habit)
+
+      await executeHabitNotificationAction('CHECK_IN_PLUS_ONE', {
+        habitId: habit.id,
+        targetValue: 8
+      })
+      let logs = await db.habitLogs.where('habitId').equals(habit.id).toArray()
+      expect(logs[0].value).toBe(1)
+      expect(logs[0].completed).toBe(false)
+
+      await executeHabitNotificationAction('CHECK_IN_PLUS_ONE', {
+        habitId: habit.id,
+        targetValue: 8
+      })
+      logs = await db.habitLogs.where('habitId').equals(habit.id).toArray()
+      expect(logs[0].value).toBe(2)
+    })
+
+    it('dynamically increments large numeric habits according to smart step rules', async () => {
+      const stepsHabit = {
+        id: 'h-action-steps',
+        title: 'Daily Steps',
+        color: '#10b981',
+        frequencyType: 'daily' as const,
+        targetType: 'numeric' as const,
+        targetValue: 5000,
+        unit: 'steps',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(stepsHabit)
+
+      await executeHabitNotificationAction('CHECK_IN_PLUS_ONE', {
+        habitId: stepsHabit.id,
+        targetValue: 5000,
+        unit: 'steps'
+      })
+      const logs = await db.habitLogs.where('habitId').equals(stepsHabit.id).toArray()
+      expect(logs[0].value).toBe(500)
+    })
+
+    it('marks interval slot completed on CHECK_IN_INTERVAL', async () => {
+      const habit = {
+        id: 'h-action-3',
+        title: 'Posture Check',
+        color: '#8b5cf6',
+        frequencyType: 'subday_interval' as const,
+        targetType: 'boolean' as const,
+        intervalHours: 3,
+        timeWindow: { startTime: '09:00', endTime: '18:00' },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(habit)
+
+      await executeHabitNotificationAction('CHECK_IN_INTERVAL', {
+        habitId: habit.id,
+        intervalIndex: 1
+      })
+      const logs = await db.habitLogs.where('habitId').equals(habit.id).toArray()
+      expect(logs.length).toBe(1)
+      expect(logs[0].intervalIndex).toBe(1)
+      expect(logs[0].completed).toBe(true)
+    })
+
+    it('returns timer route on START_TIMER', async () => {
+      const habit = {
+        id: 'h-action-4',
+        title: 'Meditation',
+        color: '#f59e0b',
+        frequencyType: 'daily' as const,
+        targetType: 'timer' as const,
+        targetValue: 20,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(habit)
+
+      const route = await executeHabitNotificationAction('START_TIMER', { habitId: habit.id })
+      expect(route).toBe('/habits?habitId=h-action-4&action=timer')
+    })
+  })
+
+  describe('recalculateHabitReminders', () => {
+    it('cancels remaining today reminders when daily habit is already completed', async () => {
+      const mockCancel = vi.fn().mockResolvedValue({})
+      ;(globalThis as unknown as { window: MockWindow }).window = {
+        Capacitor: {
+          isNativePlatform: () => true,
+          Plugins: {
+            LocalNotifications: {
+              cancel: mockCancel
+            }
+          }
+        }
+      }
+
+      const habit = {
+        id: 'h-recalc-1',
+        title: 'Gym Workout',
+        color: '#ef4444',
+        frequencyType: 'daily' as const,
+        targetType: 'boolean' as const,
+        reminderTimes: ['18:00', '21:00'],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        archived: false
+      }
+      await db.habits.add(habit)
+
+      // Add completed log for today
+      const todayStr = new Date().toISOString().slice(0, 10)
+      await db.habitLogs.add({
+        id: 'log-recalc-1',
+        habitId: habit.id,
+        date: todayStr,
+        timestamp: new Date().toISOString(),
+        completed: true,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+
+      await recalculateHabitReminders(habit.id, todayStr)
+      expect(mockCancel).toHaveBeenCalled()
+    })
   })
 
   describe('isNotificationSupported', () => {
@@ -283,13 +500,13 @@ describe('notificationService', () => {
       expect(sent).toBe(true)
       expect(mockSchedule).toHaveBeenCalledWith({
         notifications: [
-          {
+          expect.objectContaining({
             id: 42,
             title: 'Meditation',
             body: 'Time for mindful minutes',
             extra: undefined,
             channelId: 'productivity-reminders'
-          }
+          })
         ]
       })
     })
@@ -301,6 +518,9 @@ describe('notificationService', () => {
       expect(getNotificationTargetRoute({})).toBeNull()
       expect(getNotificationTargetRoute({ taskId: 'task-10' })).toBe('/tasks?taskId=task-10')
       expect(getNotificationTargetRoute({ habitId: 'habit-20' })).toBe('/habits?habitId=habit-20')
+      expect(getNotificationTargetRoute({ habitId: 'habit-20', action: 'timer' })).toBe(
+        '/habits?habitId=habit-20&action=timer'
+      )
       expect(getNotificationTargetRoute({ route: '/notes?noteId=note-30' })).toBe(
         '/notes?noteId=note-30'
       )
@@ -341,6 +561,7 @@ describe('notificationService', () => {
       expect(registeredListener).not.toBeNull()
       if (registeredListener) {
         ;(registeredListener as (action: unknown) => void)({
+          actionId: 'tap',
           notification: {
             extra: { habitId: 'h-99' }
           }
@@ -373,7 +594,7 @@ describe('notificationService', () => {
 
       expect(id).toBeDefined()
       expect(mockNotificationConstructor).toHaveBeenCalledWith(
-        'Habit Reminder: Read Book',
+        'Read Book',
         expect.objectContaining({
           body: 'Time for interval #3 check-in.'
         })
@@ -381,58 +602,68 @@ describe('notificationService', () => {
     })
 
     it('schedules future reminder and triggers when time elapses', async () => {
-      const mockNotificationConstructor = vi.fn()
-      ;(globalThis as unknown as { window: MockWindow }).window = {
-        Notification: Object.assign(mockNotificationConstructor, {
-          permission: 'granted',
-          requestPermission: vi.fn()
+      vi.useFakeTimers()
+      try {
+        const mockNotificationConstructor = vi.fn()
+        ;(globalThis as unknown as { window: MockWindow }).window = {
+          Notification: Object.assign(mockNotificationConstructor, {
+            permission: 'granted',
+            requestPermission: vi.fn()
+          })
+        }
+
+        const targetDate = new Date(Date.now() + 5000)
+        const id = await scheduleHabitReminder({
+          habitId: 'h-1',
+          habitTitle: 'Stretch',
+          at: targetDate
         })
+
+        expect(id).toBeDefined()
+        expect(mockNotificationConstructor).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(5000)
+
+        expect(mockNotificationConstructor).toHaveBeenCalledWith(
+          'Stretch',
+          expect.objectContaining({
+            body: 'Ready for your daily check-in?'
+          })
+        )
+      } finally {
+        vi.useRealTimers()
       }
-
-      const targetDate = new Date(Date.now() + 5000)
-      const id = await scheduleHabitReminder({
-        habitId: 'h-1',
-        habitTitle: 'Stretch',
-        at: targetDate
-      })
-
-      expect(id).toBeDefined()
-      expect(mockNotificationConstructor).not.toHaveBeenCalled()
-
-      vi.advanceTimersByTime(5000)
-
-      expect(mockNotificationConstructor).toHaveBeenCalledWith(
-        'Habit Reminder: Stretch',
-        expect.objectContaining({
-          body: 'Time to complete your habit: Stretch'
-        })
-      )
     })
 
     it('cancels scheduled reminder before it fires', async () => {
-      const mockNotificationConstructor = vi.fn()
-      ;(globalThis as unknown as { window: MockWindow }).window = {
-        Notification: Object.assign(mockNotificationConstructor, {
-          permission: 'granted',
-          requestPermission: vi.fn()
+      vi.useFakeTimers()
+      try {
+        const mockNotificationConstructor = vi.fn()
+        ;(globalThis as unknown as { window: MockWindow }).window = {
+          Notification: Object.assign(mockNotificationConstructor, {
+            permission: 'granted',
+            requestPermission: vi.fn()
+          })
+        }
+
+        const targetDate = new Date(Date.now() + 5000)
+        const id = await scheduleHabitReminder({
+          habitId: 'h-1',
+          habitTitle: 'Stretch',
+          at: targetDate
         })
+
+        expect(id).toBeDefined()
+        if (id) {
+          const cancelled = await cancelHabitReminder(id)
+          expect(cancelled).toBe(true)
+        }
+
+        vi.advanceTimersByTime(6000)
+        expect(mockNotificationConstructor).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
       }
-
-      const targetDate = new Date(Date.now() + 5000)
-      const id = await scheduleHabitReminder({
-        habitId: 'h-1',
-        habitTitle: 'Stretch',
-        at: targetDate
-      })
-
-      expect(id).toBeDefined()
-      if (id) {
-        const cancelled = await cancelHabitReminder(id)
-        expect(cancelled).toBe(true)
-      }
-
-      vi.advanceTimersByTime(6000)
-      expect(mockNotificationConstructor).not.toHaveBeenCalled()
     })
 
     it('cancels scheduled reminder via Capacitor when native', async () => {
@@ -481,7 +712,6 @@ describe('notificationService', () => {
     })
 
     it('computes reminder date when dueDate or dueTime is omitted', () => {
-      // 1. Future date with no dueTime defaults to 09:00 AM minus offset
       const futureBase = new Date('2026-08-16T08:00:00')
       const futureDate = computeTaskReminderDate(
         { id: 'r3', type: 'offset', offsetMinutes: 30 },
@@ -494,7 +724,6 @@ describe('notificationService', () => {
       expect(futureDate?.getHours()).toBe(8)
       expect(futureDate?.getMinutes()).toBe(30)
 
-      // 2. Today with no dueTime picks next future daytime slot
       const morningBase = new Date('2026-08-16T10:00:00')
       const todayDate = computeTaskReminderDate(
         { id: 'r4', type: 'offset', offsetMinutes: 0 },
@@ -503,10 +732,8 @@ describe('notificationService', () => {
         morningBase
       )
       expect(todayDate).toBeDefined()
-      // Next checkpoint is 12:00:00
       expect(todayDate?.getHours()).toBe(12)
 
-      // 3. No dueDate and no dueTime defaults to today with next available checkpoint
       const afternoonBase = new Date('2026-08-16T13:30:00')
       const noDateTask = computeTaskReminderDate(
         { id: 'r5', type: 'offset', offsetMinutes: 0 },
@@ -517,7 +744,6 @@ describe('notificationService', () => {
       expect(noDateTask).toBeDefined()
       expect(noDateTask?.getHours()).toBe(15)
 
-      // 4. Late night fallback when all daytime slots passed
       const lateNightBase = new Date('2026-08-16T23:00:00')
       const lateNightTask = computeTaskReminderDate(
         { id: 'r6', type: 'offset', offsetMinutes: 15 },
@@ -549,55 +775,62 @@ describe('notificationService', () => {
     })
 
     it('schedules and triggers task reminders on web timer', async () => {
-      const mockNotificationConstructor = vi.fn()
-      ;(globalThis as unknown as { window: MockWindow }).window = {
-        Notification: Object.assign(mockNotificationConstructor, {
-          permission: 'granted',
-          requestPermission: vi.fn()
+      vi.useFakeTimers()
+      try {
+        const mockNotificationConstructor = vi.fn()
+        ;(globalThis as unknown as { window: MockWindow }).window = {
+          Notification: Object.assign(mockNotificationConstructor, {
+            permission: 'granted',
+            requestPermission: vi.fn()
+          })
+        }
+
+        const futureTime = new Date(Date.now() + 10000).toISOString()
+        const reminderId = await scheduleTaskReminder({
+          taskId: 't-1',
+          taskTitle: 'Team Sync',
+          reminder: { id: 'r-1', type: 'exact', exactDateTime: futureTime }
         })
+
+        expect(reminderId).toBeDefined()
+        expect(mockNotificationConstructor).not.toHaveBeenCalled()
+
+        vi.advanceTimersByTime(10000)
+
+        expect(mockNotificationConstructor).toHaveBeenCalledWith('Team Sync', expect.anything())
+      } finally {
+        vi.useRealTimers()
       }
-
-      const futureTime = new Date(Date.now() + 10000).toISOString()
-      const reminderId = await scheduleTaskReminder({
-        taskId: 't-1',
-        taskTitle: 'Team Sync',
-        reminder: { id: 'r-1', type: 'exact', exactDateTime: futureTime }
-      })
-
-      expect(reminderId).toBeDefined()
-      expect(mockNotificationConstructor).not.toHaveBeenCalled()
-
-      vi.advanceTimersByTime(10000)
-
-      expect(mockNotificationConstructor).toHaveBeenCalledWith(
-        'Task Reminder: Team Sync',
-        expect.anything()
-      )
     })
 
     it('cancels scheduled task reminder', async () => {
-      const mockNotificationConstructor = vi.fn()
-      ;(globalThis as unknown as { window: MockWindow }).window = {
-        Notification: Object.assign(mockNotificationConstructor, {
-          permission: 'granted',
-          requestPermission: vi.fn()
+      vi.useFakeTimers()
+      try {
+        const mockNotificationConstructor = vi.fn()
+        ;(globalThis as unknown as { window: MockWindow }).window = {
+          Notification: Object.assign(mockNotificationConstructor, {
+            permission: 'granted',
+            requestPermission: vi.fn()
+          })
+        }
+
+        const futureTime = new Date(Date.now() + 10000).toISOString()
+        const reminderId = await scheduleTaskReminder({
+          taskId: 't-2',
+          taskTitle: 'Deploy Build',
+          reminder: { id: 'r-2', type: 'exact', exactDateTime: futureTime }
         })
+
+        if (reminderId) {
+          const cancelled = await cancelTaskReminder(reminderId)
+          expect(cancelled).toBe(true)
+        }
+
+        vi.advanceTimersByTime(12000)
+        expect(mockNotificationConstructor).not.toHaveBeenCalled()
+      } finally {
+        vi.useRealTimers()
       }
-
-      const futureTime = new Date(Date.now() + 10000).toISOString()
-      const reminderId = await scheduleTaskReminder({
-        taskId: 't-2',
-        taskTitle: 'Deploy Build',
-        reminder: { id: 'r-2', type: 'exact', exactDateTime: futureTime }
-      })
-
-      if (reminderId) {
-        const cancelled = await cancelTaskReminder(reminderId)
-        expect(cancelled).toBe(true)
-      }
-
-      vi.advanceTimersByTime(12000)
-      expect(mockNotificationConstructor).not.toHaveBeenCalled()
     })
   })
 

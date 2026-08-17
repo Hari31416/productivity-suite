@@ -1,8 +1,16 @@
 import type { Task, TaskReminder } from '@/modules/tasks/types'
-import type { Habit } from '@/modules/habits/types'
+import type { Habit, HabitLog } from '@/modules/habits/types'
 import { format, addDays } from 'date-fns'
-import { isHabitScheduledOnDate } from '@/modules/habits/utils/streakCalculator'
-import { generateSubdayIntervalSlots } from '@/modules/habits/utils/intervalCalculator'
+import {
+  isHabitScheduledOnDate,
+  isHabitCompletedOnDate
+} from '@/modules/habits/utils/streakCalculator'
+import {
+  generateSubdayIntervalSlots,
+  getHabitSlots
+} from '@/modules/habits/utils/intervalCalculator'
+import { getDynamicStepConfig } from '@/modules/habits/utils/dynamicStepper'
+import { db } from '@/core/db'
 
 export type NotificationPermissionStatus = 'granted' | 'denied' | 'default' | 'unsupported'
 
@@ -18,6 +26,9 @@ export interface NotificationPayload {
 export interface HabitReminderOptions {
   habitId: string
   habitTitle: string
+  targetType?: Habit['targetType']
+  targetValue?: number
+  unit?: string
   time?: string
   intervalIndex?: number
   body?: string
@@ -34,7 +45,14 @@ export interface TaskReminderOptions {
 
 export const NOTIFICATION_CHANNEL_ID = 'productivity-reminders'
 
-interface CapacitorNotificationAction {
+export const HABIT_ACTION_TYPES = {
+  BOOLEAN: 'HABIT_BOOLEAN_ACTION',
+  NUMERIC: 'HABIT_NUMERIC_ACTION',
+  TIMER: 'HABIT_TIMER_ACTION',
+  INTERVAL: 'HABIT_INTERVAL_ACTION'
+} as const
+
+export interface CapacitorNotificationAction {
   notification?: {
     id?: number
     title?: string
@@ -53,9 +71,10 @@ interface CapacitorLocalNotificationsPlugin {
       title: string
       body?: string
       id: number
-      schedule?: { at?: Date }
+      schedule?: { at?: Date; allowWhileIdle?: boolean }
       extra?: Record<string, unknown>
       channelId?: string
+      actionTypeId?: string
       sound?: string
       smallIcon?: string
       iconColor?: string
@@ -73,6 +92,19 @@ interface CapacitorLocalNotificationsPlugin {
     vibration?: boolean
     lights?: boolean
     lightColor?: string
+  }) => Promise<void>
+  registerActionTypes?: (options: {
+    types: Array<{
+      id: string
+      actions?: Array<{
+        id: string
+        title: string
+        requiresAuthentication?: boolean
+        foreground?: boolean
+        destructive?: boolean
+        input?: boolean
+      }>
+    }>
   }) => Promise<void>
   addListener?: (
     eventName: 'localNotificationActionPerformed',
@@ -96,22 +128,60 @@ let channelCreated = false
 export async function ensureNotificationChannel(): Promise<void> {
   if (channelCreated) return
   const capPlugin = getCapacitorBridge()
-  if (capPlugin && capPlugin.createChannel) {
+  if (capPlugin) {
     try {
-      await capPlugin.createChannel({
-        id: NOTIFICATION_CHANNEL_ID,
-        name: 'Productivity Reminders',
-        description: 'Alerts for tasks, habit intervals, and alarms with sound and vibration',
-        importance: 5,
-        visibility: 1,
-        sound: 'beep.wav',
-        vibration: true,
-        lights: true,
-        lightColor: '#0A7A64'
-      })
+      if (capPlugin.createChannel) {
+        await capPlugin.createChannel({
+          id: NOTIFICATION_CHANNEL_ID,
+          name: 'Productivity Reminders',
+          description: 'Alerts for tasks, habit intervals, and alarms with sound and vibration',
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          lights: true,
+          lightColor: '#0A7A64'
+        })
+      }
+
+      if (capPlugin.registerActionTypes) {
+        await capPlugin.registerActionTypes({
+          types: [
+            {
+              id: HABIT_ACTION_TYPES.BOOLEAN,
+              actions: [
+                { id: 'CHECK_IN_DONE', title: 'Check-In', foreground: true },
+                { id: 'VIEW_HABIT', title: 'View Habit', foreground: true }
+              ]
+            },
+            {
+              id: HABIT_ACTION_TYPES.NUMERIC,
+              actions: [
+                { id: 'CHECK_IN_DONE', title: 'Mark Done', foreground: true },
+                { id: 'CHECK_IN_PLUS_ONE', title: 'Log Progress', foreground: true },
+                { id: 'VIEW_HABIT', title: 'View Habit', foreground: true }
+              ]
+            },
+            {
+              id: HABIT_ACTION_TYPES.TIMER,
+              actions: [
+                { id: 'START_TIMER', title: 'Start Timer', foreground: true },
+                { id: 'CHECK_IN_DONE', title: 'Mark Done', foreground: true }
+              ]
+            },
+            {
+              id: HABIT_ACTION_TYPES.INTERVAL,
+              actions: [
+                { id: 'CHECK_IN_INTERVAL', title: 'Check-In Slot', foreground: true },
+                { id: 'VIEW_HABIT', title: 'View Habit', foreground: true }
+              ]
+            }
+          ]
+        })
+      }
+
       channelCreated = true
     } catch {
-      // Channel creation failed or not supported
+      // Channel or action registration failed or not supported
     }
   }
 }
@@ -180,6 +250,9 @@ export function getNotificationTargetRoute(data?: Record<string, unknown>): stri
     return `/tasks?taskId=${data.taskId}`
   }
   if (data.habitId) {
+    if (data.action === 'timer') {
+      return `/habits?habitId=${data.habitId}&action=timer`
+    }
     return `/habits?habitId=${data.habitId}`
   }
   if (typeof data.route === 'string' && data.route) {
@@ -188,10 +261,136 @@ export function getNotificationTargetRoute(data?: Record<string, unknown>): stri
   return null
 }
 
+export async function executeHabitNotificationAction(
+  actionId: string,
+  extra?: Record<string, unknown>
+): Promise<string | null> {
+  if (!extra || !extra.habitId) return null
+  const habitId = String(extra.habitId)
+  const todayStr = format(new Date(), 'yyyy-MM-dd')
+  const now = new Date().toISOString()
+
+  try {
+    const habit = await db.habits.get(habitId)
+    if (!habit || habit.archived) return null
+
+    if (actionId === 'START_TIMER') {
+      return `/habits?habitId=${habitId}&action=timer`
+    }
+
+    if (actionId === 'CHECK_IN_DONE' || actionId === 'CHECK_IN') {
+      const intervalIndex =
+        typeof extra.intervalIndex === 'number' ? extra.intervalIndex : undefined
+      const logs = await db.habitLogs.where('[habitId+date]').equals([habitId, todayStr]).toArray()
+      const existing = logs.find((l) =>
+        intervalIndex !== undefined
+          ? l.intervalIndex === intervalIndex
+          : l.intervalIndex === undefined || l.intervalIndex === 0
+      )
+
+      if (existing) {
+        await db.habitLogs.put({
+          ...existing,
+          completed: true,
+          value: habit.targetValue || 1,
+          updatedAt: now
+        })
+      } else {
+        await db.habitLogs.add({
+          id: crypto.randomUUID(),
+          habitId,
+          date: todayStr,
+          timestamp: now,
+          intervalIndex,
+          completed: true,
+          value: habit.targetValue || 1,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+
+      await recalculateHabitReminders(habitId, todayStr)
+      return `/habits?habitId=${habitId}`
+    }
+
+    if (actionId === 'CHECK_IN_PLUS_ONE' || actionId === 'CHECK_IN_STEP') {
+      const targetVal = habit.targetValue || 1
+      const stepDelta =
+        typeof extra.stepValue === 'number' && extra.stepValue > 0
+          ? extra.stepValue
+          : getDynamicStepConfig(targetVal, habit.unit).primaryStep
+      const logs = await db.habitLogs.where('[habitId+date]').equals([habitId, todayStr]).toArray()
+      const existing = logs.find((l) => l.intervalIndex === undefined || l.intervalIndex === 0)
+      const currentVal = existing?.value ?? (existing?.completed ? targetVal : 0)
+      const nextVal = currentVal + stepDelta
+
+      if (existing) {
+        await db.habitLogs.put({
+          ...existing,
+          value: nextVal,
+          completed: nextVal >= targetVal,
+          updatedAt: now
+        })
+      } else {
+        await db.habitLogs.add({
+          id: crypto.randomUUID(),
+          habitId,
+          date: todayStr,
+          timestamp: now,
+          value: nextVal,
+          completed: nextVal >= targetVal,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+
+      await recalculateHabitReminders(habitId, todayStr)
+      return `/habits?habitId=${habitId}`
+    }
+
+    if (actionId === 'CHECK_IN_INTERVAL') {
+      const intervalIndex = typeof extra.intervalIndex === 'number' ? extra.intervalIndex : 0
+      const logs = await db.habitLogs.where('[habitId+date]').equals([habitId, todayStr]).toArray()
+      const existing = logs.find((l) => l.intervalIndex === intervalIndex)
+
+      if (existing) {
+        await db.habitLogs.put({
+          ...existing,
+          completed: true,
+          updatedAt: now
+        })
+      } else {
+        await db.habitLogs.add({
+          id: crypto.randomUUID(),
+          habitId,
+          date: todayStr,
+          timestamp: now,
+          intervalIndex,
+          completed: true,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+
+      await recalculateHabitReminders(habitId, todayStr)
+      return `/habits?habitId=${habitId}`
+    }
+
+    if (actionId === 'VIEW_HABIT' || actionId === 'tap') {
+      return `/habits?habitId=${habitId}`
+    }
+  } catch {
+    // Return fallback route on action execution failure
+  }
+
+  return `/habits?habitId=${habitId}`
+}
+
 let notificationListenersSetup = false
 
 export function setupNotificationListeners(
-  onNavigate?: (route: string) => void
+  onNavigate?: (route: string) => void,
+  queryClient?: { invalidateQueries: (options: { queryKey: readonly unknown[] }) => Promise<void> }
 ): (() => void) | void {
   if (typeof window === 'undefined') return
   const capPlugin = getCapacitorBridge()
@@ -199,13 +398,42 @@ export function setupNotificationListeners(
     notificationListenersSetup = true
     try {
       const listenerHandle = capPlugin.addListener('localNotificationActionPerformed', (action) => {
-        const extra = action?.notification?.extra
-        const targetRoute = getNotificationTargetRoute(extra)
-        if (targetRoute) {
-          if (onNavigate) {
-            onNavigate(targetRoute)
-          } else {
-            window.location.hash = targetRoute
+        const actionId = action?.actionId || 'tap'
+        const extra =
+          (action?.notification?.extra as Record<string, unknown> | undefined) ||
+          ((action?.notification as Record<string, unknown> | undefined)?.data as
+            Record<string, unknown> | undefined) ||
+          ((action as Record<string, unknown> | undefined)?.extra as
+            Record<string, unknown> | undefined) ||
+          {}
+
+        if (extra?.habitId && actionId && actionId !== 'tap' && actionId !== 'VIEW_HABIT') {
+          executeHabitNotificationAction(actionId, extra).then((targetRoute) => {
+            if (queryClient) {
+              queryClient.invalidateQueries({ queryKey: ['habitLogs'] })
+              queryClient.invalidateQueries({ queryKey: ['habits'] })
+            }
+            if (targetRoute) {
+              if (onNavigate) {
+                onNavigate(targetRoute)
+              } else {
+                window.location.hash = targetRoute
+              }
+            }
+          })
+        } else {
+          const targetRoute = getNotificationTargetRoute(extra)
+          if (queryClient) {
+            queryClient.invalidateQueries({ queryKey: ['habitLogs'] })
+            queryClient.invalidateQueries({ queryKey: ['habits'] })
+            queryClient.invalidateQueries({ queryKey: ['tasks'] })
+          }
+          if (targetRoute) {
+            if (onNavigate) {
+              onNavigate(targetRoute)
+            } else {
+              window.location.hash = targetRoute
+            }
           }
         }
       })
@@ -319,6 +547,22 @@ export function getTaskNotificationId(taskId: string, reminderId: string | numbe
   return Math.abs(hash % 2000000000) + 1
 }
 
+export function getHabitActionTypeId(
+  targetType?: Habit['targetType'],
+  intervalIndex?: number
+): string {
+  if (intervalIndex !== undefined) {
+    return HABIT_ACTION_TYPES.INTERVAL
+  }
+  if (targetType === 'numeric') {
+    return HABIT_ACTION_TYPES.NUMERIC
+  }
+  if (targetType === 'timer') {
+    return HABIT_ACTION_TYPES.TIMER
+  }
+  return HABIT_ACTION_TYPES.BOOLEAN
+}
+
 export async function scheduleHabitReminder(
   options: HabitReminderOptions
 ): Promise<number | string | null> {
@@ -336,14 +580,25 @@ export async function scheduleHabitReminder(
         : Math.floor(Date.now() % 1000000) +
           (options.intervalIndex !== undefined ? options.intervalIndex : 0)
 
-  const title = `Habit Reminder: ${options.habitTitle}`
+  const stepConfig =
+    options.targetType === 'numeric'
+      ? getDynamicStepConfig(options.targetValue, options.unit)
+      : null
+
+  const title = options.habitTitle
   const body =
     options.body ||
     (options.intervalIndex !== undefined
       ? `Time for interval #${options.intervalIndex + 1} check-in.`
-      : `Time to complete your habit: ${options.habitTitle}`)
+      : options.targetType === 'timer'
+        ? `Ready for your ${options.targetValue || 15}-minute focus session?`
+        : stepConfig && stepConfig.primaryStep > 1
+          ? `Log progress (+${stepConfig.primaryStep} ${options.unit || ''}) toward daily goal.`
+          : 'Ready for your daily check-in?')
 
+  const actionTypeId = getHabitActionTypeId(options.targetType, options.intervalIndex)
   const capPlugin = getCapacitorBridge()
+
   if (capPlugin && capPlugin.schedule) {
     try {
       await ensureNotificationChannel()
@@ -353,11 +608,18 @@ export async function scheduleHabitReminder(
             id: reminderId,
             title,
             body,
-            schedule: options.at ? { at: options.at } : undefined,
+            schedule: options.at ? { at: options.at, allowWhileIdle: true } : undefined,
             channelId: NOTIFICATION_CHANNEL_ID,
+            actionTypeId,
             extra: {
               habitId: options.habitId,
-              intervalIndex: options.intervalIndex
+              habitTitle: options.habitTitle,
+              intervalIndex: options.intervalIndex,
+              targetType: options.targetType,
+              targetValue: options.targetValue,
+              stepValue: stepConfig?.primaryStep,
+              unit: options.unit,
+              time: options.time
             }
           }
         ]
@@ -380,7 +642,14 @@ export async function scheduleHabitReminder(
         id: reminderId,
         title,
         body,
-        data: { habitId: options.habitId, intervalIndex: options.intervalIndex }
+        data: {
+          habitId: options.habitId,
+          habitTitle: options.habitTitle,
+          intervalIndex: options.intervalIndex,
+          targetType: options.targetType,
+          targetValue: options.targetValue,
+          unit: options.unit
+        }
       })
       scheduledTimers.delete(reminderId)
     }, delayMs)
@@ -394,7 +663,14 @@ export async function scheduleHabitReminder(
     id: reminderId,
     title,
     body,
-    data: { habitId: options.habitId, intervalIndex: options.intervalIndex }
+    data: {
+      habitId: options.habitId,
+      habitTitle: options.habitTitle,
+      intervalIndex: options.intervalIndex,
+      targetType: options.targetType,
+      targetValue: options.targetValue,
+      unit: options.unit
+    }
   })
 
   return sent ? reminderId : null
@@ -424,8 +700,6 @@ export function computeTaskReminderDate(
       return new Date(baseDate.getTime() - offsetMs)
     }
 
-    // When dueTime is omitted:
-    // If dueDate is in the future (> todayStr), default to 09:00 AM on that future date
     if (effectiveDueDate > todayStr) {
       const fullIso = `${effectiveDueDate}T09:00:00`
       const baseDate = new Date(fullIso)
@@ -433,8 +707,6 @@ export function computeTaskReminderDate(
       return new Date(baseDate.getTime() - offsetMs)
     }
 
-    // If effectiveDueDate is today (or past):
-    // Search standard daytime checkpoints (09:00, 12:00, 15:00, 18:00, 21:00) for the next future reminder slot
     const candidateSlots = ['09:00:00', '12:00:00', '15:00:00', '18:00:00', '21:00:00']
     for (const slot of candidateSlots) {
       const fullIso = `${effectiveDueDate}T${slot}`
@@ -444,7 +716,6 @@ export function computeTaskReminderDate(
       }
     }
 
-    // If all daily checkpoints today have passed, schedule for fallback offset from right now
     const fallbackDelayMs = Math.max(5 * 60 * 1000, offsetMs || 15 * 60 * 1000)
     return new Date(baseNow.getTime() + fallbackDelayMs)
   }
@@ -466,7 +737,7 @@ export async function scheduleTaskReminder(options: TaskReminderOptions): Promis
   const reminderId =
     options.reminder.notificationId || getTaskNotificationId(options.taskId, options.reminder.id)
 
-  const title = `Task Reminder: ${options.taskTitle}`
+  const title = options.taskTitle
   const body = options.dueTime
     ? `Scheduled for ${options.dueDate || 'today'} at ${options.dueTime}`
     : `Due on ${options.dueDate || 'today'}`
@@ -503,7 +774,7 @@ export async function scheduleTaskReminder(options: TaskReminderOptions): Promis
   if (targetDate) {
     const delayMs = targetDate.getTime() - Date.now()
     if (delayMs <= 0) {
-      return null // Already in past
+      return null
     }
 
     const existingTimer = scheduledTimers.get(reminderId)
@@ -576,18 +847,40 @@ export async function rescheduleAllTaskReminders(tasks: Task[]): Promise<void> {
   }
 }
 
-export async function scheduleHabitReminders(habit: Habit): Promise<number[]> {
+export async function scheduleHabitReminders(
+  habit: Habit,
+  options?: { logsForToday?: HabitLog[] }
+): Promise<number[]> {
   if (habit.archived) return []
   const scheduledIds: number[] = []
   const now = new Date()
   const nowMs = now.getTime()
+  const todayStr = format(now, 'yyyy-MM-dd')
+
+  const todayLogs =
+    options?.logsForToday ||
+    (typeof window !== 'undefined'
+      ? await db.habitLogs
+          .where('[habitId+date]')
+          .equals([habit.id, todayStr])
+          .toArray()
+          .catch(() => [])
+      : [])
+
+  const isTodayDone = isHabitCompletedOnDate(habit, todayLogs)
 
   // Schedule for the next 7 days
   for (let dayOffset = 0; dayOffset < 7; dayOffset++) {
     const targetDay = addDays(now, dayOffset)
     const dateStr = format(targetDay, 'yyyy-MM-dd')
+    const isTargetToday = dateStr === todayStr
 
     if (!isHabitScheduledOnDate(habit, targetDay)) {
+      continue
+    }
+
+    // If today's target is already completed early, suppress reminders for today
+    if (isTargetToday && isTodayDone) {
       continue
     }
 
@@ -601,6 +894,9 @@ export async function scheduleHabitReminders(habit: Habit): Promise<number[]> {
           await scheduleHabitReminder({
             habitId: habit.id,
             habitTitle: habit.title,
+            targetType: habit.targetType,
+            targetValue: habit.targetValue,
+            unit: habit.unit,
             time: timeStr,
             at: targetDate,
             body: `Time to complete your habit: ${habit.title}`
@@ -618,6 +914,14 @@ export async function scheduleHabitReminders(habit: Habit): Promise<number[]> {
       const slots = generateSubdayIntervalSlots(startTime, endTime, intervalHours)
 
       for (const slot of slots) {
+        // If checking today, verify if this specific slot is already checked in
+        if (isTargetToday) {
+          const slotLog = todayLogs.find((l) => l.intervalIndex === slot.index)
+          if (slotLog?.completed) {
+            continue
+          }
+        }
+
         const timeStr = slot.startTime || '09:00'
         const fullIso = `${dateStr}T${timeStr}:00`
         const targetDate = new Date(fullIso)
@@ -626,6 +930,9 @@ export async function scheduleHabitReminders(habit: Habit): Promise<number[]> {
           await scheduleHabitReminder({
             habitId: habit.id,
             habitTitle: habit.title,
+            targetType: habit.targetType,
+            targetValue: habit.targetValue,
+            unit: habit.unit,
             intervalIndex: slot.index,
             at: targetDate,
             body: `Time for interval #${slot.index + 1} check-in (${slot.label}) for: ${habit.title}`
@@ -660,6 +967,51 @@ export async function cancelHabitReminders(habit: Habit | { id: string }): Promi
       const id = getHabitNotificationId(habitId, `${dateStr}_interval_${slotIndex}`)
       await cancelHabitReminder(id)
     }
+  }
+}
+
+export async function recalculateHabitReminders(
+  habitId: string,
+  targetDateStr?: string
+): Promise<void> {
+  try {
+    const habit = await db.habits.get(habitId)
+    if (!habit || habit.archived) {
+      await cancelHabitReminders({ id: habitId })
+      return
+    }
+
+    const todayStr = targetDateStr || format(new Date(), 'yyyy-MM-dd')
+    const logs = await db.habitLogs.where('[habitId+date]').equals([habitId, todayStr]).toArray()
+    const isCompleted = isHabitCompletedOnDate(habit, logs)
+
+    if (isCompleted) {
+      // Habit is finished early today: cancel today's reminders
+      if (habit.reminderTimes && Array.isArray(habit.reminderTimes)) {
+        for (const timeStr of habit.reminderTimes) {
+          const id = getHabitNotificationId(habit.id, `${todayStr}_${timeStr}`)
+          await cancelHabitReminder(id)
+        }
+      }
+      for (let slotIndex = 0; slotIndex < 24; slotIndex++) {
+        const id = getHabitNotificationId(habit.id, `${todayStr}_interval_${slotIndex}`)
+        await cancelHabitReminder(id)
+      }
+    } else {
+      // Habit is still in progress: cancel only completed interval slots
+      if (habit.frequencyType === 'subday_interval') {
+        const slots = getHabitSlots(habit)
+        for (const slot of slots) {
+          const slotLog = logs.find((l) => l.intervalIndex === slot.index)
+          if (slotLog?.completed) {
+            const id = getHabitNotificationId(habit.id, `${todayStr}_interval_${slot.index}`)
+            await cancelHabitReminder(id)
+          }
+        }
+      }
+    }
+  } catch {
+    // Non-fatal error during notification recalculation
   }
 }
 

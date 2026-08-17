@@ -38,11 +38,11 @@ export function App() {
   useEffect(() => {
     const cleanup = setupNotificationListeners((route) => {
       navigate(route)
-    })
+    }, queryClient)
     return () => {
       if (typeof cleanup === 'function') cleanup()
     }
-  }, [navigate])
+  }, [navigate, queryClient])
 
   // Android / Capacitor Back Button & Escape dismissal for modals and navigation
   useEffect(() => {

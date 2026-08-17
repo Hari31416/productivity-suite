@@ -783,18 +783,30 @@ export function HabitDetailView({
           </div>
         )}
 
-        {/* Scheduled Reminder Times Timeline */}
+        {/* Scheduled Reminder Times Timeline & Smart Recalculation Status */}
         {habit.reminderTimes && habit.reminderTimes.length > 0 && (
           <div className="space-y-1.5">
-            <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
-              <Bell className="h-3 w-3 text-primary" />
-              <span>Reminders:</span>
+            <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Bell className="h-3 w-3 text-primary" />
+                <span>Scheduled Notifications:</span>
+              </div>
+              {isCompletedToday && isDateToday && (
+                <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  Target completed (today's remaining reminders silenced)
+                </span>
+              )}
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
               {habit.reminderTimes.map((timeStr) => (
                 <span
                   key={timeStr}
-                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-primary/10 text-primary border border-primary/20"
+                  className={cn(
+                    'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg border transition-colors',
+                    isCompletedToday && isDateToday
+                      ? 'bg-muted text-muted-foreground border-border/50 line-through opacity-70'
+                      : 'bg-primary/10 text-primary border-primary/20'
+                  )}
                 >
                   <Clock className="h-2.5 w-2.5" />
                   <span>{timeStr}</span>

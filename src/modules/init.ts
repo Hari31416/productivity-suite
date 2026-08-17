@@ -14,6 +14,7 @@ import {
   rescheduleAllTaskReminders,
   rescheduleAllHabitReminders,
   clearAllScheduledReminders,
+  ensureNotificationChannel,
   sendLocalNotification
 } from '@/core/notifications/notificationService'
 import { db } from '@/core/db'
@@ -118,6 +119,7 @@ export function initializeModules(queryClient?: QueryClient): void {
         }
       })
       .then(() => {
+        ensureNotificationChannel().catch(() => {})
         clearAllScheduledReminders()
         return taskRepository.syncRecurringInstances(30)
       })
