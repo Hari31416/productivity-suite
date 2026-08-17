@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Check, Copy } from 'lucide-react'
+import { Check, Copy, CheckSquare, Activity } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export interface MarkdownRendererProps {
@@ -67,20 +67,107 @@ function parseInline(text: string): React.ReactNode[] {
       continue
     }
 
+    // Check for Task mention link: @[Task Title](task:taskId) or @[Task Title](taskId)
+    const taskMentionMatch = remaining.match(/^@\[([^\]]+)\]\((?:task:)?([^)]+)\)/)
+    if (taskMentionMatch) {
+      const taskTitle = taskMentionMatch[1]
+      const taskId = taskMentionMatch[2]
+      elements.push(
+        <button
+          key={`task-mention-${keyIndex++}`}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            window.location.hash = `#/tasks?taskId=${taskId}`
+          }}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-xs hover:bg-blue-500/20 border border-blue-500/20 transition-colors mx-0.5 align-baseline cursor-pointer"
+          title={`Open Task: ${taskTitle}`}
+        >
+          <CheckSquare className="h-3 w-3 shrink-0" />
+          <span>{taskTitle}</span>
+        </button>
+      )
+      remaining = remaining.slice(taskMentionMatch[0].length)
+      continue
+    }
+
+    // Check for Habit mention link: #[Habit Title](habit:habitId) or #[Habit Title](habitId)
+    const habitMentionMatch = remaining.match(/^#\[([^\]]+)\]\((?:habit:)?([^)]+)\)/)
+    if (habitMentionMatch) {
+      const habitTitle = habitMentionMatch[1]
+      const habitId = habitMentionMatch[2]
+      elements.push(
+        <button
+          key={`habit-mention-${keyIndex++}`}
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            window.location.hash = `#/habits?habitId=${habitId}`
+          }}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium text-xs hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors mx-0.5 align-baseline cursor-pointer"
+          title={`Open Habit: ${habitTitle}`}
+        >
+          <Activity className="h-3 w-3 shrink-0" />
+          <span>{habitTitle}</span>
+        </button>
+      )
+      remaining = remaining.slice(habitMentionMatch[0].length)
+      continue
+    }
+
     // Check for link: [text](url)
     const linkMatch = remaining.match(/^\[([^\]]+)\]\(([^)]+)\)/)
     if (linkMatch) {
-      elements.push(
-        <a
-          key={`link-${keyIndex++}`}
-          href={linkMatch[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-primary underline underline-offset-4 hover:opacity-80"
-        >
-          {parseInline(linkMatch[1])}
-        </a>
-      )
+      const linkText = linkMatch[1]
+      const linkUrl = linkMatch[2]
+
+      if (linkUrl.startsWith('task:')) {
+        const taskId = linkUrl.replace(/^task:/, '')
+        elements.push(
+          <button
+            key={`task-link-${keyIndex++}`}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              window.location.hash = `#/tasks?taskId=${taskId}`
+            }}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-medium text-xs hover:bg-blue-500/20 border border-blue-500/20 transition-colors mx-0.5 align-baseline cursor-pointer"
+            title={`Open Task: ${linkText}`}
+          >
+            <CheckSquare className="h-3 w-3 shrink-0" />
+            <span>{linkText}</span>
+          </button>
+        )
+      } else if (linkUrl.startsWith('habit:')) {
+        const habitId = linkUrl.replace(/^habit:/, '')
+        elements.push(
+          <button
+            key={`habit-link-${keyIndex++}`}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              window.location.hash = `#/habits?habitId=${habitId}`
+            }}
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-medium text-xs hover:bg-emerald-500/20 border border-emerald-500/20 transition-colors mx-0.5 align-baseline cursor-pointer"
+            title={`Open Habit: ${linkText}`}
+          >
+            <Activity className="h-3 w-3 shrink-0" />
+            <span>{linkText}</span>
+          </button>
+        )
+      } else {
+        elements.push(
+          <a
+            key={`link-${keyIndex++}`}
+            href={linkUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline underline-offset-4 hover:opacity-80"
+          >
+            {parseInline(linkText)}
+          </a>
+        )
+      }
       remaining = remaining.slice(linkMatch[0].length)
       continue
     }
@@ -122,7 +209,7 @@ function parseInline(text: string): React.ReactNode[] {
     }
 
     // Plain text until the next special character
-    const nextSpecialIndex = remaining.search(/[`*~_\[]/)
+    const nextSpecialIndex = remaining.search(/[`*~_\[@#]/)
     if (nextSpecialIndex === -1) {
       elements.push(remaining)
       break

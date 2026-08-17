@@ -4,6 +4,8 @@ export interface Note {
   content: string
   tags: string[]
   projectId?: string
+  linkedTaskId?: string
+  linkedHabitId?: string
   pinned: boolean
   color?: string
   wordCount: number
@@ -22,6 +24,8 @@ export interface NoteFilter {
   searchQuery?: string
   tag?: string
   projectId?: string
+  linkedTaskId?: string
+  linkedHabitId?: string
   pinned?: boolean
   archived?: boolean
 }
@@ -31,6 +35,8 @@ export interface CreateNoteInput {
   content: string
   tags?: string[]
   projectId?: string
+  linkedTaskId?: string
+  linkedHabitId?: string
   pinned?: boolean
   color?: string
   wordCount?: number

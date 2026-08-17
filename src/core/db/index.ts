@@ -30,6 +30,10 @@ export class AppDatabase extends Dexie {
         'id, projectId, status, priority, dueDate, isRecurring, recurringParentId, archived, createdAt'
     })
 
+    this.version(3).stores({
+      notes: 'id, projectId, linkedTaskId, linkedHabitId, pinned, archived, updatedAt, *tags'
+    })
+
     this.on('populate', (tx) => {
       seedInitialData(tx)
     })

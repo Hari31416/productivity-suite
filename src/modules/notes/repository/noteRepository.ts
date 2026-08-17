@@ -19,6 +19,14 @@ export const noteRepository = {
         notes = notes.filter((n) => n.projectId === filter.projectId)
       }
 
+      if (filter.linkedTaskId) {
+        notes = notes.filter((n) => n.linkedTaskId === filter.linkedTaskId)
+      }
+
+      if (filter.linkedHabitId) {
+        notes = notes.filter((n) => n.linkedHabitId === filter.linkedHabitId)
+      }
+
       if (filter.pinned !== undefined) {
         notes = notes.filter((n) => n.pinned === filter.pinned)
       }
@@ -62,6 +70,8 @@ export const noteRepository = {
       content: input.content,
       tags: input.tags || [],
       projectId: input.projectId,
+      linkedTaskId: input.linkedTaskId,
+      linkedHabitId: input.linkedHabitId,
       pinned: input.pinned ?? false,
       color: input.color,
       wordCount,
