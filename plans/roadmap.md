@@ -78,21 +78,22 @@ Provide a dedicated full-view execution workspace and detail drawer for task exe
 - **Interval Check-in Automation**:
   - Smart interval recalculation that adjusts remaining reminders as daily targets are completed early.
 
-## 5. Unified Pomodoro and Task Focus Sessions
+## 5. Unified Pomodoro and Task Focus Sessions [Completed]
 
 - **Task-Linked Timer Sessions**:
   - Run the circular focus timer against specific tasks (e.g. 25-minute Pomodoro block for a project task) to record actual time spent vs estimated duration.
 - **Offline Ambient Focus Audio**:
-  - Lightweight Web Audio synthesis and offline ambient tracks (rain, white noise, cafe, binaural focus frequencies) playable during active focus timer sessions.
+  - Lightweight Web Audio synthesis and offline ambient tracks (rain, white noise, ocean waves, cafe atmosphere, alpha/beta/gamma binaural focus frequencies) playable during active focus timer sessions.
 
-## 6. Habit Stacking, Routines and Streak Protection
+## 6. Habit Stacking, Routines and Streak Protection [Completed]
 
 - **Routine Stacking Chains**:
   - Group habits into structured sequence stacks (e.g. "Morning Routine": _Drink Water -> Stretch -> Meditation_).
+  - Dedicated routine sequence builder with presets and reordering.
   - Completing one item in a stack prompts or activates the subsequent item.
 - **Streak Freeze and Planned Rest Days**:
   - Configure rest days for specific habits (e.g. gym workout 5 days/week with weekend rest) without breaking streak calculations.
-  - Support manual streak freezes for travel or illness.
+  - Support manual streak freezes for travel or illness from habit detail view and daily card action menu.
 
 ## 7. Cross-Module Bi-Directional Linking
 
