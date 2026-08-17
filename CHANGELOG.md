@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-08-17
+
+### Added
+
+- **Multiple Scheduled Reminder Times per Habit**:
+  - Configurable multiple reminder times throughout the day (`reminderTimes`) supported across all habit frequencies.
+  - One-tap preset time chips (`Morning 08:00`, `Midday 12:30`, `Evening 18:00`, `Night 21:30`) and custom time selector in habit creation/edit modal.
+  - 7-day rolling window reminder scheduling in `notificationService.ts`.
+- **Interactive Android Notification Quick Actions**:
+  - Registered native Capacitor action categories (`HABIT_BOOLEAN_ACTION`, `HABIT_NUMERIC_ACTION`, `HABIT_TIMER_ACTION`, `HABIT_INTERVAL_ACTION`).
+  - Action buttons on notifications for one-tap completion (`Check-In`, `Mark Done`), step increment logging (`Log Progress`), and opening focus timer (`Start Timer`).
+  - Proportional dynamic step sizing (`+250 ml`, `+500 steps`) based on habit target value and unit.
+- **Smart Interval Recalculation & Early Completion Silence**:
+  - Automatically cancels remaining reminder triggers for today when a habit reaches its target early while preserving upcoming days.
+  - Recalculates remaining interval check-in slots upon partial log entries.
+- **Notification Testing Suite in Settings**:
+  - Instant test buttons for boolean check-ins, numeric progress stepping, timer actions, and task alerts in `SettingsView.tsx`.
+
+### Changed
+
+- **Clean Notification Copy**:
+  - Streamlined notification titles and concise body copy without redundant repetitions.
+- **Foreground Action Delivery & Query Synchronization**:
+  - Foreground action handlers activate MainActivity and automatically invalidate React Query cache to keep UI in sync.
+
+### Fixed
+
+- **Unified Habit Completion Calculation on Dashboard**:
+  - Connected `isHabitCompletedOnDate` across `DashboardView` and `HabitDashboardWidget` to eliminate mismatches between the dashboard and habits page.
+  - Added support for toggling numeric habits between zero and target value from the dashboard check button.
+- **Duplicate Progress Bar in Habit Detail View**:
+  - Removed duplicate progress bar from top hero card in `HabitDetailView.tsx`.
+- **System Status Bar Safe Area Insets**:
+  - Added responsive `--safe-area-inset-top` token and flexible header padding to prevent Android system status bar overlap on all screens.
+
 ## [0.5.0] - 2026-08-16
 
 ### Added

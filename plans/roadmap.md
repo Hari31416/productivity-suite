@@ -69,7 +69,7 @@ Provide a dedicated full-view execution workspace and detail drawer for task exe
   - Connected notes list discovering markdown notes associated with the task project, matching tags, or title references, with a 1-click "Create Connected Note" button.
   - Recurrence schedule description, active reminder notification count, and creation, update, and completion timestamps.
 
-## 4. Advanced Habit Notifications
+## 4. Advanced Habit Notifications [Completed]
 
 - **Multiple Scheduled Times**:
   - Allow each habit to schedule distinct notification triggers throughout the day.
