@@ -6,7 +6,11 @@ import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { Activity, ArrowRight, Flame, Sparkles } from 'lucide-react'
 import { useHabits, useHabitLogs } from '../hooks/useHabits'
-import { isHabitScheduledOnDate, calculateStreak } from '../utils/streakCalculator'
+import {
+  isHabitScheduledOnDate,
+  calculateStreak,
+  isHabitCompletedOnDate
+} from '../utils/streakCalculator'
 import { DEFAULT_HABIT_CATEGORIES } from '../constants'
 
 export function HabitDashboardWidget() {
@@ -26,7 +30,7 @@ export function HabitDashboardWidget() {
     let completed = 0
     for (const habit of todayHabits) {
       const logs = todayLogs.filter((l) => l.habitId === habit.id)
-      if (logs.some((l) => l.completed)) {
+      if (isHabitCompletedOnDate(habit, logs)) {
         completed += 1
       }
     }

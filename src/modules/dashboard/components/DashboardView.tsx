@@ -29,14 +29,23 @@ import {
 import { moduleRegistry } from '@/core/modules/registry'
 import { useHashRoute } from '@/core/router/hashRouter'
 import { useBackButton } from '@/core/platform/backButton'
-import { useHabits, useHabitLogs, useToggleHabitLog } from '@/modules/habits/hooks/useHabits'
+import {
+  useHabits,
+  useHabitLogs,
+  useToggleHabitLog,
+  useSetHabitLogValue
+} from '@/modules/habits/hooks/useHabits'
 import { useTasks, useUpdateTaskStatus } from '@/modules/tasks/hooks/useTasks'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
 import { useNotes } from '@/modules/notes/hooks/useNotes'
 import { HabitFormModal } from '@/modules/habits/components/HabitFormModal'
 import { TaskFormModal } from '@/modules/tasks/components/TaskFormModal'
 import { NoteFormModal } from '@/modules/notes/components/NoteFormModal'
-import { isHabitScheduledOnDate, calculateStreak } from '@/modules/habits/utils/streakCalculator'
+import {
+  isHabitScheduledOnDate,
+  calculateStreak,
+  isHabitCompletedOnDate
+} from '@/modules/habits/utils/streakCalculator'
 import { calculateDailyProductivityScore, getProductivityStatus } from '../utils/dashboardScore'
 import { cn } from '@/lib/utils'
 
@@ -86,6 +95,7 @@ export function DashboardView() {
 
   // Mutations
   const toggleHabitMutation = useToggleHabitLog()
+  const setHabitLogValueMutation = useSetHabitLogValue()
   const updateTaskStatusMutation = useUpdateTaskStatus()
 
   // Habit metrics
@@ -96,7 +106,7 @@ export function DashboardView() {
 
     for (const habit of scheduled) {
       const logs = todayLogs.filter((l) => l.habitId === habit.id)
-      if (logs.some((l) => l.completed)) {
+      if (isHabitCompletedOnDate(habit, logs)) {
         completedCount += 1
       }
     }
@@ -163,10 +173,25 @@ export function DashboardView() {
   }, [])
 
   const handleToggleHabit = (habitId: string) => {
-    toggleHabitMutation.mutate({
-      habitId,
-      date: todayStr
-    })
+    const habit = habits.find((h) => h.id === habitId)
+    const logs = todayLogs.filter((l) => l.habitId === habitId)
+    const isCompleted = habit ? isHabitCompletedOnDate(habit, logs) : false
+
+    if (habit?.targetType === 'numeric') {
+      const target = habit.targetValue || 1
+      const nextVal = isCompleted ? 0 : target
+      setHabitLogValueMutation.mutate({
+        habitId,
+        date: todayStr,
+        value: nextVal,
+        completed: nextVal >= target
+      })
+    } else {
+      toggleHabitMutation.mutate({
+        habitId,
+        date: todayStr
+      })
+    }
   }
 
   const handleToggleTask = (taskId: string, currentStatus: string) => {
@@ -288,7 +313,7 @@ export function DashboardView() {
             <div className="space-y-2">
               {todayHabits.slice(0, 5).map((habit) => {
                 const logs = todayLogs.filter((l) => l.habitId === habit.id)
-                const isCompleted = logs.some((l) => l.completed)
+                const isCompleted = isHabitCompletedOnDate(habit, logs)
                 const streak = calculateStreak(habit, logs, todayStr).currentStreak
 
                 return (
