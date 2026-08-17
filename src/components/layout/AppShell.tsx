@@ -39,7 +39,7 @@ export function AppShell({
         />
         <main
           className="flex-1 overflow-y-auto p-3 sm:p-6 pb-28 md:pb-6"
-          style={{ paddingBottom: 'calc(6rem + env(safe-area-inset-bottom, 0px))' }}
+          style={{ paddingBottom: 'calc(6rem + var(--safe-area-inset-bottom))' }}
         >
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>

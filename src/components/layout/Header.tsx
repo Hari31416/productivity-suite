@@ -22,7 +22,7 @@ export function Header({
   onToggleSidebar
 }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 flex h-14 w-full items-center justify-between border-b bg-background/95 px-3 pt-[env(safe-area-inset-top,0px)] backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
+    <header className="sticky top-0 z-40 flex min-h-[3.5rem] md:h-14 w-full items-center justify-between border-b bg-background/95 px-3 pt-[var(--safe-area-inset-top)] pb-1.5 md:pb-0 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
       <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 mr-2">
         {onToggleSidebar && (
           <Button
