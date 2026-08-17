@@ -469,55 +469,6 @@ export function HabitDetailView({
           </div>
         </div>
 
-        {/* Dotted / Segmented Progress Bar for Multi-step & Timer Habits */}
-        {dotProgress && (
-          <div className="space-y-1.5 pt-0.5">
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground px-0.5">
-              <span>Today's Progress</span>
-              <span className="font-semibold text-foreground">
-                {habit.targetType === 'timer'
-                  ? `${currentTimerMinutes} / ${targetValue} min (${progressPercentage}%)`
-                  : `${currentNumericValue} / ${targetValue} ${habit.unit || 'units'} (${progressPercentage}%)`}
-              </span>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-1.5">
-              {Array.from({ length: dotProgress.totalDots }).map((_, idx) => {
-                const isFilled = idx < dotProgress.activeDots
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => {
-                      if (habit.targetType === 'timer') {
-                        const ratio = (idx + 1) / dotProgress.totalDots
-                        handleTimerChange(Math.round(ratio * targetValue) - currentTimerMinutes)
-                      } else if (!dotProgress.isRatio) {
-                        handleSetExactValue(idx + 1)
-                      } else {
-                        const ratio = (idx + 1) / dotProgress.totalDots
-                        handleSetExactValue(Math.round(ratio * targetValue))
-                      }
-                    }}
-                    className={cn(
-                      'h-2.5 flex-1 rounded-full transition-all hover:scale-105',
-                      isFilled ? 'shadow-xs' : 'bg-muted-foreground/20 hover:bg-muted-foreground/30'
-                    )}
-                    style={{
-                      backgroundColor: isFilled ? themeColor : undefined
-                    }}
-                    title={`Set progress to ${
-                      dotProgress.isRatio
-                        ? `${Math.round(((idx + 1) / dotProgress.totalDots) * targetValue)} ${habit.unit || (habit.targetType === 'timer' ? 'min' : 'units')}`
-                        : `${idx + 1} ${habit.unit || 'units'}`
-                    }`}
-                    aria-label={`Step ${idx + 1}`}
-                  />
-                )
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Integrated Streak & Stats Strip (Single clean segmented bar) */}
         <div className="grid grid-cols-3 divide-x divide-border/60 rounded-xl bg-background/60 border py-2 px-1 text-center">
           <div className="px-1">
