@@ -20,14 +20,27 @@ import {
   Maximize2,
   Minimize2,
   Check,
-  Loader2
+  Loader2,
+  Activity,
+  AtSign,
+  Hash
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { MarkdownRenderer } from '../utils/markdownParser'
 import { getNoteStats } from '../utils/noteStats'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
-import { useTags, useFindOrCreateTag } from '../hooks/useTags'
+import { useTasks } from '@/modules/tasks/hooks/useTasks'
+import { useHabits } from '@/modules/habits/hooks/useHabits'
+import { useFindOrCreateTag } from '../hooks/useTags'
 import { cn } from '@/lib/utils'
 import type { Note, CreateNoteInput, UpdateNoteInput } from '../types'
 
@@ -61,6 +74,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   const [tags, setTags] = useState<string[]>(initialNote?.tags || [])
   const [tagInput, setTagInput] = useState('')
   const [projectId, setProjectId] = useState<string | undefined>(initialNote?.projectId)
+  const [linkedTaskId, setLinkedTaskId] = useState<string | undefined>(initialNote?.linkedTaskId)
+  const [linkedHabitId, setLinkedHabitId] = useState<string | undefined>(initialNote?.linkedHabitId)
   const [pinned, setPinned] = useState(initialNote?.pinned || false)
   const [color, setColor] = useState(initialNote?.color || '')
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
@@ -85,6 +100,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     content: initialNote?.content || '',
     tagsStr: JSON.stringify(initialNote?.tags || []),
     projectId: initialNote?.projectId,
+    linkedTaskId: initialNote?.linkedTaskId,
+    linkedHabitId: initialNote?.linkedHabitId,
     pinned: initialNote?.pinned || false,
     color: initialNote?.color || ''
   })
@@ -102,7 +119,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
   }, [])
 
   const { data: projects = [] } = useProjects()
-  const { data: existingTags = [] } = useTags()
+  const { data: allTasks = [] } = useTasks()
+  const { data: allHabits = [] } = useHabits(false)
   const findOrCreateTagMutation = useFindOrCreateTag()
 
   const stats = getNoteStats(content)
@@ -142,6 +160,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
       last.content === content &&
       last.tagsStr === tagsStr &&
       last.projectId === projectId &&
+      last.linkedTaskId === linkedTaskId &&
+      last.linkedHabitId === linkedHabitId &&
       last.pinned === pinned &&
       last.color === color
     ) {
@@ -162,6 +182,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             content,
             tags,
             projectId: projectId || undefined,
+            linkedTaskId: linkedTaskId || undefined,
+            linkedHabitId: linkedHabitId || undefined,
             pinned,
             color: color || undefined,
             wordCount: stats.wordCount
@@ -173,6 +195,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
           content,
           tagsStr,
           projectId,
+          linkedTaskId,
+          linkedHabitId,
           pinned,
           color
         }
@@ -182,6 +206,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
           content,
           tags,
           projectId: projectId || undefined,
+          linkedTaskId: linkedTaskId || undefined,
+          linkedHabitId: linkedHabitId || undefined,
           pinned,
           color: color || undefined,
           wordCount: stats.wordCount,
@@ -195,6 +221,8 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
             content,
             tagsStr,
             projectId,
+            linkedTaskId,
+            linkedHabitId,
             pinned,
             color
           }
@@ -206,7 +234,18 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
     } finally {
       isSavingRef.current = false
     }
-  }, [noteId, title, content, tags, projectId, pinned, color, stats.wordCount])
+  }, [
+    noteId,
+    title,
+    content,
+    tags,
+    projectId,
+    linkedTaskId,
+    linkedHabitId,
+    pinned,
+    color,
+    stats.wordCount
+  ])
 
   // Keyboard shortcut listener for Cmd+S / Ctrl+S and Esc for Zen mode
   useEffect(() => {
@@ -295,6 +334,81 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
       textarea.setSelectionRange(newCursorPos, newCursorPos)
     }, 0)
   }
+
+  const handleInsertTaskMention = (task: { id: string; title: string }) => {
+    insertFormatting(`@[${task.title}](task:${task.id}) `, '', '')
+    setMentionQuery(null)
+  }
+
+  const handleInsertHabitMention = (habit: { id: string; title: string }) => {
+    insertFormatting(`#[${habit.title}](habit:${habit.id}) `, '', '')
+    setMentionQuery(null)
+  }
+
+  const [mentionQuery, setMentionQuery] = useState<{
+    type: 'task' | 'habit'
+    query: string
+    index: number
+  } | null>(null)
+
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newVal = e.target.value
+    setContent(newVal)
+
+    const cursor = e.target.selectionStart
+    const textBeforeCursor = newVal.slice(0, cursor)
+    const taskMatch = textBeforeCursor.match(/@([a-zA-Z0-9_\s-]{0,25})$/)
+    const habitMatch = textBeforeCursor.match(/#([a-zA-Z0-9_\s-]{0,25})$/)
+
+    if (taskMatch && !taskMatch[0].includes('\n')) {
+      setMentionQuery({
+        type: 'task',
+        query: taskMatch[1].trim().toLowerCase(),
+        index: taskMatch.index!
+      })
+    } else if (habitMatch && !habitMatch[0].includes('\n') && !habitMatch[0].startsWith('##')) {
+      setMentionQuery({
+        type: 'habit',
+        query: habitMatch[1].trim().toLowerCase(),
+        index: habitMatch.index!
+      })
+    } else {
+      setMentionQuery(null)
+    }
+  }
+
+  const handleApplyMention = (item: { id: string; title: string; type: 'task' | 'habit' }) => {
+    if (!mentionQuery || !textareaRef.current) return
+    const textarea = textareaRef.current
+    const cursor = textarea.selectionStart
+    const before = content.slice(0, mentionQuery.index)
+    const after = content.slice(cursor)
+    const tag =
+      item.type === 'task'
+        ? `@[${item.title}](task:${item.id}) `
+        : `#[${item.title}](habit:${item.id}) `
+    const updated = before + tag + after
+    setContent(updated)
+    setMentionQuery(null)
+    setTimeout(() => {
+      textarea.focus()
+      const newPos = before.length + tag.length
+      textarea.setSelectionRange(newPos, newPos)
+    }, 0)
+  }
+
+  const matchingTasks = allTasks
+    .filter(
+      (t) =>
+        !t.archived && (!mentionQuery?.query || t.title.toLowerCase().includes(mentionQuery.query))
+    )
+    .slice(0, 5)
+  const matchingHabits = allHabits
+    .filter(
+      (h) =>
+        !h.archived && (!mentionQuery?.query || h.title.toLowerCase().includes(mentionQuery.query))
+    )
+    .slice(0, 5)
 
   const handleAddTag = async (tagName: string) => {
     const trimmed = tagName.trim().replace(/^#/, '')
@@ -468,72 +582,164 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
           className="w-full border-none bg-transparent p-0 text-lg sm:text-2xl font-bold tracking-tight text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-0"
         />
       </div>
-      {/* Meta Controls (Tags, Project) */}
-      <div className="flex flex-wrap items-center gap-2 border-b bg-muted/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs">
-        {/* Project Selector */}
-        <div className="flex items-center gap-1.5 text-muted-foreground">
-          <Folder className="h-3.5 w-3.5" />
-          <select
-            value={projectId || ''}
-            onChange={(e) => setProjectId(e.target.value || undefined)}
-            className="rounded border bg-background px-2 py-1 text-xs text-foreground focus:outline-hidden focus:ring-1 focus:ring-primary"
-          >
-            <option value="">No Project</option>
-            {projects.map((proj) => (
-              <option key={proj.id} value={proj.id}>
-                {proj.name}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Sleek Compact Meta Pills Bar */}
+      <div className="flex flex-wrap items-center gap-1.5 border-b bg-muted/20 px-3 sm:px-4 py-1.5 text-xs min-h-[36px]">
+        {/* Active Project Badge */}
+        {projectId && projects.find((p) => p.id === projectId) && (
+          <Badge variant="outline" className="gap-1 text-[11px] py-0.5 font-normal bg-background">
+            <Folder className="h-3 w-3 text-muted-foreground" />
+            <span className="max-w-[120px] truncate">
+              {projects.find((p) => p.id === projectId)?.name}
+            </span>
+            <button
+              type="button"
+              onClick={() => setProjectId(undefined)}
+              className="rounded-full hover:bg-muted p-0.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </Badge>
+        )}
 
-        {/* Tags list and input */}
-        <div className="flex flex-1 flex-wrap items-center gap-1.5">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="gap-1 py-0.5 text-xs font-normal">
-              <span>#{tag}</span>
+        {/* Active Task Badge */}
+        {linkedTaskId && allTasks.find((t) => t.id === linkedTaskId) && (
+          <Badge
+            variant="outline"
+            className="gap-1 text-[11px] py-0.5 font-normal border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5"
+          >
+            <CheckSquare className="h-3 w-3" />
+            <span className="max-w-[130px] truncate">
+              {allTasks.find((t) => t.id === linkedTaskId)?.title}
+            </span>
+            <button
+              type="button"
+              onClick={() => setLinkedTaskId(undefined)}
+              className="rounded-full hover:bg-blue-500/20 p-0.5"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </Badge>
+        )}
+
+        {/* Active Habit Badge */}
+        {linkedHabitId && allHabits.find((h) => h.id === linkedHabitId) && (
+          <Badge
+            variant="outline"
+            className="gap-1 text-[11px] py-0.5 font-normal border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5"
+          >
+            <Activity className="h-3 w-3" />
+            <span className="max-w-[130px] truncate">
+              {allHabits.find((h) => h.id === linkedHabitId)?.title}
+            </span>
+            <button
+              type="button"
+              onClick={() => setLinkedHabitId(undefined)}
+              className="rounded-full hover:bg-emerald-500/20 p-0.5"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </Badge>
+        )}
+
+        {/* Active User Tags */}
+        {tags.map((tag) => (
+          <Badge key={tag} variant="secondary" className="gap-1 py-0.5 text-[11px] font-normal">
+            <span>#{tag}</span>
+            <button
+              type="button"
+              onClick={() => handleRemoveTag(tag)}
+              className="rounded-full hover:bg-muted-foreground/20 p-0.5"
+            >
+              <X className="h-2.5 w-2.5" />
+            </button>
+          </Badge>
+        ))}
+
+        {/* + Link dropdown (Attach Project, Task, or Habit) */}
+        {(!projectId || !linkedTaskId || !linkedHabitId) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                onClick={() => handleRemoveTag(tag)}
-                className="rounded-full hover:bg-muted-foreground/20"
-              >
-                <X className="h-2.5 w-2.5" />
-              </button>
-            </Badge>
-          ))}
-          <div className="flex items-center">
-            <input
-              type="text"
-              placeholder="+ tag"
-              value={tagInput}
-              onChange={(e) => setTagInput(e.target.value)}
-              onKeyDown={handleKeyDownTag}
-              className="h-6 w-20 rounded border bg-background px-2 text-xs placeholder:text-muted-foreground focus:w-32 focus:outline-hidden focus:ring-1 focus:ring-primary"
-            />
-            {tagInput.trim() && (
-              <button
-                type="button"
-                onClick={() => handleAddTag(tagInput)}
-                className="ml-1 rounded p-1 hover:bg-muted"
+                className="inline-flex items-center gap-1 rounded border border-dashed px-2 py-0.5 text-[11px] text-muted-foreground hover:border-primary hover:text-primary transition-colors bg-background"
               >
                 <Plus className="h-3 w-3" />
+                <span>Link</span>
               </button>
-            )}
-          </div>
-          {/* Quick existing tag suggestions */}
-          {existingTags
-            .filter((t) => !tags.includes(t.name))
-            .slice(0, 3)
-            .map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => handleAddTag(t.name)}
-                className="rounded border border-dashed px-1.5 py-0.5 text-[11px] text-muted-foreground hover:border-primary hover:text-primary"
-              >
-                +{t.name}
-              </button>
-            ))}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 max-h-64 overflow-y-auto">
+              {!linkedTaskId && allTasks.filter((t) => !t.archived).length > 0 && (
+                <>
+                  <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider py-1">
+                    Link Task
+                  </DropdownMenuLabel>
+                  {allTasks
+                    .filter((t) => !t.archived)
+                    .slice(0, 5)
+                    .map((t) => (
+                      <DropdownMenuItem
+                        key={t.id}
+                        onClick={() => setLinkedTaskId(t.id)}
+                        className="text-xs flex items-center gap-2 cursor-pointer"
+                      >
+                        <CheckSquare className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                        <span className="truncate">{t.title}</span>
+                      </DropdownMenuItem>
+                    ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {!linkedHabitId && allHabits.length > 0 && (
+                <>
+                  <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider py-1">
+                    Link Habit
+                  </DropdownMenuLabel>
+                  {allHabits.slice(0, 5).map((h) => (
+                    <DropdownMenuItem
+                      key={h.id}
+                      onClick={() => setLinkedHabitId(h.id)}
+                      className="text-xs flex items-center gap-2 cursor-pointer"
+                    >
+                      <Activity className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                      <span className="truncate">{h.title}</span>
+                    </DropdownMenuItem>
+                  ))}
+                  <DropdownMenuSeparator />
+                </>
+              )}
+
+              {!projectId && projects.length > 0 && (
+                <>
+                  <DropdownMenuLabel className="text-[11px] text-muted-foreground uppercase tracking-wider py-1">
+                    Assign Project
+                  </DropdownMenuLabel>
+                  {projects.map((p) => (
+                    <DropdownMenuItem
+                      key={p.id}
+                      onClick={() => setProjectId(p.id)}
+                      className="text-xs flex items-center gap-2 cursor-pointer"
+                    >
+                      <Folder className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="truncate">{p.name}</span>
+                    </DropdownMenuItem>
+                  ))}
+                </>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+
+        {/* Compact + tag input */}
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="+ tag"
+            value={tagInput}
+            onChange={(e) => setTagInput(e.target.value)}
+            onKeyDown={handleKeyDownTag}
+            className="h-5 w-14 rounded border border-dashed bg-transparent px-1.5 text-[11px] placeholder:text-muted-foreground/60 focus:w-24 focus:border-solid focus:bg-background focus:outline-hidden focus:ring-1 focus:ring-primary transition-all"
+          />
         </div>
       </div>
 
@@ -648,23 +854,150 @@ export function MarkdownEditor({ initialNote, onSave, onClose }: MarkdownEditorP
           >
             <TableIcon className="h-4 w-4" />
           </Button>
+
+          <div className="mx-1 h-4 w-px bg-border shrink-0" />
+
+          {/* Mention Task Popover */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 min-h-[32px] gap-1 text-xs shrink-0 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10"
+                title="Mention Task (@task)"
+              >
+                <AtSign className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-medium">Task</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 max-h-60 overflow-y-auto">
+              <DropdownMenuLabel className="text-xs">Mention a Task</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allTasks.filter((t) => !t.archived).length === 0 ? (
+                <div className="p-2 text-xs text-muted-foreground">No active tasks</div>
+              ) : (
+                allTasks
+                  .filter((t) => !t.archived)
+                  .map((task) => (
+                    <DropdownMenuItem
+                      key={task.id}
+                      onClick={() => handleInsertTaskMention(task)}
+                      className="text-xs flex items-center gap-2 cursor-pointer"
+                    >
+                      <CheckSquare className="h-3.5 w-3.5 text-blue-500 shrink-0" />
+                      <span className="truncate">{task.title}</span>
+                    </DropdownMenuItem>
+                  ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Mention Habit Popover */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 min-h-[32px] gap-1 text-xs shrink-0 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                title="Mention Habit (#habit)"
+              >
+                <Hash className="h-3.5 w-3.5" />
+                <span className="text-[11px] font-medium">Habit</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56 max-h-60 overflow-y-auto">
+              <DropdownMenuLabel className="text-xs">Mention a Habit</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {allHabits.length === 0 ? (
+                <div className="p-2 text-xs text-muted-foreground">No active habits</div>
+              ) : (
+                allHabits.map((habit) => (
+                  <DropdownMenuItem
+                    key={habit.id}
+                    onClick={() => handleInsertHabitMention(habit)}
+                    className="text-xs flex items-center gap-2 cursor-pointer"
+                  >
+                    <Activity className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <span className="truncate">{habit.title}</span>
+                  </DropdownMenuItem>
+                ))
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
       {/* Editor & Preview Area */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Editor Pane */}
         {(viewMode === 'edit' || viewMode === 'split') && (
           <div
-            className={`flex flex-1 flex-col overflow-auto p-4 ${
+            className={`flex flex-1 flex-col overflow-auto p-4 relative ${
               viewMode === 'split' ? 'border-r' : ''
             }`}
           >
+            {/* Mention Suggestions Floating Bar */}
+            {mentionQuery && (
+              <div className="mb-2 p-2 rounded-xl border bg-card/95 backdrop-blur-xs shadow-md flex flex-col gap-1 z-20 shrink-0">
+                <div className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                  {mentionQuery.type === 'task' ? (
+                    <>
+                      <CheckSquare className="h-3 w-3 text-blue-500" />
+                      <span>Matching Tasks:</span>
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="h-3 w-3 text-emerald-500" />
+                      <span>Matching Habits:</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {mentionQuery.type === 'task' &&
+                    matchingTasks.map((t) => (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() =>
+                          handleApplyMention({ id: t.id, title: t.title, type: 'task' })
+                        }
+                        className="text-xs px-2 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1"
+                      >
+                        <CheckSquare className="h-3 w-3" />
+                        <span>{t.title}</span>
+                      </button>
+                    ))}
+                  {mentionQuery.type === 'habit' &&
+                    matchingHabits.map((h) => (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() =>
+                          handleApplyMention({ id: h.id, title: h.title, type: 'habit' })
+                        }
+                        className="text-xs px-2 py-1 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1"
+                      >
+                        <Activity className="h-3 w-3" />
+                        <span>{h.title}</span>
+                      </button>
+                    ))}
+                  {mentionQuery.type === 'task' && matchingTasks.length === 0 && (
+                    <span className="text-xs text-muted-foreground">No matching tasks</span>
+                  )}
+                  {mentionQuery.type === 'habit' && matchingHabits.length === 0 && (
+                    <span className="text-xs text-muted-foreground">No matching habits</span>
+                  )}
+                </div>
+              </div>
+            )}
+
             <textarea
               ref={textareaRef}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Write your note here in Markdown format..."
+              onChange={handleTextareaChange}
+              placeholder="Write your note here in Markdown format... (type @ for tasks, # for habits)"
               className="h-full min-h-[350px] w-full resize-none bg-transparent font-mono text-sm leading-relaxed text-foreground placeholder:text-muted-foreground focus:outline-hidden"
               spellCheck="false"
             />

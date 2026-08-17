@@ -29,6 +29,8 @@ import {
 } from '../hooks/useNotes'
 import { useTags } from '../hooks/useTags'
 import { useProjects } from '@/modules/tasks/hooks/useProjects'
+import { useTasks } from '@/modules/tasks/hooks/useTasks'
+import { useHabits } from '@/modules/habits/hooks/useHabits'
 import { exportAllNotesAsZip } from '../utils/noteExporter'
 import { useBackButton } from '@/core/platform/backButton'
 import { useHashRoute } from '@/core/router/hashRouter'
@@ -87,6 +89,8 @@ export function NotesView() {
   const { data: notes = [], isLoading } = useNotes({ archived: showArchived })
   const { data: tags = [] } = useTags()
   const { data: projects = [] } = useProjects()
+  const { data: allTasks = [] } = useTasks()
+  const { data: allHabits = [] } = useHabits(true)
 
   // Deep Link / Router support: auto-open note in edit/preview mode
   useEffect(() => {
@@ -106,7 +110,7 @@ export function NotesView() {
   const toggleArchiveMutation = useToggleArchiveNote()
   const duplicateNoteMutation = useDuplicateNote()
 
-  // Project map for quick lookup
+  // Maps for quick lookup
   const projectMap = useMemo(() => {
     const map = new Map<string, string>()
     for (const p of projects) {
@@ -114,6 +118,22 @@ export function NotesView() {
     }
     return map
   }, [projects])
+
+  const taskMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const t of allTasks) {
+      map.set(t.id, t.title)
+    }
+    return map
+  }, [allTasks])
+
+  const habitMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const h of allHabits) {
+      map.set(h.id, h.title)
+    }
+    return map
+  }, [allHabits])
 
   // Filter notes client-side for immediate responsiveness
   const filteredNotes = useMemo(() => {
@@ -442,6 +462,8 @@ export function NotesView() {
                     note={note}
                     layout={layout}
                     projectName={note.projectId ? projectMap.get(note.projectId) : undefined}
+                    taskTitle={note.linkedTaskId ? taskMap.get(note.linkedTaskId) : undefined}
+                    habitTitle={note.linkedHabitId ? habitMap.get(note.linkedHabitId) : undefined}
                     searchQuery={searchQuery}
                     onEdit={(n) => setEditingNote(n)}
                     onTogglePin={(id) => togglePinMutation.mutate(id)}
@@ -477,6 +499,8 @@ export function NotesView() {
                     note={note}
                     layout={layout}
                     projectName={note.projectId ? projectMap.get(note.projectId) : undefined}
+                    taskTitle={note.linkedTaskId ? taskMap.get(note.linkedTaskId) : undefined}
+                    habitTitle={note.linkedHabitId ? habitMap.get(note.linkedHabitId) : undefined}
                     searchQuery={searchQuery}
                     onEdit={(n) => setEditingNote(n)}
                     onTogglePin={(id) => togglePinMutation.mutate(id)}

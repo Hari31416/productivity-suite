@@ -9,7 +9,9 @@ import {
   Archive,
   ArchiveRestore,
   Clock,
-  FileText
+  FileText,
+  CheckSquare,
+  Activity
 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,6 +32,8 @@ interface NoteCardProps {
   note: Note
   layout?: 'grid' | 'list'
   projectName?: string
+  taskTitle?: string
+  habitTitle?: string
   searchQuery?: string
   onEdit: (note: Note) => void
   onTogglePin: (id: string) => void
@@ -101,6 +105,8 @@ export function NoteCard({
   note,
   layout = 'grid',
   projectName,
+  taskTitle,
+  habitTitle,
   searchQuery,
   onEdit,
   onTogglePin,
@@ -138,6 +144,24 @@ export function NoteCard({
           {projectName && (
             <Badge variant="outline" className="hidden sm:inline-flex text-[10px]">
               {projectName}
+            </Badge>
+          )}
+          {taskTitle && (
+            <Badge
+              variant="outline"
+              className="hidden sm:inline-flex text-[10px] border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5 items-center gap-1"
+            >
+              <CheckSquare className="h-2.5 w-2.5" />
+              <span>{taskTitle}</span>
+            </Badge>
+          )}
+          {habitTitle && (
+            <Badge
+              variant="outline"
+              className="hidden sm:inline-flex text-[10px] border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 items-center gap-1"
+            >
+              <Activity className="h-2.5 w-2.5" />
+              <span>{habitTitle}</span>
             </Badge>
           )}
 
@@ -322,14 +346,32 @@ export function NoteCard({
           </div>
         </div>
 
-        {/* Project badge if available */}
-        {projectName && (
-          <div>
+        {/* Project, Task, Habit badges if available */}
+        <div className="flex flex-wrap items-center gap-1.5">
+          {projectName && (
             <Badge variant="outline" className="text-[10px] px-1.5 py-0">
               {projectName}
             </Badge>
-          </div>
-        )}
+          )}
+          {taskTitle && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 border-blue-500/30 text-blue-600 dark:text-blue-400 bg-blue-500/5 flex items-center gap-1"
+            >
+              <CheckSquare className="h-2.5 w-2.5" />
+              <span>{taskTitle}</span>
+            </Badge>
+          )}
+          {habitTitle && (
+            <Badge
+              variant="outline"
+              className="text-[10px] px-1.5 py-0 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 flex items-center gap-1"
+            >
+              <Activity className="h-2.5 w-2.5" />
+              <span>{habitTitle}</span>
+            </Badge>
+          )}
+        </div>
 
         {/* Markdown Content Preview / Search Match */}
         <div className="max-h-24 overflow-hidden text-xs text-muted-foreground pointer-events-none prose-sm relative">

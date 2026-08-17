@@ -124,21 +124,25 @@ export function TaskDetailView({ task, onBack }: TaskDetailViewProps) {
     return null
   }, [task.recurrence, task.recurringParentId])
 
-  // Connected Notes: Strictly notes referencing or tagged with this specific task
+  // Connected Notes: Strictly notes referencing, linked to, or tagged with this specific task
   const connectedNotes = useMemo(() => {
     const taskTitleTrimmed = task.title.trim()
     const taskTagIdentifier = `task-${task.id}`
 
     return allNotes.filter((note) => {
-      // 1. Explicit task tag
+      // 1. First-class linkedTaskId
+      if (note.linkedTaskId === task.id) {
+        return true
+      }
+      // 2. Explicit task tag
       if (note.tags?.some((t) => t.toLowerCase() === taskTagIdentifier.toLowerCase())) {
         return true
       }
-      // 2. Explicit task ID reference in content
+      // 3. Explicit task ID reference or mention in content
       if (note.content.includes(task.id)) {
         return true
       }
-      // 3. Explicit markdown reference or note title for task
+      // 4. Explicit markdown reference or note title for task
       if (
         taskTitleTrimmed.length >= 3 &&
         (note.content
@@ -209,9 +213,10 @@ export function TaskDetailView({ task, onBack }: TaskDetailViewProps) {
   const handleCreateConnectedNote = async () => {
     const newNote = await createNoteMutation.mutateAsync({
       title: `Notes: ${task.title}`,
-      content: `# Notes for Task: ${task.title}\n\nTask ID: \`${task.id}\`\n\n- Created: ${format(new Date(), 'PPpp')}\n\n### Task Context\n- Status: **${statusInfo.label}**\n- Priority: **${priorityInfo.label}**\n\n### Notes & Execution Log\n`,
+      content: `# Notes: ${task.title}\n\nTask: @[${task.title}](task:${task.id})\n\n### Task Context\n- Status: **${statusInfo.label}**\n- Priority: **${priorityInfo.label}**\n\n### Notes & Execution Log\n`,
       projectId: task.projectId,
-      tags: [...task.tags, `task-${task.id}`, 'task-note']
+      linkedTaskId: task.id,
+      tags: [...task.tags]
     })
 
     setActiveEditingNote(newNote)

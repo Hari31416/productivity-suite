@@ -62,6 +62,12 @@ import { HabitMonthlyCalendar } from './HabitMonthlyCalendar'
 import { HabitFormModal } from './HabitFormModal'
 import { fireConfetti } from '@/lib/confetti'
 import { cn } from '@/lib/utils'
+import { useHashRoute } from '@/core/router/hashRouter'
+import { MarkdownRenderer } from '@/modules/notes/utils/markdownParser'
+import { MarkdownEditor } from '@/modules/notes/components/MarkdownEditor'
+import { useNotes, useCreateNote, useUpdateNote } from '@/modules/notes/hooks/useNotes'
+import type { Note, CreateNoteInput, UpdateNoteInput } from '@/modules/notes/types'
+import { FileText, ExternalLink } from 'lucide-react'
 
 interface HabitDetailViewProps {
   habit: Habit
@@ -90,6 +96,58 @@ export function HabitDetailView({
   const deleteMutation = useDeleteHabit()
   const toggleMutation = useToggleHabitLog()
   const setValueMutation = useSetHabitLogValue()
+
+  const { navigate } = useHashRoute()
+  const { data: allNotes = [] } = useNotes()
+  const [activeEditingNote, setActiveEditingNote] = useState<Note | null>(null)
+
+  const createNoteMutation = useCreateNote()
+  const updateNoteMutation = useUpdateNote()
+
+  const handleSaveNote = async (
+    noteData: CreateNoteInput | { id: string; input: UpdateNoteInput }
+  ): Promise<Note | void> => {
+    if ('id' in noteData) {
+      await updateNoteMutation.mutateAsync(noteData)
+    } else {
+      const created = await createNoteMutation.mutateAsync(noteData)
+      return created
+    }
+  }
+
+  const handleCreateConnectedNote = async () => {
+    const newNote = await createNoteMutation.mutateAsync({
+      title: `Reflection: ${habit.title}`,
+      content: `# Reflection: ${habit.title}\n\nHabit: #[${habit.title}](habit:${habit.id})\n\n- Date: ${selectedDate}\n\n### Observations & Notes\n`,
+      linkedHabitId: habit.id,
+      tags: []
+    })
+    setActiveEditingNote(newNote)
+  }
+
+  // Connected Notes: notes linked to, referencing or tagged with this habit
+  const connectedNotes = useMemo(() => {
+    const habitTitleLower = habit.title.trim().toLowerCase()
+    const habitTag = `habit-${habit.id}`.toLowerCase()
+
+    return allNotes.filter((note) => {
+      // 1. First-class linkedHabitId
+      if (note.linkedHabitId === habit.id) return true
+      // 2. Explicit habit tag
+      if (note.tags?.some((t) => t.toLowerCase() === habitTag)) return true
+      // 3. Explicit habit ID reference in content
+      if (note.content.includes(habit.id)) return true
+      // 4. Mention by title
+      if (
+        habitTitleLower.length >= 3 &&
+        (note.content.toLowerCase().includes(`#[${habitTitleLower}]`) ||
+          note.title.toLowerCase() === `habit log: ${habitTitleLower}`)
+      ) {
+        return true
+      }
+      return false
+    })
+  }, [allNotes, habit.id, habit.title])
 
   const category = useMemo(() => {
     return DEFAULT_HABIT_CATEGORIES.find((c) => c.id === habit.categoryId)
@@ -336,6 +394,41 @@ export function HabitDetailView({
     if (habit.frequencyType === 'times_per_day') return `${habit.timesPerDay || 3} times daily`
     return 'Regular Habit'
   }, [habit])
+
+  // Active Note Editor/Preview View
+  if (activeEditingNote) {
+    return (
+      <div className="space-y-4 max-w-5xl mx-auto pb-10 animate-in fade-in-50 duration-200">
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setActiveEditingNote(null)}
+            className="h-8 px-2 sm:px-3 gap-1 text-xs text-muted-foreground hover:text-foreground -ml-1 rounded-xl font-medium"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            <span>Back to Habit ({habit.title})</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/notes', { noteId: activeEditingNote.id })}
+            className="h-8 px-3 text-xs gap-1.5 rounded-xl font-medium"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            <span>Open in Notes</span>
+          </Button>
+        </div>
+
+        <MarkdownEditor
+          initialNote={activeEditingNote}
+          onSave={handleSaveNote}
+          onClose={() => setActiveEditingNote(null)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-5 pb-8 animate-in fade-in-50 duration-200">
@@ -937,6 +1030,87 @@ export function HabitDetailView({
         logs={allLogs.filter((l) => l.habitId === habit.id)}
         onSelectDate={(d) => setSelectedDate(d)}
       />
+
+      {/* Linked Notes & Reflections Card */}
+      <Card className="rounded-2xl border-border/60 shadow-xs">
+        <CardHeader className="py-3 px-4 flex flex-row items-center justify-between gap-2">
+          <CardTitle className="text-sm font-semibold flex items-center gap-2">
+            <FileText className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Linked Notes & Reflections</span>
+            {connectedNotes.length > 0 && (
+              <span className="text-xs text-muted-foreground font-normal">
+                ({connectedNotes.length})
+              </span>
+            )}
+          </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateConnectedNote}
+            className="h-7 text-xs px-2.5 gap-1 rounded-lg"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            <span>Add Reflection</span>
+          </Button>
+        </CardHeader>
+        <CardContent className="px-4 pb-4 pt-0">
+          {connectedNotes.length === 0 ? (
+            <div className="text-center py-6 text-xs text-muted-foreground bg-muted/20 rounded-xl border border-dashed border-border/60">
+              <p>No notes or reflections linked to this habit yet.</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCreateConnectedNote}
+                className="mt-2 h-7 text-xs text-primary hover:text-primary/80"
+              >
+                + Write Daily Reflection
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {connectedNotes.map((note) => (
+                <div
+                  key={note.id}
+                  onClick={() => setActiveEditingNote(note)}
+                  className="group flex items-start justify-between gap-3 p-3 rounded-xl border bg-card/50 hover:bg-muted/30 hover:border-primary/40 cursor-pointer transition-all"
+                >
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="font-medium text-xs sm:text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                        {note.title || 'Untitled Note'}
+                      </h4>
+                      {note.tags && note.tags.length > 0 && (
+                        <div className="hidden sm:flex items-center gap-1">
+                          {note.tags.slice(0, 2).map((t) => (
+                            <span
+                              key={t}
+                              className="text-[10px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground"
+                            >
+                              #{t}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {note.content && (
+                      <div className="text-xs text-muted-foreground line-clamp-1 pointer-events-none">
+                        <MarkdownRenderer
+                          content={note.content}
+                          className="text-xs space-y-0 [&_h1]:text-xs [&_h2]:text-xs [&_p]:text-xs line-clamp-1"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground shrink-0 pt-0.5">
+                    <span>{note.updatedAt ? format(parseISO(note.updatedAt), 'MMM d') : ''}</span>
+                    <ChevronLeft className="h-3.5 w-3.5 rotate-180 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Edit Habit Modal */}
       <HabitFormModal
