@@ -21,12 +21,19 @@ import {
   RotateCcw,
   Pencil,
   Star,
-  ChevronRight
+  ChevronRight,
+  Layers,
+  Shield
 } from 'lucide-react'
 import type { Habit, HabitLog } from '../types'
 import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
 import { getHabitSlots } from '../utils/intervalCalculator'
-import { calculateStreak, isHabitCompletedOnDate } from '../utils/streakCalculator'
+import {
+  calculateStreak,
+  isHabitCompletedOnDate,
+  isHabitFrozenOnDate,
+  isHabitRestDayOnDate
+} from '../utils/streakCalculator'
 import { getDynamicStepConfig, getDynamicTimerConfig } from '../utils/dynamicStepper'
 import { useToggleHabitLog, useSetHabitLogValue, useUpdateHabit } from '../hooks/useHabits'
 import { useHashRoute } from '@/core/router/hashRouter'
@@ -232,6 +239,21 @@ export function HabitCard({
     })
   }
 
+  const isFrozenToday = isHabitFrozenOnDate(habit, selectedDate)
+
+  const handleToggleFreeze = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    const currentFrozen = habit.frozenDates || []
+    const newFrozen = isFrozenToday
+      ? currentFrozen.filter((d) => d !== selectedDate)
+      : [...currentFrozen, selectedDate]
+
+    updateMutation.mutate({
+      id: habit.id,
+      updates: { frozenDates: newFrozen }
+    })
+  }
+
   const HabitIcon = getHabitIconComponent(habit.icon, habit.title, habit.categoryId)
 
   // Progress Dots calculation (Max 10 dots, single row)
@@ -318,6 +340,28 @@ export function HabitCard({
                   <span>{habit.categoryId}</span>
                 </span>
               ) : null}
+
+              {habit.routineName && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 border border-primary/20 bg-primary/10 text-primary">
+                  <Layers className="h-2.5 w-2.5" />
+                  <span>
+                    {habit.routineName} #{habit.routineOrder || 1}
+                  </span>
+                </span>
+              )}
+
+              {isHabitFrozenOnDate(habit, selectedDate) && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 border border-cyan-500/20 bg-cyan-500/10 text-cyan-700 dark:text-cyan-300">
+                  <Shield className="h-2.5 w-2.5" />
+                  <span>Frozen</span>
+                </span>
+              )}
+
+              {isHabitRestDayOnDate(habit, selectedDate) && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-md shrink-0 border border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300">
+                  <span>Rest Day</span>
+                </span>
+              )}
             </div>
 
             {/* Subtitle / Counter / Status */}
@@ -585,6 +629,10 @@ export function HabitCard({
                 <DropdownMenuItem onClick={handleTogglePin}>
                   <Star className="h-4 w-4 mr-2" />
                   {habit.pinned ? 'Unpin Habit' : 'Pin Habit'}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleToggleFreeze}>
+                  <Shield className="h-4 w-4 mr-2 text-cyan-600 dark:text-cyan-400" />
+                  {isFrozenToday ? 'Unfreeze This Date' : 'Freeze This Date'}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={(e) => {

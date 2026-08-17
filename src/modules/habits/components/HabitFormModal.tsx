@@ -68,6 +68,11 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
   const [unit, setUnit] = useState('')
   const [reminderTimes, setReminderTimes] = useState<string[]>([])
   const [newReminderInput, setNewReminderInput] = useState('08:00')
+
+  // Streak Protection & Routine Stacking State
+  const [restDays, setRestDays] = useState<number[]>([])
+  const [routineName, setRoutineName] = useState('')
+  const [routineOrder, setRoutineOrder] = useState<number>(1)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -89,6 +94,9 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
       setTargetValue(habitToEdit.targetValue || (habitToEdit.targetType === 'timer' ? 25 : 1))
       setUnit(habitToEdit.unit || '')
       setReminderTimes(habitToEdit.reminderTimes || [])
+      setRestDays(habitToEdit.restDays || [])
+      setRoutineName(habitToEdit.routineName || '')
+      setRoutineOrder(habitToEdit.routineOrder || 1)
     } else {
       setTitle('')
       setDescription('')
@@ -107,6 +115,9 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
       setTargetValue(1)
       setUnit('')
       setReminderTimes([])
+      setRestDays([])
+      setRoutineName('')
+      setRoutineOrder(1)
     }
     setNewReminderInput('08:00')
     setError(null)
@@ -118,6 +129,14 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
       setTargetDaysOfWeek(targetDaysOfWeek.filter((d) => d !== dayVal))
     } else {
       setTargetDaysOfWeek([...targetDaysOfWeek, dayVal].sort())
+    }
+  }
+
+  const toggleRestDay = (dayVal: number) => {
+    if (restDays.includes(dayVal)) {
+      setRestDays(restDays.filter((d) => d !== dayVal))
+    } else {
+      setRestDays([...restDays, dayVal].sort())
     }
   }
 
@@ -167,6 +186,15 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
         targetValue: targetType === 'numeric' || targetType === 'timer' ? targetValue : undefined,
         unit: targetType === 'numeric' && unit ? unit.trim() : undefined,
         reminderTimes: reminderTimes.length > 0 ? reminderTimes : undefined,
+        restDays: restDays.length > 0 ? restDays : undefined,
+        routineName: routineName.trim() ? routineName.trim() : undefined,
+        routineId: routineName.trim()
+          ? routineName
+              .trim()
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '_')
+          : undefined,
+        routineOrder: routineName.trim() ? Number(routineOrder) || 1 : undefined,
         pinned: habitToEdit ? habitToEdit.pinned : false,
         archived: habitToEdit ? habitToEdit.archived : false
       }
@@ -553,6 +581,94 @@ export function HabitFormModal({ open, onOpenChange, habitToEdit }: HabitFormMod
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Time</span>
               </Button>
+            </div>
+          </div>
+
+          {/* Planned Rest Days (Streak Protection) */}
+          <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium">Planned Rest Days (Streak Protection)</label>
+              <span className="text-[11px] text-muted-foreground">
+                Days where taking a break does not break your active habit streak (e.g. Sat & Sun).
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 pt-1">
+              {DAYS_OF_WEEK.map((d) => {
+                const isRest = restDays.includes(d.value)
+                return (
+                  <Button
+                    key={d.value}
+                    type="button"
+                    size="sm"
+                    variant={isRest ? 'default' : 'outline'}
+                    onClick={() => toggleRestDay(d.value)}
+                    className={cn(
+                      'h-8 flex-1 p-0 text-xs font-medium rounded-lg',
+                      isRest
+                        ? 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600'
+                        : 'text-muted-foreground'
+                    )}
+                  >
+                    {d.label}
+                  </Button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Habit Stacking & Routine Chain */}
+          <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+            <div className="flex flex-col">
+              <label className="text-xs font-medium">Routine Stacking Chain</label>
+              <span className="text-[11px] text-muted-foreground">
+                Group this habit into a sequence stack (e.g. Morning Routine: Water -&gt; Stretch
+                -&gt; Meditate).
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 pt-1">
+              <div className="col-span-2 space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground">
+                  Routine Name
+                </label>
+                <Input
+                  placeholder="e.g. Morning Routine, Evening Wind Down"
+                  value={routineName}
+                  onChange={(e) => setRoutineName(e.target.value)}
+                  className="h-8 text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-medium text-muted-foreground">Step #</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="50"
+                  value={routineOrder}
+                  onChange={(e) => setRoutineOrder(Math.max(1, Number(e.target.value) || 1))}
+                  className="h-8 text-xs"
+                />
+              </div>
+            </div>
+
+            {/* Quick Routine Presets */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              <span className="text-[11px] text-muted-foreground">Presets:</span>
+              {['Morning Routine', 'Evening Routine', 'Deep Work Flow', 'Gym Ritual'].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoutineName(r)}
+                  className={cn(
+                    'px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors',
+                    routineName === r
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background text-muted-foreground hover:text-foreground'
+                  )}
+                >
+                  {r}
+                </button>
+              ))}
             </div>
           </div>
 

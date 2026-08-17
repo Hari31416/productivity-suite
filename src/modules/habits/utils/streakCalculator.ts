@@ -24,6 +24,26 @@ export interface HeatmapDay {
   total: number
   ratio: number
   level: 0 | 1 | 2 | 3 | 4
+  isRestDay?: boolean
+  isFrozen?: boolean
+}
+
+export function isHabitFrozenOnDate(habit: Habit, date: Date | string): boolean {
+  if (!habit.frozenDates || habit.frozenDates.length === 0) {
+    return false
+  }
+  const dateObj = typeof date === 'string' ? parseISO(date) : date
+  const dateStr = format(dateObj, 'yyyy-MM-dd')
+  return habit.frozenDates.includes(dateStr)
+}
+
+export function isHabitRestDayOnDate(habit: Habit, date: Date | string): boolean {
+  if (!habit.restDays || habit.restDays.length === 0) {
+    return false
+  }
+  const dateObj = typeof date === 'string' ? parseISO(date) : date
+  const dayOfWeek = dateObj.getDay()
+  return habit.restDays.includes(dayOfWeek)
 }
 
 export function isHabitCompletedOnDate(habit: Habit, logsForDate: HabitLog[]): boolean {
@@ -65,6 +85,16 @@ export function isHabitCompletedOnDate(habit: Habit, logsForDate: HabitLog[]): b
 
 export function isHabitScheduledOnDate(habit: Habit, date: Date | string): boolean {
   const dateObj = typeof date === 'string' ? parseISO(date) : date
+
+  // If the date is configured as a planned rest day, it is not scheduled
+  if (isHabitRestDayOnDate(habit, dateObj)) {
+    return false
+  }
+
+  // If the date is manually frozen for illness/travel, it is not scheduled as a mandatory day
+  if (isHabitFrozenOnDate(habit, dateObj)) {
+    return false
+  }
 
   if (
     habit.frequencyType === 'daily' ||
@@ -156,10 +186,8 @@ export function calculateStreak(
   for (const day of allDays) {
     const dayStr = format(day, 'yyyy-MM-dd')
     const scheduled = isHabitScheduledOnDate(habit, day)
-
-    if (!scheduled) {
-      continue
-    }
+    const isFrozen = isHabitFrozenOnDate(habit, day)
+    const isRest = isHabitRestDayOnDate(habit, day)
 
     const dayLogs = logsByDate.get(dayStr) || []
     const completed = isHabitCompletedOnDate(habit, dayLogs)
@@ -169,6 +197,9 @@ export function calculateStreak(
       if (runningStreak > bestStreak) {
         bestStreak = runningStreak
       }
+    } else if (isFrozen || isRest || !scheduled) {
+      // Rest or frozen days do not reset the running streak
+      continue
     } else {
       runningStreak = 0
     }
@@ -178,10 +209,10 @@ export function calculateStreak(
   const isTargetToday = targetDateStr === todayStr
 
   let checkDate = targetDateObj
-  let targetScheduled = isHabitScheduledOnDate(habit, checkDate)
   let targetLogs = logsByDate.get(format(checkDate, 'yyyy-MM-dd')) || []
-  let targetCompleted = targetScheduled && isHabitCompletedOnDate(habit, targetLogs)
+  let targetCompleted = isHabitCompletedOnDate(habit, targetLogs)
 
+  // If checking today and today is not completed yet, skip today if it is today
   if (isTargetToday && !targetCompleted) {
     checkDate = subDays(checkDate, 1)
   }
@@ -189,16 +220,19 @@ export function calculateStreak(
   while (true) {
     const dateStr = format(checkDate, 'yyyy-MM-dd')
     const scheduled = isHabitScheduledOnDate(habit, checkDate)
+    const isFrozen = isHabitFrozenOnDate(habit, checkDate)
+    const isRest = isHabitRestDayOnDate(habit, checkDate)
 
-    if (scheduled) {
-      const dateLogs = logsByDate.get(dateStr) || []
-      const completed = isHabitCompletedOnDate(habit, dateLogs)
+    const dateLogs = logsByDate.get(dateStr) || []
+    const completed = isHabitCompletedOnDate(habit, dateLogs)
 
-      if (completed) {
-        currentStreak += 1
-      } else {
-        break
-      }
+    if (completed) {
+      currentStreak += 1
+    } else if (isFrozen || isRest || !scheduled) {
+      // Streak preserved, continue stepping back
+    } else {
+      // Uncompleted scheduled day breaks streak
+      break
     }
 
     if (isBefore(checkDate, normalizedStartDate)) {
@@ -216,13 +250,19 @@ export function calculateStreak(
   let completed30Count = 0
 
   for (const day of last30Days) {
-    if (isHabitScheduledOnDate(habit, day)) {
+    const isFrozen = isHabitFrozenOnDate(habit, day)
+    const isRest = isHabitRestDayOnDate(habit, day)
+    const scheduled = isHabitScheduledOnDate(habit, day)
+
+    const dayStr = format(day, 'yyyy-MM-dd')
+    const dayLogs = logsByDate.get(dayStr) || []
+    const completed = isHabitCompletedOnDate(habit, dayLogs)
+
+    if (completed) {
+      completed30Count += 1
       scheduled30Count += 1
-      const dayStr = format(day, 'yyyy-MM-dd')
-      const dayLogs = logsByDate.get(dayStr) || []
-      if (isHabitCompletedOnDate(habit, dayLogs)) {
-        completed30Count += 1
-      }
+    } else if (!isFrozen && !isRest && scheduled) {
+      scheduled30Count += 1
     }
   }
 

@@ -17,7 +17,10 @@ import {
   Pencil,
   Sparkles,
   Info,
-  MoreVertical
+  MoreVertical,
+  Shield,
+  Layers,
+  CalendarDays
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,7 +42,12 @@ import {
 } from '@/components/ui/dialog'
 import type { Habit, HabitLog } from '../types'
 import { DEFAULT_HABIT_CATEGORIES, getHabitIconComponent } from '../constants'
-import { calculateStreak, isHabitCompletedOnDate } from '../utils/streakCalculator'
+import {
+  calculateStreak,
+  isHabitCompletedOnDate,
+  isHabitFrozenOnDate,
+  isHabitRestDayOnDate
+} from '../utils/streakCalculator'
 import { getHabitSlots } from '../utils/intervalCalculator'
 import { getDynamicStepConfig, getDynamicTimerConfig } from '../utils/dynamicStepper'
 import {
@@ -177,6 +185,27 @@ export function HabitDetailView({
     )
     return dates.size
   }, [allLogs, habit.id])
+
+  const isSelectedDateFrozen = useMemo(() => {
+    return isHabitFrozenOnDate(habit, selectedDate)
+  }, [habit, selectedDate])
+
+  const isSelectedDateRest = useMemo(() => {
+    return isHabitRestDayOnDate(habit, selectedDate)
+  }, [habit, selectedDate])
+
+  const handleToggleFreezeDate = (dateToToggle: string) => {
+    const existing = habit.frozenDates || []
+    const isFrozen = existing.includes(dateToToggle)
+    const updatedFrozen = isFrozen
+      ? existing.filter((d) => d !== dateToToggle)
+      : [...existing, dateToToggle].sort()
+
+    updateMutation.mutate({
+      id: habit.id,
+      updates: { frozenDates: updatedFrozen }
+    })
+  }
 
   // Action Handlers
   const handleToggleFavorite = () => {
@@ -708,6 +737,124 @@ export function HabitDetailView({
           }}
         />
       )}
+
+      {/* Streak Protection, Rest Days & Routine Stacking */}
+      <div className="rounded-2xl border bg-card/60 p-3.5 sm:p-4 space-y-3 shadow-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+            <Shield className="h-3.5 w-3.5 text-primary" />
+            <span>Streak Protection & Planned Rest</span>
+          </div>
+          {isSelectedDateFrozen ? (
+            <span className="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full border border-cyan-500/20">
+              Streak Frozen on {selectedDate}
+            </span>
+          ) : isSelectedDateRest ? (
+            <span className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+              Planned Rest Day
+            </span>
+          ) : null}
+        </div>
+
+        {/* Freeze / Unfreeze Action for Selected Date */}
+        <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-muted/20 border flex-wrap">
+          <div className="space-y-0.5 min-w-0">
+            <div className="text-xs font-medium text-foreground">
+              {isSelectedDateFrozen
+                ? 'Streak is currently frozen'
+                : 'Need a freeze for illness or travel?'}
+            </div>
+            <div className="text-[11px] text-muted-foreground">
+              {isSelectedDateFrozen
+                ? `Streak calculations preserve your streak on ${selectedDate}.`
+                : `Freeze your streak on ${selectedDate} without resetting consecutive count.`}
+            </div>
+          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant={isSelectedDateFrozen ? 'outline' : 'secondary'}
+            onClick={() => handleToggleFreezeDate(selectedDate)}
+            className={cn(
+              'h-7 text-xs rounded-lg px-3 shrink-0',
+              isSelectedDateFrozen && 'text-destructive hover:bg-destructive/10'
+            )}
+          >
+            {isSelectedDateFrozen ? 'Unfreeze Date' : 'Freeze This Day'}
+          </Button>
+        </div>
+
+        {/* Frozen Dates List */}
+        {habit.frozenDates && habit.frozenDates.length > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <label className="text-[11px] font-medium text-muted-foreground">
+              Active Streak Freezes:
+            </label>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {habit.frozenDates.map((fDate) => (
+                <span
+                  key={fDate}
+                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-lg bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/20"
+                >
+                  <CalendarDays className="h-3 w-3" />
+                  <span>{fDate}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleToggleFreezeDate(fDate)}
+                    className="hover:text-destructive transition-colors ml-0.5"
+                    title={`Unfreeze ${fDate}`}
+                    aria-label={`Unfreeze ${fDate}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Planned Rest Days Pills */}
+        {habit.restDays && habit.restDays.length > 0 && (
+          <div className="space-y-1 pt-1">
+            <label className="text-[11px] font-medium text-muted-foreground">
+              Configured Planned Rest Days:
+            </label>
+            <div className="flex items-center gap-1 flex-wrap">
+              {habit.restDays.map((d) => {
+                const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+                return (
+                  <span
+                    key={d}
+                    className="inline-flex items-center text-[11px] font-medium px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                  >
+                    {dayNames[d]}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Routine Stacking Info */}
+        {habit.routineName && (
+          <div className="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-primary/5 border border-primary/20">
+            <div className="flex items-center gap-2 min-w-0">
+              <Layers className="h-4 w-4 text-primary shrink-0" />
+              <div className="min-w-0">
+                <div className="text-xs font-semibold text-foreground truncate">
+                  {habit.routineName}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  Step {habit.routineOrder || 1} in routine sequence stack
+                </div>
+              </div>
+            </div>
+            <span className="text-[11px] font-medium bg-primary/10 text-primary px-2 py-0.5 rounded-full shrink-0">
+              Chain Step #{habit.routineOrder || 1}
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* About, Motivation & Reminder Times Timeline */}
       <div className="rounded-2xl border bg-card/60 p-3.5 sm:p-4 space-y-3 shadow-xs">

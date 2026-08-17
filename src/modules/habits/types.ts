@@ -27,6 +27,13 @@ export interface Habit {
   pinned?: boolean
   reminderTimes?: string[]
   motivationNotes?: string
+  // Streak Protection & Rest Days
+  restDays?: number[] // Days of week (0=Sun, 6=Sat) where rest is planned without breaking streaks
+  frozenDates?: string[] // ISO dates (YYYY-MM-DD) frozen for illness/travel/recovery
+  // Routine Stacking
+  routineId?: string
+  routineName?: string
+  routineOrder?: number
   createdAt: string
   updatedAt: string
   archived: boolean
@@ -51,6 +58,15 @@ export interface HabitCategory {
   name: string
   color: string
   icon?: string
+}
+
+export interface HabitRoutineStack {
+  id: string
+  name: string
+  habits: Habit[]
+  completedTodayCount: number
+  totalCount: number
+  isFullyCompletedToday: boolean
 }
 
 export type CreateHabitInput = Omit<Habit, 'id' | 'createdAt' | 'updatedAt' | 'archived'> & {

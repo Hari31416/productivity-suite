@@ -308,6 +308,96 @@ describe('streakCalculator', () => {
       expect(result.bestStreak).toBe(3)
       expect(result.totalCompletions).toBe(3)
     })
+
+    it('preserves streaks across planned rest days (e.g. gym workout 5 days/week with weekend rest)', () => {
+      // 2026-08-07 is Friday (completed)
+      // 2026-08-08 is Saturday (rest day - not logged)
+      // 2026-08-09 is Sunday (rest day - not logged)
+      // 2026-08-10 is Monday (completed)
+      const habit: Habit = {
+        id: 'h-gym',
+        title: 'Gym Workout',
+        color: '#f97316',
+        frequencyType: 'daily',
+        restDays: [0, 6], // Saturday (6) and Sunday (0) planned rest days
+        targetType: 'boolean',
+        createdAt: '2026-08-01T00:00:00.000Z',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+        archived: false
+      }
+
+      const logs: HabitLog[] = [
+        {
+          id: 'l1',
+          habitId: 'h-gym',
+          date: '2026-08-07', // Friday
+          timestamp: '2026-08-07T08:00:00.000Z',
+          completed: true,
+          createdAt: '2026-08-07T08:00:00.000Z',
+          updatedAt: '2026-08-07T08:00:00.000Z'
+        },
+        {
+          id: 'l2',
+          habitId: 'h-gym',
+          date: '2026-08-10', // Monday
+          timestamp: '2026-08-10T08:00:00.000Z',
+          completed: true,
+          createdAt: '2026-08-10T08:00:00.000Z',
+          updatedAt: '2026-08-10T08:00:00.000Z'
+        }
+      ]
+
+      const result = calculateStreak(habit, logs, '2026-08-10')
+      // The 2 completed days (Friday + Monday) bridge across Saturday/Sunday rest days without breaking!
+      expect(result.currentStreak).toBe(2)
+      expect(result.bestStreak).toBe(2)
+      expect(result.totalCompletions).toBe(2)
+    })
+
+    it('protects and preserves streaks across manual frozen dates (illness or travel freeze)', () => {
+      // 2026-08-12 (completed)
+      // 2026-08-13 (frozen date - illness/travel)
+      // 2026-08-14 (frozen date - illness/travel)
+      // 2026-08-15 (completed)
+      const habit: Habit = {
+        id: 'h-meditate',
+        title: 'Daily Meditation',
+        color: '#8b5cf6',
+        frequencyType: 'daily',
+        frozenDates: ['2026-08-13', '2026-08-14'],
+        targetType: 'boolean',
+        createdAt: '2026-08-01T00:00:00.000Z',
+        updatedAt: '2026-08-01T00:00:00.000Z',
+        archived: false
+      }
+
+      const logs: HabitLog[] = [
+        {
+          id: 'l1',
+          habitId: 'h-meditate',
+          date: '2026-08-12',
+          timestamp: '2026-08-12T08:00:00.000Z',
+          completed: true,
+          createdAt: '2026-08-12T08:00:00.000Z',
+          updatedAt: '2026-08-12T08:00:00.000Z'
+        },
+        {
+          id: 'l2',
+          habitId: 'h-meditate',
+          date: '2026-08-15',
+          timestamp: '2026-08-15T08:00:00.000Z',
+          completed: true,
+          createdAt: '2026-08-15T08:00:00.000Z',
+          updatedAt: '2026-08-15T08:00:00.000Z'
+        }
+      ]
+
+      const result = calculateStreak(habit, logs, '2026-08-15')
+      // Both days connect continuously across the frozen dates
+      expect(result.currentStreak).toBe(2)
+      expect(result.bestStreak).toBe(2)
+      expect(result.totalCompletions).toBe(2)
+    })
   })
 
   describe('generateHeatmapData', () => {
