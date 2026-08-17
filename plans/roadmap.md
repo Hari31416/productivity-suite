@@ -95,7 +95,7 @@ Provide a dedicated full-view execution workspace and detail drawer for task exe
   - Configure rest days for specific habits (e.g. gym workout 5 days/week with weekend rest) without breaking streak calculations.
   - Support manual streak freezes for travel or illness from habit detail view and daily card action menu.
 
-## 7. Cross-Module Bi-Directional Linking
+## 7. Cross-Module Bi-Directional Linking [Completed]
 
 - **Notes Linked to Tasks and Habits**:
   - Attach contextual markdown notes to tasks or habit check-ins for detailed documentation and reflection.
